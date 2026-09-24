@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { fakeAuth, mockFetch, renderRoutes } from '@/test/testUtils'
+import { allDefs } from './checks/testFixtures'
 import { ClientsPage } from './ClientsPage'
 
 const CLIENTS = [
@@ -15,7 +16,7 @@ function show(permissions = ['CLIENT_MANAGE']) {
 
 describe('ClientsPage', () => {
   it('lists clients with their printed name and status', async () => {
-    mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }) })
+    mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'GET /api/check-types': () => ({ body: allDefs }) })
     show()
 
     const acme = (await screen.findByText('Acme Corp', { selector: 'td' })).closest('tr')!
@@ -25,22 +26,23 @@ describe('ClientsPage', () => {
   })
 
   it('is read-only for someone who can only read cases', async () => {
-    mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }) })
+    mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'GET /api/check-types': () => ({ body: allDefs }) })
     show(['CASE_READ_ASSIGNED'])
     await screen.findByText('Acme Corp', { selector: 'td' })
     expect(screen.queryByRole('button', { name: 'New client' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
   })
 
-  it('creates a client, turning the check list into codes', async () => {
-    const fake = mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'POST /api/clients': () => ({ status: 201, body: CLIENTS[0] }) })
+  it('creates a client with the ticked usual checks', async () => {
+    const fake = mockFetch({ 'GET /api/check-types': () => ({ body: allDefs }), 'GET /api/clients': () => ({ body: CLIENTS }), 'POST /api/clients': () => ({ status: 201, body: CLIENTS[0] }) })
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'New client' }))
     const dialog = screen.getByRole('dialog', { name: 'New client' })
 
     await userEvent.type(within(dialog).getByLabelText('Client name'), ' Gamma Inc ')
     await userEvent.type(within(dialog).getByLabelText('Name on reports'), 'Gamma{Enter}Incorporated')
-    await userEvent.type(within(dialog).getByLabelText(/Usual checks/), 'aadhaar, pan , ,education')
+    await userEvent.click(await within(dialog).findByRole('checkbox', { name: 'Identity Verification (Aadhaar)' }))
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Gap Review' }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
 
     await screen.findByText('Acme Corp', { selector: 'td' })
@@ -48,13 +50,13 @@ describe('ClientsPage', () => {
     expect(JSON.parse(post[1]!.body as string)).toEqual({
       name: 'Gamma Inc',
       displayName: 'Gamma\nIncorporated',
-      defaultCheckTypes: ['AADHAAR', 'PAN', 'EDUCATION'],
+      defaultCheckTypes: ['AADHAAR', 'GAP_REVIEW'],
       active: true,
     })
   })
 
   it('checks the form before saving', async () => {
-    const fake = mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }) })
+    const fake = mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'GET /api/check-types': () => ({ body: allDefs }) })
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'New client' }))
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Save' }))
@@ -65,12 +67,14 @@ describe('ClientsPage', () => {
   })
 
   it('edits a client with the version it was loaded with', async () => {
-    const fake = mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'PUT /api/clients/cl-1': () => ({ body: CLIENTS[0] }) })
+    const fake = mockFetch({ 'GET /api/check-types': () => ({ body: allDefs }), 'GET /api/clients': () => ({ body: CLIENTS }), 'PUT /api/clients/cl-1': () => ({ body: CLIENTS[0] }) })
     show()
     const acme = (await screen.findByText('Acme Corp', { selector: 'td' })).closest('tr')!
     await userEvent.click(within(acme).getByRole('button', { name: 'Edit' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit Acme Corp' })
-    expect(within(dialog).getByLabelText(/Usual checks/)).toHaveValue('AADHAAR, PAN')
+    expect(await within(dialog).findByRole('checkbox', { name: 'Identity Verification (Aadhaar)' })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'Gap Review' })).not.toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'PAN' })).toBeChecked() // a stored code the server no longer lists is kept, not dropped
 
     await userEvent.click(within(dialog).getByRole('checkbox', { name: /Active/ }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))

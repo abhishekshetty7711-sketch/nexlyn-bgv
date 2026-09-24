@@ -29,6 +29,8 @@ function serve(initial: CaseView, extra: Record<string, FakeHandler> = {}): Setu
     'GET /api/cases/c-1': () => ({ body: setup.current }),
     'GET /api/cases/c-1/progress': () => ({ body: progressFixture() }),
     'GET /api/cases/c-1/validation': () => ({ body: validationFixture() }),
+    'GET /api/cases/c-1/checks': () => ({ body: [] }),
+    'GET /api/check-types': () => ({ body: [] }),
     'GET /api/clients': () => ({ body: CLIENTS }),
     'GET /api/assignable-admins': () => ({ body: ADMINS }),
     ...extra,
@@ -339,10 +341,10 @@ describe('CaseWorkspacePage', () => {
 
   // ---- checks and generate ---------------------------------------------------------------------------------------------
 
-  it('says checks are coming', async () => {
+  it('shows the checks section, saying a case with no checks cannot be submitted', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=checks' })
-    expect(await screen.findByText(/next build phase/)).toBeInTheDocument()
+    expect(await screen.findByText(/No checks yet/)).toBeInTheDocument()
   })
 
   it('lists what blocks the report and jumps to the section that needs work', async () => {

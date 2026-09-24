@@ -108,7 +108,7 @@ export type NewCaseValues = z.infer<typeof newCaseSchema>
 export const clientSchema = z.object({
   name: z.string().trim().min(1, 'Enter the client name').max(200, 'That name is too long'),
   displayName: z.string().trim().min(1, 'Enter the name as it should print on reports').max(1000, 'That is too long'),
-  defaultCheckTypes: z.string().max(1000, 'That is too long'),
+  defaultCheckTypes: z.array(z.string()),
   active: z.boolean(),
 })
 export type ClientValues = z.infer<typeof clientSchema>

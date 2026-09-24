@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { Can } from '@/features/auth/Can'
 import { useClients, useSaveClient } from './api'
+import { useCheckTypes } from './checks/api'
 import { type ClientValues, clientSchema } from './schemas'
 import type { ClientView } from './types'
 
@@ -77,12 +78,13 @@ export function ClientsPage() {
 
 function ClientDialog({ client, onClose }: { client: ClientView | null; onClose: () => void }) {
   const save = useSaveClient()
+  const types = useCheckTypes()
   const form = useForm<ClientValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       name: client?.name ?? '',
       displayName: client?.displayName ?? '',
-      defaultCheckTypes: client?.defaultCheckTypes.join(', ') ?? '',
+      defaultCheckTypes: client?.defaultCheckTypes ?? [],
       active: client?.active ?? true,
     },
   })
@@ -96,7 +98,7 @@ function ClientDialog({ client, onClose }: { client: ClientView | null; onClose:
         input: {
           name: values.name.trim(),
           displayName: values.displayName.trim(),
-          defaultCheckTypes: values.defaultCheckTypes.split(',').map((type) => type.trim().toUpperCase()).filter(Boolean),
+          defaultCheckTypes: values.defaultCheckTypes,
           active: values.active,
         },
       },
@@ -119,14 +121,33 @@ function ClientDialog({ client, onClose }: { client: ClientView | null; onClose:
         >
           <Textarea id="cl-display" rows={3} aria-invalid={!!errors.displayName} {...form.register('displayName')} />
         </Field>
-        <Field
-          label="Usual checks (optional)"
-          htmlFor="cl-checks"
-          hint="Comma-separated, for example AADHAAR, PAN, EDUCATION. Used to suggest checks on new cases."
-          error={errors.defaultCheckTypes?.message}
-        >
-          <Input id="cl-checks" {...form.register('defaultCheckTypes')} />
-        </Field>
+        <Controller
+          control={form.control}
+          name="defaultCheckTypes"
+          render={({ field }) => {
+            const known = new Set((types.data ?? []).map((type) => type.code))
+            const options = [...(types.data ?? []).map((type) => ({ code: type.code, name: type.displayName })), ...field.value.filter((code) => !known.has(code)).map((code) => ({ code, name: code }))]
+            return (
+              <fieldset className="flex flex-col gap-1">
+                <legend className="text-sm font-medium text-slate-700">Usual checks (optional)</legend>
+                <p className="text-xs text-slate-500">These are offered first when adding a check to this client&apos;s cases.</p>
+                <div className="grid max-h-48 gap-1 overflow-y-auto rounded-md border border-slate-200 p-2 sm:grid-cols-2">
+                  {options.map((option) => (
+                    <label key={option.code} className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={field.value.includes(option.code)}
+                        onChange={(event) => field.onChange(event.target.checked ? [...field.value, option.code] : field.value.filter((code) => code !== option.code))}
+                      />
+                      {option.name}
+                    </label>
+                  ))}
+                  {types.isLoading && <span className="text-xs text-slate-500">Loading the list of checks...</span>}
+                </div>
+              </fieldset>
+            )
+          }}
+        />
         <label className="flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" {...form.register('active')} /> Active (can be chosen for new cases)
         </label>

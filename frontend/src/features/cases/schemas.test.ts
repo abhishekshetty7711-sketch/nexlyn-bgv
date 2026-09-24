@@ -88,9 +88,9 @@ describe('other sections', () => {
   })
 
   it('needs a client name and a printed name', () => {
-    expect(clientSchema.safeParse({ name: 'Acme', displayName: 'Acme', defaultCheckTypes: '', active: true }).success).toBe(true)
-    expect(clientSchema.safeParse({ name: '', displayName: 'Acme', defaultCheckTypes: '', active: true }).success).toBe(false)
-    expect(clientSchema.safeParse({ name: 'Acme', displayName: ' ', defaultCheckTypes: '', active: true }).success).toBe(false)
+    expect(clientSchema.safeParse({ name: 'Acme', displayName: 'Acme', defaultCheckTypes: [], active: true }).success).toBe(true)
+    expect(clientSchema.safeParse({ name: '', displayName: 'Acme', defaultCheckTypes: [], active: true }).success).toBe(false)
+    expect(clientSchema.safeParse({ name: 'Acme', displayName: ' ', defaultCheckTypes: [], active: true }).success).toBe(false)
   })
 })
 

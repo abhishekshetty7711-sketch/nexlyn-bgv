@@ -12,7 +12,7 @@ _Last updated: 2026-09-24_
 | 1. Foundation | **Done** (commit `db0689b`). Stack starts with `./scripts/local-up.sh -d`; MinIO off by default (D-002). |
 | 2. Auth & RBAC | **Done** (steps 2a-2f). Done-when met: security tests cover unauthenticated, wrong permission, refresh-token reuse and lockout. 106 auth + 6 common + 5 app backend tests, 97 frontend tests. Only the Docker-image rebuild check is pending (see open issues). |
 | 3. Clients & Case workspace core | **Done** (3a-3c). Done-when met: every section saves and loads, validation follows section 7.1. 41 cases + 16 common + 106 auth + 5 app backend tests; 155 frontend tests. |
-| 4. Checks | **In progress:** 4a-4b done (18 YAML check types + registry, schema, PII encryption / masking / reveal, prefill, date master, attestation, free text sections, API; 92 cases tests); 4c (frontend section 4: check list, dynamic forms, reveal, attestation, free sections) to do |
+| 4. Checks | **Done** (4a-4c). Done-when met: all 18 types can be added and saved (backend tests add and save every type; frontend renders any definition). 92 cases + 23 common + 106 auth + 5 app backend tests; 197 frontend tests. |
 | 5. Documents | Not started |
 | 6. Reports | Not started |
 | 7. Workflow | Not started |
@@ -31,7 +31,7 @@ _Last updated: 2026-09-24_
 
 ## Next step
 
-Start **Phase 4: Checks** (CLAUDE.md section 15, with sections 8 and 9.2, and 10 tables `verification_checks`, `check_fields`, `check_details`, `check_free_sections`): check type registry (YAML) and payload records, add / save / reorder / delete checks, prefill from the candidate, date master, free sections, attestation (needs `ATTESTATION_APPLY`), PII encryption / masking / reveal (needs `PII_UNMASK`, audited, uses `AesGcmEncryptor`); frontend workspace section 4 with dynamic forms. Replace `ChecksSummary.NoChecks` with the real source (D-025) so the overview numbers, validation and progress use real checks. Also update Section 4's placeholder (`ChecksSection.tsx`) and the "usual checks" field on clients (comma-separated codes today, D-027).
+Start **Phase 5: Documents** (CLAUDE.md section 15, with sections 9.3 and 10 table `documents`, and 11.4 upload rules): `documents` module (uploads with magic-byte sniffing for JPEG / PNG / PDF, size limit, metadata stripping by re-encoding, S3-compatible storage, access only through a permission check plus short-lived signed URL or streaming, image quality badge, crop, reorder, move-to-next-page / use-larger-box), candidate photo, check documents, free-section images; frontend uploader and editor. MinIO images are not available (D-002): choose and log a local S3-compatible store first. Then wire in the "at least one document per check" warning and the candidate photo warning, and image free sections (currently refused).
 
 ## Open issues and things only the owner can do
 

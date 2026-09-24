@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { type CheckView, STATUS_LABELS, STATUS_MARKS } from '../checks/types'
 import type { Progress, SectionKey, SectionState } from '../types'
 import { SECTION_KEYS } from '../types'
 
@@ -23,10 +24,14 @@ interface SectionNavigatorProps {
   progress: Progress | undefined
   current: SectionKey
   onSelect: (section: SectionKey) => void
+  /** The checks of the case: listed under "4 Checks" so one can be opened directly. */
+  checks?: CheckView[]
+  currentCheckId?: string | null
+  onSelectCheck?: (checkId: string) => void
 }
 
 /** The left-hand list of sections with a saved / needs-attention mark each, and the overall progress bar. */
-export function SectionNavigator({ progress, current, onSelect }: SectionNavigatorProps) {
+export function SectionNavigator({ progress, current, onSelect, checks = [], currentCheckId = null, onSelectCheck }: SectionNavigatorProps) {
   const byKey = new Map(progress?.sections.map((section) => [section.key, section]))
   const percent = progress?.percent ?? 0
 
@@ -75,6 +80,28 @@ export function SectionNavigator({ progress, current, onSelect }: SectionNavigat
                   </span>
                 )}
               </button>
+              {key === 'checks' && checks.length > 0 && (
+                <ul className="ml-6 mt-1 flex flex-col gap-0.5" aria-label="Checks">
+                  {checks.map((check) => (
+                    <li key={check.id}>
+                      <button
+                        type="button"
+                        aria-current={current === 'checks' && check.id === currentCheckId ? 'true' : undefined}
+                        onClick={() => onSelectCheck?.(check.id)}
+                        className={cn(
+                          'flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-slate-100',
+                          current === 'checks' && check.id === currentCheckId && 'bg-slate-200 font-medium',
+                        )}
+                      >
+                        <span role="img" aria-label={STATUS_LABELS[check.status]}>
+                          {STATUS_MARKS[check.status]}
+                        </span>
+                        <span className="flex-1 truncate">{check.title}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           )
         })}

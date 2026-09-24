@@ -11,6 +11,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/AuthContext'
 import { useCase, useProgress } from '../api'
+import { useChecks } from '../checks/api'
 import { formatDate } from '../format'
 import { isSectionKey, LIFECYCLE_LABELS, type SectionKey } from '../types'
 import { AssignmentsPanel } from './AssignmentsPanel'
@@ -36,13 +37,15 @@ export function CaseWorkspacePage() {
   const queryClient = useQueryClient()
   const caseQuery = useCase(id)
   const progress = useProgress(id)
+  const checks = useChecks(id)
 
   const requested = search.get('section')
   const section: SectionKey = isSectionKey(requested) ? requested : 'report-info'
+  const checkParam = section === 'checks' ? search.get('check') : null
 
   // ---- unsaved-changes guard ---------------------------------------------------------------
   const dirty = useRef(false)
-  const [pendingSection, setPendingSection] = useState<SectionKey | null>(null)
+  const [pending, setPending] = useState<{ section: SectionKey; check: string | null } | null>(null)
   const guard = useMemo(() => ({ setDirty: (value: boolean) => void (dirty.current = value) }), [])
 
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty.current && currentLocation.pathname !== nextLocation.pathname)
@@ -58,17 +61,18 @@ export function CaseWorkspacePage() {
   }, [])
 
   const goTo = useCallback(
-    (next: SectionKey) => {
-      if (next === section) {
+    (next: SectionKey, check: string | null = null) => {
+      const target = next === 'checks' ? check : null
+      if (next === section && target === checkParam) {
         return
       }
       if (dirty.current) {
-        setPendingSection(next)
+        setPending({ section: next, check: target })
         return
       }
-      setSearch({ section: next })
+      setSearch(target ? { section: next, check: target } : { section: next })
     },
-    [section, setSearch],
+    [section, checkParam, setSearch],
   )
 
   const reload = useCallback(() => {
@@ -133,7 +137,14 @@ export function CaseWorkspacePage() {
         <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
           <aside className="flex flex-col gap-4">
             <Card>
-              <SectionNavigator progress={progress.data} current={section} onSelect={goTo} />
+              <SectionNavigator
+                progress={progress.data}
+                current={section}
+                onSelect={(key) => goTo(key)}
+                checks={checks.data ?? []}
+                currentCheckId={checkParam}
+                onSelectCheck={(checkId) => goTo('checks', checkId)}
+              />
               <AssignmentsPanel caseView={caseView} />
             </Card>
           </aside>
@@ -141,7 +152,7 @@ export function CaseWorkspacePage() {
             {section === 'report-info' && <ReportInfoSection {...props} />}
             {section === 'candidate' && <CandidateSection {...props} />}
             {section === 'verification-period' && <PeriodSection {...props} />}
-            {section === 'checks' && <ChecksSection caseId={caseView.id} />}
+            {section === 'checks' && <ChecksSection caseView={caseView} checkId={checkParam} onSelectCheck={(checkId) => goTo('checks', checkId)} />}
             {section === 'overview' && <OverviewSection {...props} />}
             {section === 'remarks' && <RemarksSection {...props} />}
             {section === 'settings' && <SettingsSection {...props} />}
@@ -149,13 +160,13 @@ export function CaseWorkspacePage() {
           </Card>
         </div>
 
-        {pendingSection && (
+        {pending && (
           <UnsavedDialog
-            onStay={() => setPendingSection(null)}
+            onStay={() => setPending(null)}
             onDiscard={() => {
               dirty.current = false
-              setSearch({ section: pendingSection })
-              setPendingSection(null)
+              setSearch(pending.check ? { section: pending.section, check: pending.check } : { section: pending.section })
+              setPending(null)
             }}
           />
         )}
