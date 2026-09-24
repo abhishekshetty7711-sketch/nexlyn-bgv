@@ -336,12 +336,17 @@ class AuthFlowIntegrationTest {
         assertThat(accessAsChallenge.getResponse().getStatus()).isEqualTo(401);
     }
 
+    /** The body of an error answer without its per-request correlation id (which differs by design). */
+    private static String withoutCorrelationId(MvcResult result) throws Exception {
+        return result.getResponse().getContentAsString().replaceAll("\"correlationId\":\"[^\"]*\"", "");
+    }
+
     @Test
     void wrongPasswordAndUnknownEmailLookIdentical() throws Exception {
         MvcResult wrong = login(EMAIL, "Wrong-Password-1!");
         MvcResult unknown = login("nobody@example.com", "Wrong-Password-1!");
         assertThat(wrong.getResponse().getStatus()).isEqualTo(401).isEqualTo(unknown.getResponse().getStatus());
-        assertThat(wrong.getResponse().getContentAsString()).isEqualTo(unknown.getResponse().getContentAsString());
+        assertThat(withoutCorrelationId(wrong)).isEqualTo(withoutCorrelationId(unknown));
         assertThat(errorCode(wrong)).isEqualTo("INVALID_CREDENTIALS");
     }
 

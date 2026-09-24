@@ -5,15 +5,26 @@ on:
     branches: [main]
     paths:
       - "backend/**"
+      - "infra/local/postgres/**"
+      - "infra/local/seaweedfs/**"
       - ".github/workflows/ci-backend.yml"
   pull_request:
     paths:
       - "backend/**"
+      - "infra/local/postgres/**"
+      - "infra/local/seaweedfs/**"
       - ".github/workflows/ci-backend.yml"
+
+permissions:
+  contents: read
 
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      # The report tests print real PDFs with the Chrome that comes with the runner (they are skipped without one).
+      CHROMIUM_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +36,16 @@ jobs:
           cache: maven
           cache-dependency-path: backend/**/pom.xml
 
+      # Docker is available on the runner: the tests start PostgreSQL, S3Mock and SeaweedFS with Testcontainers.
       - name: mvnw verify
         working-directory: backend
         run: ./mvnw --batch-mode verify
+
+      - name: Keep the sample report pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-samples
+          path: backend/modules/reports/target/report-samples/
+          if-no-files-found: ignore
+          retention-days: 7

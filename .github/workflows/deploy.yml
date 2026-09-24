@@ -1,0 +1,51 @@
+name: deploy
+
+# Builds the two images and pushes them to the container registry (CLAUDE.md section 3.3). It only ever runs when
+# a person starts it by hand ("Run workflow"): nothing is deployed by a push. It does NOT start anything on the
+# server: after it finishes, follow docs/runbooks/deploy-update.md (pull the new images, take a database
+# backup, restart). Before this can work the owner must:
+#   1. create the registry repositories (AWS ECR, region ap-south-1): nexlyn-bgv-backend and nexlyn-bgv-frontend
+#   2. create an AWS role that GitHub may assume (OpenID Connect, no stored keys) with permission to push to them
+#   3. add the repository secret AWS_DEPLOY_ROLE_ARN and the repository variable AWS_ACCOUNT_ID
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to publish (for example v1.0.0). Use a new one for every release."
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Backend image
+        run: |
+          docker build -f backend/bgv-app/Dockerfile -t "$REGISTRY/nexlyn-bgv-backend:${{ inputs.tag }}" backend
+          docker push "$REGISTRY/nexlyn-bgv-backend:${{ inputs.tag }}"
+
+      - name: Frontend image
+        run: |
+          docker build -t "$REGISTRY/nexlyn-bgv-frontend:${{ inputs.tag }}" frontend
+          docker push "$REGISTRY/nexlyn-bgv-frontend:${{ inputs.tag }}"
+
+      - name: What to do next
+        run: |
+          echo "Published ${{ inputs.tag }}. On the server set BACKEND_IMAGE / FRONTEND_IMAGE in .env to these images and follow docs/runbooks/deploy-update.md."

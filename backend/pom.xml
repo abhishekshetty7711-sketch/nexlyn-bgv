@@ -26,6 +26,8 @@
     <bouncycastle.version>1.78.1</bouncycastle.version>
     <bucket4j.version>8.14.0</bucket4j.version>
     <nimbus-jose-jwt.version>9.40</nimbus-jose-jwt.version>
+    <!-- Tests tagged @Tag("load") take minutes and are run by hand: mvnw -pl modules/reports -am test -Dtest.excluded.groups=none -Dgroups=load -->
+    <test.excluded.groups>load</test.excluded.groups>
   </properties>
 
   <modules>
@@ -110,6 +112,7 @@
           <configuration>
             <!-- Deterministic tests; also avoids the legacy zone name "Asia/Calcutta", which PostgreSQL 16 rejects -->
             <argLine>-Duser.timezone=UTC</argLine>
+            <excludedGroups>${test.excluded.groups}</excludedGroups>
           </configuration>
         </plugin>
       </plugins>

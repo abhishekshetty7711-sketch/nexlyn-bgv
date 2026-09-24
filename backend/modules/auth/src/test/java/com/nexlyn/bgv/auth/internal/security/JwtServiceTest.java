@@ -211,6 +211,15 @@ class JwtServiceTest {
         assertThatThrownBy(() -> cleaned.parseAccessToken(oldToken)).isInstanceOf(InvalidTokenException.class);
     }
 
+    @Test
+    void anEmptyPreviousKeySlotIsIgnored() throws Exception {
+        // the production compose file always passes one slot; it is empty except while a key is being replaced
+        AuthProperties props = props(pem("PRIVATE KEY", newPair().getPrivate().getEncoded()), null, "2026-02",
+                List.of(new AuthProperties.PreviousKey("", "")));
+        JwtService service = service(new JwtKeyProvider(props, new MockEnvironment()), props, NOW);
+        assertThat(service.parseAccessToken(service.issueAccessToken(ADMIN, "a@b.co", List.of(), List.of(), SESSION))).isNotNull();
+    }
+
     /** Reads the {@code kid} header of a token without verifying it. */
     private static final class SignedJWTHeader {
         static String kid(String token) {

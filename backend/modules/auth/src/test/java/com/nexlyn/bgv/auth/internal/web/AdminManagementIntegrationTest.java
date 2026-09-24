@@ -194,6 +194,11 @@ class AdminManagementIntegrationTest {
         assertThat(auditActionsSinceStart()).contains("ADMIN_INVITED", "INVITATION_ACCEPTED", "TWO_FACTOR_ENABLED", "LOGIN_SUCCESS");
     }
 
+    /** The body of an error answer without its per-request correlation id (which differs by design). */
+    private static String withoutCorrelationId(MvcResult result) throws Exception {
+        return result.getResponse().getContentAsString().replaceAll("\"correlationId\":\"[^\"]*\"", "");
+    }
+
     @Test
     void aLinkWorksOnceAndEveryProblemWithALinkLooksTheSame() throws Exception {
         String token = invite(superToken(), "one@example.com", roleId("ANALYST"));
@@ -205,13 +210,13 @@ class AdminManagementIntegrationTest {
 
         MvcResult unknown = accept("not-a-real-token", STRONG);
         assertThat(status(unknown)).isEqualTo(400);
-        assertThat(unknown.getResponse().getContentAsString()).isEqualTo(reuse.getResponse().getContentAsString());
+        assertThat(withoutCorrelationId(unknown)).isEqualTo(withoutCorrelationId(reuse));
 
         String expiring = invite(superToken(), "two@example.com", roleId("ANALYST"));
         jdbc.update("UPDATE auth.invitations SET expires_at = now() - interval '1 second' WHERE lower(email) = 'two@example.com'");
         MvcResult expired = accept(expiring, STRONG);
         assertThat(status(expired)).isEqualTo(400);
-        assertThat(expired.getResponse().getContentAsString()).isEqualTo(reuse.getResponse().getContentAsString());
+        assertThat(withoutCorrelationId(expired)).isEqualTo(withoutCorrelationId(reuse));
     }
 
     @Test

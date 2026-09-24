@@ -61,6 +61,9 @@ public class JwtKeyProvider {
             this.verificationKeys.put(signingKeyId, derived);
         }
         for (AuthProperties.PreviousKey previous : jwt.previousKeys()) {
+            if (isBlank(previous.keyId()) || isBlank(previous.publicKey())) {
+                continue; // an empty slot (the deployment file always passes one; it is filled only while rotating)
+            }
             verificationKeys.put(previous.keyId(), parsePublicKey(previous.publicKey()));
         }
     }

@@ -11,9 +11,13 @@ on:
       - "frontend/**"
       - ".github/workflows/ci-frontend.yml"
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -27,7 +31,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
+      - run: npm run lint
       - run: npm run build
       - run: npm test
-      - run: npm audit --audit-level=high
-        continue-on-error: true
+      # A high or critical vulnerability in what the app ships fails the build (CLAUDE.md section 11.5).
+      - run: npm audit --audit-level=high --omit=dev

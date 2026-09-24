@@ -3,7 +3,7 @@
 Read this file and `docs/DECISIONS.md` at the start of every session, then continue from
 "Next step". Update it (and commit) after every step.
 
-_Last updated: 2026-09-24_
+_Last updated: 2026-09-25_
 
 ## Phase status (CLAUDE.md section 15)
 
@@ -16,7 +16,7 @@ _Last updated: 2026-09-24_
 | 5. Documents | **Done** (5a-5c). Done-when met: files are stored in an S3-compatible bucket and never public (tests against S3Mock and SeaweedFS). 43 documents + 92 cases + 23 common + 106 auth + 5 app backend tests; 233 frontend tests. The Docker image has not been rebuilt with this code yet (needs Avast HTTPS scanning off, see open issues). |
 | 6. Reports | **Done** (6a-6d). Done-when met: a fixture case renders to a PDF whose layout matches the reference tool (printed both and compared page by page); the browser's page count equals the plan; cut-off pages are detected. 69 reports + 43 documents + 92 cases + 23 common + 106 auth + 5 app backend tests; 247 frontend tests. Finalize (protected final PDF) belongs to Phase 7. |
 | 7. Workflow | **Done** (7a-7d). Done-when met: maker-checker is enforced by tests (preparer, creator, submitter, later-added preparer, super admin). 14 workflow + 7 dashboard + 12 finalize tests among 81 reports, 43 documents, 113+ cases, 23 common, 106+ auth and 5 app backend tests; 269 frontend tests. |
-| 8. Hardening & deploy | Not started |
+| 8. Hardening & deploy | **Done as far as it can be done without the owner** (8a-8c, D-034): NCSC password list, correlation ids, JSON logs, proxy-aware prod config, nightly purge of retired documents, lazy routes, Dockerfiles, prod compose + nginx (TLS, rate limits), CI / security / dependabot / manual deploy workflows, backup script, runbooks, PDF load test (about 10 s per heavy report). NOT verified here: building the images, TLS, the AWS side and running the workflows (owner-only items below). |
 
 ## Phase 2 steps
 
@@ -31,12 +31,16 @@ _Last updated: 2026-09-24_
 
 ## Next step
 
-Start **Phase 8: Hardening & deploy** (CLAUDE.md section 15, with sections 3.3, 11.4, 14, 17): production Docker Compose and Nginx with TLS (`infra/prod`), the backend Dockerfile with Chromium and fonts for the report PDFs (Noto for Indian scripts) and a non-root user, env config and `.env.example` for prod (JWT keys, PII / TOTP keys, S3, RDS, bootstrap admin), CORS and CSP from Nginx, backups (database dump, S3 versioning) and runbooks, dependency scanning (OWASP Dependency-Check, `npm audit`, Dependabot) in CI, the load test of PDF generation, the audit-log viewer polish, **replace the starter common-password list (CLAUDE.md 17 item 7)**, a purge job for retired documents (D-030), lazy-route code splitting (bundle over 600 kB), correlation-id filter and trusted-proxy client IPs, GitHub Actions workflows (`ci-backend`, `ci-frontend`, `deploy`; anything that pushes or deploys is owner-only). Owner-only items (secrets, DNS and certificates, AWS accounts, spending) must be listed, not attempted.
+All eight phases of CLAUDE.md section 15 are built. What is left needs the owner (see below) or is in the "Later" row of section 15 (third-party verification vendors, roadmap polish, module extraction), which must not start until the owner asks. Suggested first use: bring the local stack up (`./scripts/local-up.sh -d`, needs Avast HTTPS scanning off), create the admin, and try a real case end to end; then review the open items of CLAUDE.md section 17.
 
 ## Open issues and things only the owner can do
 
 - **Avast HTTPS scanning** breaks Maven/npm inside Docker builds (certificate error). It must be turned off while images are built, then can be turned back on. Claude cannot change it. Check with `openssl s_client -connect repo.maven.apache.org:443` (issuer must not be Avast). Host builds work regardless (D-015).
 - **The running Docker stack is still on the Phase 2b image** (it also lacks the new SeaweedFS `storage` service, so file uploads cannot be tried in the browser until it is rebuilt). Rebuilding it (`./scripts/local-up.sh -d`) with the 2c code needs Avast HTTPS scanning off. Until then the full-app smoke test is the end-to-end check. The first rebuild also generates local JWT and 2FA keys into `infra/local/.env`.
 - **`docs/reference/` now holds the reference tool** (sanitised copy, D-032). Nothing needed from the owner.
-- **Before production:** replace the starter common-password list (CLAUDE.md section 17 item 7). The local file store is now SeaweedFS (D-031); review that MinIO deviation.
+- **Password list:** replaced by the NCSC top-100k list (D-034), so CLAUDE.md section 17 item 7 is done. The local file store is SeaweedFS (D-031); review that MinIO deviation.
+- **Going live (owner only, all listed in `infra/prod/README.md`):** a Linux server with Docker; a domain and a TLS certificate; AWS RDS (PostgreSQL 16) and an S3 bucket in ap-south-1; real secrets in `infra/prod/.env` (`JWT_PRIVATE_KEY`, `PII_ENCRYPTION_KEY`, `TOTP_ENCRYPTION_KEY`, `DB_PASSWORD`, bootstrap admin) and an **offline backup of `PII_ENCRYPTION_KEY`** (losing it makes stored Aadhaar / PAN / UAN unreadable); the real host name in `infra/prod/nginx/nexlyn.conf`; the daily backup cron job.
+- **GitHub (owner only):** pushing the repository, the secret `NVD_API_KEY`, the AWS role `AWS_DEPLOY_ROLE_ARN` and variable `AWS_ACCOUNT_ID` for the `deploy` workflow. The workflows are written but have never run.
+- **Images not built yet:** the backend and web Docker images (Chromium, fonts, non-root, health checks) need Avast HTTPS scanning off to build. Their compose and nginx configs are validated; the first real build may need small fixes.
+- **Open questions for the owner (CLAUDE.md section 17):** full or masked Aadhaar / PAN on the PDF (masked is built), the provisional check-type fields, POLICE, Report ID format, RDS.
 - **Local admin:** set `BOOTSTRAP_SUPERADMIN_EMAIL` and `BOOTSTRAP_SUPERADMIN_PASSWORD` in `infra/local/.env` to create the first admin (the owner picks the password).

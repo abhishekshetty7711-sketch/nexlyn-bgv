@@ -1,0 +1,24 @@
+# Weekly update proposals for every dependency (CLAUDE.md section 11.4). Each proposal is a pull request that
+# the CI runs against, so nothing is merged untested. Security fixes arrive as soon as they are published.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /backend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      spring:
+        patterns: ["org.springframework*", "org.springframework.boot*", "org.springframework.modulith*"]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: docker
+    directory: /backend/bgv-app
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

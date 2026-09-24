@@ -774,4 +774,4 @@ Prod (now): one machine — Nginx (TLS) + frontend + backend containers; Postgre
 4. Report ID format (`NX-YYYY-NNNN` assumed).
 5. Services page content — port as-is from reference HTML unless told otherwise.
 6. RDS vs self-hosted PostgreSQL on the single machine (RDS recommended).
-7. **BEFORE PRODUCTION: swap in a bigger common-password list.** `backend/modules/auth/src/main/resources/common-passwords.txt` is only a ~150-entry starter list. Replace it with a full breached-password list (for example a top 100k–1M list of common passwords, or an offline copy of the HIBP hashes) and re-run the auth tests. Password rules (decided 2026-09-24): minimum 12 characters (never lower), at least 3 of 4 character classes, not equal to the email, not in the list.
+7. ~~Bigger common-password list~~ **Done 2026-09-25 (D-034):** `common-passwords.txt` is now the NCSC top-100k list (about 97,700 entries). Password rules stay: minimum 12 characters (never lower), at least 3 of 4 character classes, not equal to the email, not in the list.

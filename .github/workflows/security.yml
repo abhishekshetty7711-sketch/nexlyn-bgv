@@ -1,0 +1,58 @@
+name: security
+
+# Looks for known vulnerabilities in what the backend ships (CLAUDE.md section 11.4): every week, and on
+# every change to the dependency lists. A finding of severity 7 or higher fails the run.
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  pull_request:
+    paths:
+      - "backend/**/pom.xml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  owasp-dependency-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/**/pom.xml
+      # NVD_API_KEY (a free key from nvd.nist.gov) makes the vulnerability database download fast and reliable.
+      # It is a repository secret set by the owner; without it the run is slow and may be rate limited.
+      - name: OWASP Dependency-Check
+        working-directory: backend
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          ./mvnw --batch-mode -DskipTests
+          org.owasp:dependency-check-maven:10.0.4:aggregate
+          -DfailBuildOnCVSS=7
+          -DsuppressionFiles=dependency-check-suppressions.xml
+          -DnvdApiKey="$NVD_API_KEY"
+          -Dformats=HTML,JSON
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: backend/target/dependency-check-report.*
+          retention-days: 14
+          if-no-files-found: ignore
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - working-directory: frontend
+        run: npm ci && npm audit --audit-level=high --omit=dev
