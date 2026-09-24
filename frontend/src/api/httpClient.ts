@@ -58,6 +58,10 @@ export interface RequestOptions {
   /** Sent as the JSON body. */
   json?: unknown
   headers?: Record<string, string>
+  /** Sent as a multipart body (file uploads). The browser sets the content type and boundary. */
+  form?: FormData
+  /** How to read a successful answer: JSON (default) or the raw bytes (files). */
+  as?: 'json' | 'blob'
   /** Public endpoints (login, ...) pass `false`: no bearer token, and no refresh-and-retry on 401. */
   auth?: boolean
 }
@@ -71,10 +75,10 @@ async function send(path: string, options: RequestOptions, token: string | null)
     headers.Authorization = `Bearer ${token}`
   }
   return fetch(`${API_BASE_URL}${path}`, {
-    method: options.method ?? (options.json !== undefined ? 'POST' : 'GET'),
+    method: options.method ?? (options.json !== undefined || options.form !== undefined ? 'POST' : 'GET'),
     credentials: 'include',
     headers,
-    body: options.json !== undefined ? JSON.stringify(options.json) : undefined,
+    body: options.form ?? (options.json !== undefined ? JSON.stringify(options.json) : undefined),
   })
 }
 
@@ -115,6 +119,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
   if (response.status === 204) {
     return undefined as T
+  }
+  if (options.as === 'blob') {
+    return (await response.blob()) as T
   }
   return (await response.json()) as T
 }

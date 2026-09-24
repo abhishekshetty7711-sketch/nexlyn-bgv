@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Alert } from '@/components/ui/alert'
+import { PhotoUploader } from '../../documents/PhotoUploader'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { type CandidateValues, candidateSchema } from '../schemas'
@@ -112,11 +112,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
           <Input id="cd-country" {...form.register('country')} />
         </Field>
       </fieldset>
-      <Alert variant="info">
-        {caseView.candidate.hasPhoto
-          ? 'A photo is on file for this candidate.'
-          : 'The candidate photo can be added once document upload is available (a later build phase).'}
-      </Alert>
+      <PhotoUploader caseView={caseView} />
     </SectionShell>
   )
 }

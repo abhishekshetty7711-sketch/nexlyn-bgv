@@ -50,7 +50,7 @@
 | Deployment later | Extract modules to separate instances as the business grows (see §4.4) |
 | Security | **Spring Security 6**, permission-based **RBAC**, mandatory **TOTP 2FA**, maker-checker workflow (see §11) |
 | PDF | Server-side: Thymeleaf HTML → **Playwright for Java** (headless Chromium) → PDF; encryption with **Apache PDFBox** (AES-256) |
-| Files | S3-compatible object storage — **MinIO** locally, **AWS S3 (ap-south-1)** in prod |
+| Files | S3-compatible object storage — **AWS S3 (ap-south-1)** in prod; locally an S3-compatible store (MinIO was intended, but its images were withdrawn; SeaweedFS is used instead, see D-031 in `docs/DECISIONS.md`) |
 | Data residency | India (AWS Mumbai, ap-south-1) |
 | Build | Maven multi-module (with wrapper) |
 | Check type field sets | Aadhaar, PAN, Court are from the HTML tool. **All other types are PROVISIONAL** — user will review later. Keep them config-driven so changes need no DB migration |
@@ -536,7 +536,8 @@ All under `/api`. JSON. Errors use `ApiError { code, message, fieldErrors[], cor
 | `POST /api/checks/{checkId}/documents` (multipart) | `DOCUMENT_UPLOAD` |
 | `PUT /api/documents/{docId}` (label, moveToNextPage, useLargerBox, crop) | `DOCUMENT_UPLOAD` |
 | `PATCH /api/checks/{checkId}/documents/order` | `DOCUMENT_UPLOAD` |
-| `GET /api/documents/{docId}/content` → 5-minute signed URL / stream | read on the case |
+| `GET /api/documents/{docId}/content` → streamed after permission + case checks (chosen over signed URLs, D-030); every read is audited | read on the case |
+| `GET /api/checks/{checkId}/documents` (list) · `DELETE /api/cases/{id}/candidate/photo` · `POST …/documents?kind=FREE_IMAGE` (picture for an image block) — additions, D-030 | read / `DOCUMENT_DELETE` / `DOCUMENT_UPLOAD` |
 | `DELETE /api/documents/{docId}` | `DOCUMENT_DELETE` |
 
 ### 9.4 Reports (module `reports`)

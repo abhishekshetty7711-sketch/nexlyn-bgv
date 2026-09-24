@@ -24,6 +24,7 @@ export interface CandidateView {
   pin: string | null
   country: string
   hasPhoto: boolean
+  photoDocumentId: string | null
 }
 
 export interface Overview {

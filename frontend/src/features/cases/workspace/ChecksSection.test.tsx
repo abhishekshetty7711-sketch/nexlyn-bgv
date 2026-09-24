@@ -24,6 +24,9 @@ function serve(checks: CheckView[], extra: Record<string, FakeHandler> = {}): Se
     'GET /api/cases/c-1/validation': () => ({ body: validationFixture() }),
     'GET /api/cases/c-1/checks': () => ({ body: setup.checks }),
     'GET /api/check-types': () => ({ body: allDefs }),
+    'GET /api/checks/ck-1/documents': () => ({ body: [] }),
+    'GET /api/checks/ck-2/documents': () => ({ body: [] }),
+    'GET /api/checks/ck-3/documents': () => ({ body: [] }),
     'GET /api/clients': () => ({ body: CLIENTS }),
     'GET /api/assignable-admins': () => ({ body: [] }),
     ...extra,
@@ -31,7 +34,7 @@ function serve(checks: CheckView[], extra: Record<string, FakeHandler> = {}): Se
   setup.calls = (method, pathPart) =>
     setup.fake.mock.calls
       .filter(([url, init]) => (init?.method ?? 'GET') === method && String(url).includes(pathPart))
-      .map(([url, init]) => ({ url: String(url), body: init?.body ? (JSON.parse(init.body as string) as Record<string, unknown>) : {} }))
+      .map(([url, init]) => ({ url: String(url), body: typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : {} }))
   return setup
 }
 
@@ -254,6 +257,48 @@ describe('Checks section', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add block' }))
     await waitFor(() => expect(setup.calls('POST', '/free-sections')).toHaveLength(1))
     expect(setup.calls('POST', '/free-sections')[0]!.body).toEqual({ kind: 'TEXT', text: 'Verified on call' })
+  })
+
+  it('adds a picture block: uploads the picture for the check, then attaches it as a block', async () => {
+    const setup = serve([checkFixture()], {
+      'POST /api/checks/ck-1/documents': () => ({ status: 201, body: { id: 'pic-1' } }),
+      'POST /api/cases/c-1/checks/ck-1/free-sections': () => ({
+        body: checkFixture({ version: 1, freeSections: [{ id: 'fs-2', kind: 'IMAGE', text: null, documentId: 'pic-1', sortOrder: 0 }] }),
+      }),
+      'GET /api/documents/pic-1/content': () => ({ body: { pretend: 'picture' } }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    const input = await screen.findByLabelText('Choose a picture for a block')
+    await userEvent.upload(input, new File([new Uint8Array([1, 2, 3])], 'chart.png', { type: 'image/png' }))
+
+    await waitFor(() => expect(setup.calls('POST', '/free-sections')).toHaveLength(1))
+    expect(setup.calls('POST', '/checks/ck-1/documents')[0]!.url).toBe('/api/checks/ck-1/documents?kind=FREE_IMAGE')
+    expect(setup.calls('POST', '/free-sections')[0]!.body).toEqual({ kind: 'IMAGE', documentId: 'pic-1' })
+  })
+
+  it('shows a picture block with its picture, and can delete it', async () => {
+    const withPicture = checkFixture({ freeSections: [{ id: 'fs-2', kind: 'IMAGE', text: null, documentId: 'pic-1', sortOrder: 0 }] })
+    const setup = serve([withPicture], {
+      'GET /api/documents/pic-1/content': () => ({ body: { pretend: 'picture' } }),
+      'DELETE /api/cases/c-1/checks/ck-1/free-sections/fs-2': () => ({ body: checkFixture({ version: 1 }) }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    expect(await screen.findByRole('img', { name: 'Picture block 1' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Delete picture block 1' }))
+    await waitFor(() => expect(setup.calls('DELETE', '/free-sections/fs-2')).toHaveLength(1))
+  })
+
+  it('opens the check that a document warning is about', async () => {
+    const setup = serve([checkFixture()], {
+      'GET /api/cases/c-1/validation': () => ({
+        body: { errors: [], warnings: [{ section: 'checks', field: 'check:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee:documents', message: 'Identity: no supporting document is attached.' }] },
+      }),
+    })
+    void setup
+    const { router } = open('/cases/c-1?section=generate')
+    await userEvent.click(await screen.findByRole('button', { name: 'Go to section' }))
+    expect(await screen.findByRole('heading', { name: '4. Checks' })).toBeInTheDocument()
+    expect(router.state.location.search).toContain('check=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
   })
 
   // ---- add / reorder / delete -------------------------------------------------------------------------

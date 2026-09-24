@@ -8,10 +8,16 @@ import { isSectionKey } from '../types'
 
 interface GenerateSectionProps {
   caseId: string
-  onGoToSection: (section: SectionKey) => void
+  onGoToSection: (section: SectionKey, checkId?: string | null) => void
 }
 
-function IssueList({ issues, tone, onGoTo }: { issues: ValidationIssue[]; tone: 'error' | 'warning'; onGoTo: (s: SectionKey) => void }) {
+/** Issues about one check have a field like "check:<id>:status": the link then opens that check. */
+function checkIdOf(issue: ValidationIssue): string | null {
+  const match = /^check:([0-9a-f-]{36}):/.exec(issue.field)
+  return match ? (match[1] ?? null) : null
+}
+
+function IssueList({ issues, tone, onGoTo }: { issues: ValidationIssue[]; tone: 'error' | 'warning'; onGoTo: (s: SectionKey, checkId?: string | null) => void }) {
   return (
     <ul className="flex flex-col gap-2">
       {issues.map((issue) => (
@@ -20,7 +26,7 @@ function IssueList({ issues, tone, onGoTo }: { issues: ValidationIssue[]; tone: 
             <div className="flex items-center justify-between gap-3">
               <span>{issue.message}</span>
               {isSectionKey(issue.section) && (
-                <Button type="button" size="sm" variant="outline" onClick={() => onGoTo(issue.section as SectionKey)}>
+                <Button type="button" size="sm" variant="outline" onClick={() => onGoTo(issue.section as SectionKey, checkIdOf(issue))}>
                   Go to section
                 </Button>
               )}

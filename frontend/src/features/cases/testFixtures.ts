@@ -27,6 +27,7 @@ export function caseFixture(overrides: Partial<CaseView> = {}): CaseView {
       pin: null,
       country: 'India',
       hasPhoto: false,
+      photoDocumentId: null,
     },
     period: { show: true, start: null, end: null },
     overview: {

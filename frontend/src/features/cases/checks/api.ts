@@ -95,6 +95,24 @@ export function useAddFreeSection(caseId: string, checkId: string) {
   })
 }
 
+/** An image block: the picture is uploaded first (as a picture for this check), then attached as a block. */
+export function useAddFreeImage(caseId: string, checkId: string) {
+  const refresh = useRefreshAfterChange(caseId)
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      const picture = await apiFetch<{ id: string }>(`/checks/${checkId}/documents?kind=FREE_IMAGE`, { form })
+      return apiFetch<CheckView>(`/cases/${caseId}/checks/${checkId}/free-sections`, { json: { kind: 'IMAGE', documentId: picture.id } })
+    },
+    onSuccess: () => {
+      refresh()
+      void queryClient.invalidateQueries({ queryKey: ['documents', checkId] })
+    },
+  })
+}
+
 export function useUpdateFreeSection(caseId: string, checkId: string) {
   const refresh = useRefreshAfterChange(caseId)
   return useMutation({

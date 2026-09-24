@@ -18,6 +18,7 @@ import { useReportDirty } from '../workspace/dirtyGuard'
 import { useSaveCheck } from './api'
 import { buildCheckSchema, type CheckFormValues, toFormValues, toSaveInput } from './checkForm'
 import { FieldInput } from './FieldInput'
+import { CheckDocuments } from '../../documents/CheckDocuments'
 import { FreeSections } from './FreeSections'
 import { type CheckTypeDef, type CheckView, type DateSync, STATUS_LABELS, STATUS_MARKS, STATUS_ORDER } from './types'
 
@@ -213,7 +214,13 @@ export function CheckEditor({ caseView, check, def, canEdit, dateFormat }: Check
         </fieldset>
       </form>
 
-      {/* E. Free sections save on their own, so they sit outside the form. */}
+      {/* D. Documents and E. free blocks save on their own, so they sit outside the form. */}
+      <CheckDocuments
+        caseId={caseView.id}
+        checkId={check.id}
+        canUpload={caseView.editable && hasPermission('DOCUMENT_UPLOAD')}
+        canDelete={caseView.editable && hasPermission('DOCUMENT_DELETE')}
+      />
       <FreeSections caseId={caseView.id} check={check} canEdit={canEdit} />
     </div>
   )
