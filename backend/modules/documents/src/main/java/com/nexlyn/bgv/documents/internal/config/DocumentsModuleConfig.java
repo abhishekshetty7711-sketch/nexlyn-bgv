@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 
@@ -16,6 +17,7 @@ import javax.sql.DataSource;
  * and reads the file-store and upload settings.
  */
 @Configuration
+@EnableScheduling // the nightly purge of retired documents
 @EnableConfigurationProperties({StorageProperties.class, UploadProperties.class})
 public class DocumentsModuleConfig {
 

@@ -53,6 +53,20 @@ class PasswordPolicyServiceTest {
     }
 
     @Test
+    void usesTheFullBundledListNotJustAStarter() throws Exception {
+        java.util.List<String> entries;
+        try (var in = PasswordPolicyServiceTest.class.getResourceAsStream("/common-passwords.txt");
+             var reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8))) {
+            entries = reader.lines().filter(line -> !line.isBlank() && !line.startsWith("#")).toList();
+        }
+        assertThat(entries.size()).as("well over the old 150-entry starter").isGreaterThan(90_000);
+        // entries from deep in the list (not among the obvious ones) are recognised, whatever their length
+        for (int index : new int[]{20_000, 45_000, 70_000, 90_000}) {
+            assertThat(policy.check(entries.get(index), "a@b.co")).as(entries.get(index)).contains(Problem.COMMON_PASSWORD);
+        }
+    }
+
+    @Test
     void reportsEveryBrokenRuleAtOnce() {
         assertThat(policy.check("password", "a@b.co")).containsExactlyInAnyOrder(
                 Problem.TOO_SHORT, Problem.NOT_ENOUGH_CHARACTER_TYPES, Problem.COMMON_PASSWORD);

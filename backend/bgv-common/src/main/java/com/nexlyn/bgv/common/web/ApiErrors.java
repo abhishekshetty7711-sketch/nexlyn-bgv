@@ -36,6 +36,6 @@ public final class ApiErrors {
         if (retryAfter != null) {
             builder.header(HttpHeaders.RETRY_AFTER, Long.toString(Math.max(1, (retryAfter.toMillis() + 999) / 1000)));
         }
-        return builder.body(new ApiError(code.name(), message, fields, null));
+        return builder.body(new ApiError(code.name(), message, fields, com.nexlyn.bgv.common.logging.CorrelationIdFilter.current()));
     }
 }

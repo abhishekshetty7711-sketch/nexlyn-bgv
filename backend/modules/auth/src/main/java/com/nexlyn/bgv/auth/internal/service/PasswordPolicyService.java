@@ -16,11 +16,10 @@ import java.util.Set;
 
 /**
  * Password rules from CLAUDE.md {@literal §11.4}: at least 12 characters, at least three of the
- * four character classes, not the email address, and not a well-known password. The breached
- * list is a small bundled file checked offline (no password ever leaves the server).
- *
- * <p><b>Before production:</b> replace {@code common-passwords.txt} with a full breached-password
- * list (CLAUDE.md {@literal §17} item 7). The bundled one is only a starter.
+ * four character classes, not the email address, and not a well-known password. The list of
+ * well-known passwords is the bundled NCSC top-100,000 file ({@code common-passwords.txt}), checked
+ * offline (no password ever leaves the server). It can be swapped for a bigger list at any time; the
+ * whole list is held in memory (a few megabytes).
  */
 @Service
 public class PasswordPolicyService {

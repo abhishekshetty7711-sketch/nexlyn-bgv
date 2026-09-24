@@ -1,3 +1,19 @@
+server:
+  # The reverse proxy (nginx) terminates TLS and sets X-Forwarded-For / X-Forwarded-Proto. Tomcat reads them
+  # only from private-network addresses (its default "internal proxies"), so a caller on the internet cannot
+  # fake its address; rate limits, lockouts and the audit log then see the real client IP.
+  forward-headers-strategy: native
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+    include-binding-errors: never
+  tomcat:
+    max-swallow-size: 2MB
+    remoteip:
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
+
 spring:
   datasource:
     url: ${DB_URL}

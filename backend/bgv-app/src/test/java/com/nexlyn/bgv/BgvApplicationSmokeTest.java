@@ -64,6 +64,26 @@ class BgvApplicationSmokeTest {
     }
 
     @Test
+    void everyResponseCarriesACorrelationIdThatErrorBodiesRepeat() throws Exception {
+        MvcResult unauthenticated = mvc.perform(get("/api/me")).andReturn();
+        String header = unauthenticated.getResponse().getHeader("X-Correlation-Id");
+        assertThat(header).isNotBlank();
+        assertThat(json.readTree(unauthenticated.getResponse().getContentAsString()).get("correlationId").asText()).isEqualTo(header);
+
+        MvcResult echoed = mvc.perform(get("/api/me").header("X-Correlation-Id", "trace-2026-09-25-abcdef")).andReturn();
+        assertThat(echoed.getResponse().getHeader("X-Correlation-Id")).isEqualTo("trace-2026-09-25-abcdef");
+        MvcResult replaced = mvc.perform(get("/api/me").header("X-Correlation-Id", "bad id!")).andReturn();
+        assertThat(replaced.getResponse().getHeader("X-Correlation-Id")).isNotEqualTo("bad id!").matches("[0-9a-f-]{36}");
+        assertThat(mvc.perform(get("/actuator/health")).andReturn().getResponse().getHeader("X-Correlation-Id")).isNotBlank();
+    }
+
+    @Test
+    void theProductionJsonLogFormatIsOnTheClasspath() throws Exception {
+        assertThat(Class.forName("net.logstash.logback.encoder.LogstashEncoder")).isNotNull();
+        assertThat(getClass().getResource("/logback-spring.xml")).isNotNull();
+    }
+
+    @Test
     void theApiIsClosedByDefaultAndOnlyHealthIsPublic() throws Exception {
         MvcResult me = mvc.perform(get("/api/me")).andReturn();
         assertThat(me.getResponse().getStatus()).isEqualTo(401);

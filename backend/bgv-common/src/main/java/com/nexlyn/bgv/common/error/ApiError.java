@@ -12,6 +12,6 @@ public record ApiError(String code, String message, List<FieldError> fieldErrors
     }
 
     public static ApiError of(ErrorCode code, String message) {
-        return new ApiError(code.name(), message, List.of(), null);
+        return new ApiError(code.name(), message, List.of(), com.nexlyn.bgv.common.logging.CorrelationIdFilter.current());
     }
 }
