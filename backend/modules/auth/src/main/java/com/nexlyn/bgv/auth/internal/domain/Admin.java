@@ -169,6 +169,20 @@ public class Admin {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    /** Sets a new password hash (already hashed) and remembers when. */
+    public void changePassword(String newHash, Instant now) {
+        this.passwordHash = newHash;
+        this.passwordChangedAt = now;
+    }
+
+    public Instant getPasswordChangedAt() {
+        return passwordChangedAt;
+    }
+
     public Set<Role> getRoles() {
         return roles;
     }

@@ -26,12 +26,12 @@ _Last updated: 2026-09-24_
 | 2b. Passwords, lockout, rate limiting, bootstrap admin | Done (`bae6348`, `faffc6c`) |
 | 2c. 2FA and tokens (TOTP, backup codes, JWT, refresh rotation, CSRF, `/api/auth/*`) | **Done.** 71 auth tests + 6 common tests + full-app smoke test pass. |
 | 2d. Authorization (`SecurityFilterChain`, `@PreAuthorize`, `CaseAccessPolicy`, headers, CORS, `GET /api/me`) | **Done.** 86 auth tests + 5 app tests pass. Covers unauthenticated, wrong permission, expired/tampered/revoked tokens, per-case rule, CORS, headers. |
-| 2e. Admin management and audit (invites, admin/role CRUD, session revocation, audit persistence) | Not started |
+| 2e. Admin management and audit (invites, admin/role CRUD, session revocation, audit persistence) | **Done.** 106 auth tests + 6 common + 5 app tests pass. |
 | 2f. Frontend (login/2FA, AuthProvider, ProtectedRoute, Can, idle logout, admin/role screens) | Not started |
 
 ## Next step
 
-Start 2e: invites (24 h, single use, accept flow with password + 2FA setup), admin CRUD and disable, role CRUD with permission assignment, session revocation, and the audit listener that persists `AuditEvent`s to `auth.audit_log` plus the audit read endpoint. Then 2f (frontend). Phase 3 must implement `CaseAssignmentLookup` (see D-019).
+Start 2f (frontend): login and 2FA screens (including first-time setup with QR code and backup codes), invitation-accept page, `AuthProvider` with the access token in memory and silent refresh, `ProtectedRoute`, `Can`, idle logout with cross-tab sync, change-password, and the admin / role / audit-log screens. It uses the API documented in `docs/DECISIONS.md` D-014, D-019, D-020. Phase 3 must implement `CaseAssignmentLookup` (see D-019).
 
 ## Open issues and things only the owner can do
 

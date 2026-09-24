@@ -6,15 +6,9 @@ import com.nexlyn.bgv.auth.internal.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,7 +50,6 @@ public class SessionService {
     private final RefreshTokenRepository tokens;
     private final AuthProperties.Session settings;
     private final Clock clock;
-    private final SecureRandom random = new SecureRandom();
 
     public SessionService(RefreshTokenRepository tokens, AuthProperties properties, Clock clock) {
         this.tokens = tokens;
@@ -124,18 +117,14 @@ public class SessionService {
 
     /** A random value for the CSRF double-submit cookie. */
     public String newCsrfToken() {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        return SecureTokens.newToken();
     }
 
     private record Issued(IssuedToken token, UUID entityId) {
     }
 
     private Issued issue(UUID adminId, UUID familyId, Instant familyStartedAt, Instant now, ClientInfo client) {
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        String raw = SecureTokens.newToken();
 
         Instant idleLimit = now.plus(settings.idleTimeout());
         Instant absoluteLimit = familyStartedAt.plus(settings.absoluteTimeout());
@@ -146,14 +135,8 @@ public class SessionService {
         return new Issued(new IssuedToken(raw, familyId, expiresAt), saved.getId());
     }
 
-    /** SHA-256 is enough here: the token is 256 bits of randomness, so there is nothing to brute-force. */
     static String hash(String rawToken) {
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is unavailable", e);
-        }
+        return SecureTokens.hash(rawToken);
     }
 
     private static String truncate(String value) {

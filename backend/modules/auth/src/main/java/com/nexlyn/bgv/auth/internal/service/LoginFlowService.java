@@ -88,6 +88,12 @@ public class LoginFlowService {
         };
     }
 
+    /** Challenge that lets a brand-new admin (just accepted an invitation) continue with 2FA setup. */
+    public Challenge setupChallengeFor(java.util.UUID adminId) {
+        return new Challenge(STATUS_2FA_SETUP_REQUIRED, jwt.issueChallenge(adminId, ChallengePurpose.SETUP),
+                jwt.challengeTtl().toSeconds());
+    }
+
     // ---- step 2a: first-time 2FA enrolment ---------------------------------------------
 
     @Transactional

@@ -5,6 +5,8 @@ import com.nexlyn.bgv.auth.internal.service.FlowResult;
 import com.nexlyn.bgv.auth.internal.service.LoginFlowService;
 import com.nexlyn.bgv.auth.internal.service.TwoFactorService;
 import com.nexlyn.bgv.auth.internal.web.AuthDtos.ChallengeResponse;
+import com.nexlyn.bgv.auth.internal.service.InvitationService;
+import com.nexlyn.bgv.auth.internal.web.AuthDtos.AcceptInvitationRequest;
 import com.nexlyn.bgv.auth.internal.web.AuthDtos.CodeRequest;
 import com.nexlyn.bgv.auth.internal.web.AuthDtos.LoginRequest;
 import com.nexlyn.bgv.auth.internal.web.AuthDtos.SetupRequest;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Clock;
-import java.time.Duration;
+import java.util.List;
 
 /** {@code /api/auth/**}: thin HTTP layer over {@link LoginFlowService}. Never logs passwords, codes or tokens. */
 @RestController
@@ -32,11 +34,13 @@ import java.time.Duration;
 public class AuthController {
 
     private final LoginFlowService flow;
+    private final InvitationService invitations;
     private final AuthCookies cookies;
     private final Clock clock;
 
-    public AuthController(LoginFlowService flow, AuthCookies cookies, Clock clock) {
+    public AuthController(LoginFlowService flow, InvitationService invitations, AuthCookies cookies, Clock clock) {
         this.flow = flow;
+        this.invitations = invitations;
         this.cookies = cookies;
         this.clock = clock;
     }
@@ -49,6 +53,18 @@ public class AuthController {
                     ok.value().status(), ok.value().challengeToken(), ok.value().expiresInSeconds()));
             case FlowResult.Failure<LoginFlowService.Challenge> failure -> error(failure);
         };
+    }
+
+    /**
+     * Onboarding: the one-time invitation link token is the credential. The invitee chooses a name and
+     * password, then continues exactly like a first login (2FA setup and confirm).
+     */
+    @PostMapping("/invitations/accept")
+    public ResponseEntity<?> acceptInvitation(@Valid @RequestBody AcceptInvitationRequest body) {
+        java.util.UUID adminId = invitations.accept(body.inviteToken(), body.fullName(), body.password());
+        LoginFlowService.Challenge challenge = flow.setupChallengeFor(adminId);
+        return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").body(new ChallengeResponse(
+                challenge.status(), challenge.challengeToken(), challenge.expiresInSeconds()));
     }
 
     /** First login only: creates the authenticator secret and returns it (once) with the QR link. */
@@ -117,19 +133,7 @@ public class AuthController {
     }
 
     private static ResponseEntity<ApiError> error(FlowResult.Failure<?> failure) {
-        HttpStatus status = switch (failure.code()) {
-            case UNAUTHENTICATED, INVALID_CREDENTIALS, INVALID_CHALLENGE, INVALID_CODE, INVALID_REFRESH_TOKEN -> HttpStatus.UNAUTHORIZED;
-            case FORBIDDEN, CSRF_FAILED -> HttpStatus.FORBIDDEN;
-            case ACCOUNT_LOCKED -> HttpStatus.LOCKED;
-            case RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
-            case VALIDATION_FAILED -> HttpStatus.BAD_REQUEST;
-        };
-        ResponseEntity.BodyBuilder builder = ResponseEntity.status(status).header(HttpHeaders.CACHE_CONTROL, "no-store");
-        Duration wait = failure.retryAfter();
-        if (wait != null) {
-            builder.header(HttpHeaders.RETRY_AFTER, Long.toString(Math.max(1, (wait.toMillis() + 999) / 1000)));
-        }
-        return builder.body(ApiError.of(failure.code(), message(failure.code())));
+        return ApiErrors.response(failure.code(), message(failure.code()), List.of(), failure.retryAfter());
     }
 
     /** Generic on purpose: the same text for a wrong password, unknown email and disabled account. */
@@ -144,7 +148,7 @@ public class AuthController {
             case INVALID_REFRESH_TOKEN -> "Your session has ended. Please sign in again.";
             case CSRF_FAILED -> "Missing or invalid CSRF token.";
             case RATE_LIMITED -> "Too many requests. Please try again later.";
-            case VALIDATION_FAILED -> "The request is not valid.";
+            case VALIDATION_FAILED, WEAK_PASSWORD, NOT_FOUND, CONFLICT, INVALID_INVITATION -> "The request could not be completed.";
         };
     }
 

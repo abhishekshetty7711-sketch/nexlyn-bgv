@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "geolocation=(), camera=(), microphone=(), payment=()")))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS pre-flight; the CORS filter answers it
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/auth/2fa/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/api/auth/2fa/**",
+                                "/api/auth/invitations/accept").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers("/actuator/**").hasAuthority("SETTINGS_MANAGE")
                         .requestMatchers("/api/**").authenticated()

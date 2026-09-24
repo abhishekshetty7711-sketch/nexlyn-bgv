@@ -3,10 +3,16 @@ package com.nexlyn.bgv.auth.internal.web;
 import com.nexlyn.bgv.auth.AdminPrincipal;
 import com.nexlyn.bgv.auth.internal.domain.Admin;
 import com.nexlyn.bgv.auth.internal.repository.AdminRepository;
+import com.nexlyn.bgv.auth.internal.service.AccountService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
@@ -21,10 +27,16 @@ public class MeController {
                       boolean mfaEnabled, Instant lastLoginAt) {
     }
 
-    private final AdminRepository admins;
+    record ChangePasswordRequest(@NotBlank @Size(max = 1024) String currentPassword,
+                                 @NotBlank @Size(max = 1024) String newPassword) {
+    }
 
-    public MeController(AdminRepository admins) {
+    private final AdminRepository admins;
+    private final AccountService account;
+
+    public MeController(AdminRepository admins, AccountService account) {
         this.admins = admins;
+        this.account = account;
     }
 
     @GetMapping("/api/me")
@@ -40,5 +52,12 @@ public class MeController {
                         principal.roles().stream().sorted().toList(),
                         principal.permissions().stream().sorted().toList(),
                         admin.isMfaEnabled(), admin.getLastLoginAt()));
+    }
+
+    /** Re-checks the current password, then ends every session (including this one): sign in again. */
+    @PutMapping("/api/me/password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest body) {
+        account.changePassword(body.currentPassword(), body.newPassword());
+        return ResponseEntity.noContent().build();
     }
 }

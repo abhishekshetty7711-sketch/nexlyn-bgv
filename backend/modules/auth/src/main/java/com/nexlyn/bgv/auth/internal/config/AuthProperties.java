@@ -16,11 +16,18 @@ public record AuthProperties(
         @DefaultValue Jwt jwt,
         @DefaultValue Session session,
         @DefaultValue Cookie cookie,
-        @DefaultValue Totp totp) {
+        @DefaultValue Totp totp,
+        @DefaultValue Invitation invitation) {
 
     /** Convenience for code and tests that only care about the first three groups. */
     public AuthProperties(Lockout lockout, RateLimit rateLimit, Bootstrap bootstrap) {
-        this(lockout, rateLimit, bootstrap, null, null, null, null);
+        this(lockout, rateLimit, bootstrap, null, null, null, null, null);
+    }
+
+    /** Convenience for tests that set the token and session groups but not invitations. */
+    public AuthProperties(Lockout lockout, RateLimit rateLimit, Bootstrap bootstrap, Jwt jwt, Session session,
+                          Cookie cookie, Totp totp) {
+        this(lockout, rateLimit, bootstrap, jwt, session, cookie, totp, null);
     }
 
     @ConstructorBinding
@@ -39,6 +46,9 @@ public record AuthProperties(
         }
         if (totp == null) {
             totp = new Totp(null, "Nexlyn BGV");
+        }
+        if (invitation == null) {
+            invitation = new Invitation(Duration.ofHours(24));
         }
     }
 
@@ -87,6 +97,10 @@ public record AuthProperties(
 
     /** {@code secure=false} only for plain-http local development. */
     public record Cookie(@DefaultValue("true") boolean secure) {
+    }
+
+    /** Invitation links expire after this long (CLAUDE.md §11.4: 24 h) and work once. */
+    public record Invitation(@DefaultValue("24h") Duration ttl) {
     }
 
     /** {@code encryptionKey}: Base64 of 32 bytes. Blank outside prod = temporary key. */
