@@ -81,12 +81,8 @@ export function ReportPanel({ caseId, reportId, hasErrors, warningCount }: Repor
             {making ? 'Making the report...' : 'Generate draft PDF'}
           </Button>
         )}
-        <Button type="button" disabled>
-          Submit for review
-        </Button>
       </div>
       {hasErrors && canGenerate && <p className="text-xs text-slate-500">Fix the errors above to generate the PDF. The preview works meanwhile.</p>}
-      <p className="text-xs text-slate-500">Submitting for review, approving and the final protected PDF arrive with the workflow phase.</p>
 
       {problem && <Alert variant="error">{problem}</Alert>}
       {making && (

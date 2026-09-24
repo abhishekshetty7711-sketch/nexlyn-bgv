@@ -528,6 +528,7 @@ All under `/api`. JSON. Errors use `ApiError { code, message, fieldErrors[], cor
 | `POST /api/cases/{id}/submit-review` | DRAFT → IN_REVIEW | `REPORT_SUBMIT_FOR_REVIEW` |
 | `POST /api/cases/{id}/approve` | IN_REVIEW → APPROVED | `REPORT_APPROVE` + separation of duties |
 | `POST /api/cases/{id}/request-changes` `{comment}` | IN_REVIEW → CHANGES_REQUESTED | `REPORT_APPROVE` |
+| `POST /api/cases/{id}/reopen` `{reason}` · `GET /api/cases/{id}/history` · `GET /api/dashboard` — additions, D-033 | FINALIZED → DRAFT (`REPORT_FINALIZE`) / read / read |
 
 ### 9.3 Documents (module `documents`)
 | Method & path | Permission |

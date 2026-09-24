@@ -3,13 +3,13 @@ import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { ReportPanel } from '../../reports/ReportPanel'
+import { WorkflowPanel } from './WorkflowPanel'
 import { useValidation } from '../api'
-import type { SectionKey, ValidationIssue } from '../types'
+import type { CaseView, SectionKey, ValidationIssue } from '../types'
 import { isSectionKey } from '../types'
 
 interface GenerateSectionProps {
-  caseId: string
-  reportId: string
+  caseView: CaseView
   onGoToSection: (section: SectionKey, checkId?: string | null) => void
 }
 
@@ -41,7 +41,8 @@ function IssueList({ issues, tone, onGoTo }: { issues: ValidationIssue[]; tone: 
 }
 
 /** Section 8: what still blocks the report (errors) or deserves a second look (warnings). */
-export function GenerateSection({ caseId, reportId, onGoToSection }: GenerateSectionProps) {
+export function GenerateSection({ caseView, onGoToSection }: GenerateSectionProps) {
+  const caseId = caseView.id
   const validation = useValidation(caseId)
   const result = validation.data
 
@@ -65,7 +66,8 @@ export function GenerateSection({ caseId, reportId, onGoToSection }: GenerateSec
           </section>
         </>
       )}
-      <ReportPanel caseId={caseId} reportId={reportId} hasErrors={!result || result.errors.length > 0} warningCount={result?.warnings.length ?? 0} />
+      <WorkflowPanel caseView={caseView} hasErrors={!result || result.errors.length > 0} warningCount={result?.warnings.length ?? 0} />
+      <ReportPanel caseId={caseId} reportId={caseView.reportId} hasErrors={!result || result.errors.length > 0} warningCount={result?.warnings.length ?? 0} />
     </div>
   )
 }

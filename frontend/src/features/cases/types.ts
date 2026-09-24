@@ -52,6 +52,37 @@ export interface AssignmentView {
   assignedAt: string
 }
 
+/** What the signed-in admin may do with the case right now: the same rules the server enforces on each call. */
+export interface WorkflowActions {
+  canSubmit: boolean
+  canApprove: boolean
+  canRequestChanges: boolean
+  canFinalize: boolean
+  canReopen: boolean
+}
+
+export interface WorkflowInfo {
+  submittedAt: string | null
+  submittedByName: string | null
+  reviewedAt: string | null
+  reviewedByName: string | null
+  approvedAt: string | null
+  finalizedAt: string | null
+  finalizedByName: string | null
+  actions: WorkflowActions
+}
+
+export interface HistoryEntry {
+  action: 'SUBMIT' | 'APPROVE' | 'REQUEST_CHANGES' | 'FINALIZE' | 'REOPEN'
+  from: Lifecycle
+  to: Lifecycle
+  actorId: string
+  actorName: string
+  comment: string | null
+  reportVersion: number | null
+  at: string
+}
+
 /** The whole workspace of one case. `version` must be sent back with every save. */
 export interface CaseView {
   id: string
@@ -73,6 +104,7 @@ export interface CaseView {
   savedSections: Record<string, string>
   createdAt: string
   updatedAt: string
+  workflow: WorkflowInfo
 }
 
 export interface CaseRow {

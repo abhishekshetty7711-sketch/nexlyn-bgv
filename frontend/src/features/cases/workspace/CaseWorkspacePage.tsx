@@ -156,7 +156,7 @@ export function CaseWorkspacePage() {
             {section === 'overview' && <OverviewSection {...props} />}
             {section === 'remarks' && <RemarksSection {...props} />}
             {section === 'settings' && <SettingsSection {...props} />}
-            {section === 'generate' && <GenerateSection caseId={caseView.id} reportId={caseView.reportId} onGoToSection={goTo} />}
+            {section === 'generate' && <GenerateSection caseView={caseView} onGoToSection={goTo} />}
           </Card>
         </div>
 

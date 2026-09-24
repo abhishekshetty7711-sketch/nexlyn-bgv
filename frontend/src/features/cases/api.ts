@@ -7,6 +7,7 @@ import type {
   CaseRow,
   CaseView,
   ClientView,
+  HistoryEntry,
   Lifecycle,
   Progress,
   ValidationResult,
@@ -111,6 +112,29 @@ export function useSaveSection(caseId: string, section: SaveSection) {
       void queryClient.invalidateQueries({ queryKey: ['cases'] })
     },
   })
+}
+
+export type WorkflowStep = 'submit-review' | 'approve' | 'request-changes' | 'reopen'
+
+/** One review step (submit, approve, send back, reopen). The answer is the whole case, so every screen updates at once. */
+export function useWorkflowStep(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ step, body }: { step: WorkflowStep; body?: Record<string, unknown> }) =>
+      apiFetch<CaseView>(`/cases/${caseId}/${step}`, { json: body ?? {} }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(caseKey(caseId), updated)
+      void queryClient.invalidateQueries({ queryKey: ['case-progress', caseId] })
+      void queryClient.invalidateQueries({ queryKey: ['case-validation', caseId] })
+      void queryClient.invalidateQueries({ queryKey: ['case-history', caseId] })
+      void queryClient.invalidateQueries({ queryKey: ['cases'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
+export function useHistory(caseId: string) {
+  return useQuery({ queryKey: ['case-history', caseId], queryFn: () => apiFetch<HistoryEntry[]>(`/cases/${caseId}/history`) })
 }
 
 export function useAssign(caseId: string) {

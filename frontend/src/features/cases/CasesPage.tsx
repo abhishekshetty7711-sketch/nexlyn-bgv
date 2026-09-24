@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -24,8 +24,12 @@ const TONES: Record<Lifecycle, 'neutral' | 'green' | 'amber'> = {
 
 /** The case list: search, filter by status or client, and open a case. Analysts only ever see their own cases. */
 export function CasesPage() {
-  const [draft, setDraft] = useState<CaseFilters>(EMPTY_CASE_FILTERS)
-  const [applied, setApplied] = useState<CaseFilters>(EMPTY_CASE_FILTERS)
+  // A link such as /cases?status=IN_REVIEW (from the dashboard) opens the list already filtered.
+  const [search] = useSearchParams()
+  const linked = search.get('status')
+  const startFilters: CaseFilters = { ...EMPTY_CASE_FILTERS, status: linked && linked in LIFECYCLE_LABELS ? (linked as Lifecycle) : '' }
+  const [draft, setDraft] = useState<CaseFilters>(startFilters)
+  const [applied, setApplied] = useState<CaseFilters>(startFilters)
   const [page, setPage] = useState(0)
   const [creating, setCreating] = useState(false)
   const cases = useCases(applied, page)

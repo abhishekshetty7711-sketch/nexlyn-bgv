@@ -46,6 +46,16 @@ export function caseFixture(overrides: Partial<CaseView> = {}): CaseView {
     savedSections: { 'report-info': '2026-09-24T10:00:00Z' },
     createdAt: '2026-09-24T10:00:00Z',
     updatedAt: '2026-09-24T10:00:00Z',
+    workflow: {
+      submittedAt: null,
+      submittedByName: null,
+      reviewedAt: null,
+      reviewedByName: null,
+      approvedAt: null,
+      finalizedAt: null,
+      finalizedByName: null,
+      actions: { canSubmit: false, canApprove: false, canRequestChanges: false, canFinalize: false, canReopen: false },
+    },
     ...overrides,
   }
 }

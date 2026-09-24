@@ -63,6 +63,23 @@ export function useReportJob(caseId: string, jobId: string | null) {
   })
 }
 
+/** Turns a draft made after the approval into the final, protected report and finalizes the case. */
+export function useFinalizeReport(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ version, openPassword }: { version: number; openPassword: string | null }) =>
+      apiFetch<ReportVersion>(`/cases/${caseId}/reports/${version}/finalize`, { json: { openPassword } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['case', caseId] })
+      void queryClient.invalidateQueries({ queryKey: versionsKey(caseId) })
+      void queryClient.invalidateQueries({ queryKey: ['case-history', caseId] })
+      void queryClient.invalidateQueries({ queryKey: ['case-progress', caseId] })
+      void queryClient.invalidateQueries({ queryKey: ['cases'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 /** Fetches the PDF with the sign-in token and hands it to the browser as a file save. */
 export async function downloadReport(caseId: string, version: number, reportName: string): Promise<void> {
   const blob = await apiFetch<Blob>(`/cases/${caseId}/reports/${version}/download`, { as: 'blob' })

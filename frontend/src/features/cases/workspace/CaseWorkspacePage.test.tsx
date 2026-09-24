@@ -31,6 +31,7 @@ function serve(initial: CaseView, extra: Record<string, FakeHandler> = {}): Setu
     'GET /api/cases/c-1/validation': () => ({ body: validationFixture() }),
     'GET /api/cases/c-1/checks': () => ({ body: [] }),
     'GET /api/cases/c-1/reports': () => ({ body: [] }),
+    'GET /api/cases/c-1/history': () => ({ body: [] }),
     'GET /api/check-types': () => ({ body: [] }),
     'GET /api/clients': () => ({ body: CLIENTS }),
     'GET /api/assignable-admins': () => ({ body: ADMINS }),
@@ -356,7 +357,7 @@ describe('CaseWorkspacePage', () => {
     expect(within(errors).getByText("Candidate's full name is required.")).toBeInTheDocument()
     expect(within(errors).getByText('Add at least one verification check.')).toBeInTheDocument()
     expect(within(screen.getByRole('region', { name: 'Warnings' })).getByText('Analyst remarks are empty.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Submit for review' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Submit for review' })).not.toBeInTheDocument() // the server says this admin cannot submit
     expect(screen.getByRole('button', { name: 'Generate draft PDF' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled()
 
