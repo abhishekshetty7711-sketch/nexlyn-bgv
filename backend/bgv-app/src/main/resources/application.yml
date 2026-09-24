@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: bgv-app
+  threads:
+    virtual:
+      enabled: true
+  flyway:
+    enabled: false
+  modulith:
+    events:
+      jdbc:
+        schema: modulith
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

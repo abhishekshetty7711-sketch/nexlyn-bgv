@@ -1,0 +1,2 @@
+-- Baseline migration for the auth module (schema "auth").
+-- Real tables are introduced as each phase implements this module.

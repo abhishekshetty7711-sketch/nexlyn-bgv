@@ -1,0 +1,2 @@
+-- Baseline migration for the verification module (schema "verification").
+-- Real tables are introduced as each phase implements this module.

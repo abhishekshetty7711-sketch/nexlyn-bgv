@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+:root {
+  --color-brand: #0f172a;
+  --color-brand-accent: #2563eb;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}

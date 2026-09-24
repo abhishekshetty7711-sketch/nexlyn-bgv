@@ -1,0 +1,42 @@
+# --- Java / Maven ---
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties.bak
+
+# --- Node / frontend ---
+node_modules/
+dist/
+frontend/src/api/generated/
+*.local
+
+# --- IDE ---
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# --- Docker / data volumes ---
+infra/local/.data/
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Test / build artifacts ---
+coverage/
+playwright-report/
+test-results/

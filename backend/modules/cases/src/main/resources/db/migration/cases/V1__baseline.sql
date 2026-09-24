@@ -1,0 +1,2 @@
+-- Baseline migration for the cases module (schema "cases").
+-- Real tables are introduced as each phase implements this module.

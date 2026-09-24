@@ -1,0 +1,4 @@
+# Keep scripts and Dockerfiles LF so they run inside Linux containers
+*.sh text eol=lf
+mvnw text eol=lf
+Dockerfile text eol=lf

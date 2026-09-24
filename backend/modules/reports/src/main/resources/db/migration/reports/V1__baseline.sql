@@ -1,0 +1,2 @@
+-- Baseline migration for the reports module (schema "reports").
+-- Real tables are introduced as each phase implements this module.

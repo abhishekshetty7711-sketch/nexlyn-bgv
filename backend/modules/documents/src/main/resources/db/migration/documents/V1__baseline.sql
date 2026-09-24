@@ -1,0 +1,2 @@
+-- Baseline migration for the documents module (schema "documents").
+-- Real tables are introduced as each phase implements this module.
