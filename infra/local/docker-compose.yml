@@ -32,7 +32,8 @@ services:
       # Signed requests are refused unless an identity is configured; these are throw-away local credentials.
       - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8333 || exit 1"]
+      # 127.0.0.1, not "localhost": the S3 gateway listens on IPv4 only, and localhost tries IPv6 first.
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8333 || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 12

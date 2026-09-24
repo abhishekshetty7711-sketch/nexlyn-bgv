@@ -10,7 +10,7 @@ COPY bgv-common ./bgv-common
 COPY modules ./modules
 COPY bgv-app ./bgv-app
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -f pom.xml -pl bgv-app -am -DskipTests package \
+    mvn -B -f pom.xml -pl bgv-app -am -DskipTests install \
  && mvn -B -f pom.xml -pl modules/reports dependency:copy-dependencies \
         -DincludeArtifactIds=playwright,driver,driver-bundle,gson -DoutputDirectory=/build/playwright-lib
 
