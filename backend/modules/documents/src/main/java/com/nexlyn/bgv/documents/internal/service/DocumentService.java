@@ -313,11 +313,15 @@ public class DocumentService {
     }
 
     /** "Original Document" for the first supporting document, then "Additional Document 1", 2, ... unless renamed. */
-    private static DocumentView view(StoredDocument d, int position) {
-        String display = d.getLabel() != null ? d.getLabel()
+    static String displayLabel(StoredDocument d, int position) {
+        return d.getLabel() != null ? d.getLabel()
                 : d.getKind() == DocumentKind.PHOTO ? "Candidate photo"
                 : d.getKind() == DocumentKind.FREE_IMAGE ? "Image"
                 : position == 0 ? "Original Document" : "Additional Document " + position;
+    }
+
+    private static DocumentView view(StoredDocument d, int position) {
+        String display = displayLabel(d, position);
         return new DocumentView(d.getId(), d.getCaseId(), d.getCheckId(), d.getKind(), d.getLabel(), display,
                 d.getOriginalFilename(), d.getMimeType(), d.getSizeBytes(), d.getWidth(), d.getHeight(), d.getQuality(),
                 d.isMoveToNextPage(), d.isUseLargerBox(), d.getCrop(), d.getSortOrder(), d.getVersion(), d.getCreatedAt());

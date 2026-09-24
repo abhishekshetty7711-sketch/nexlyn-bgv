@@ -53,6 +53,13 @@ nexlyn:
   documents:
     max-bytes: 10485760
 
+  reports:
+    # The browser used to print PDFs. Blank = look for Chrome / Chromium / Edge, then use the one Playwright installs.
+    chromium-path: ${CHROMIUM_PATH:}
+    # true inside a Docker container that runs as root.
+    chromium-no-sandbox: ${CHROMIUM_NO_SANDBOX:false}
+    max-concurrent-renders: ${REPORT_MAX_CONCURRENT_RENDERS:2}
+
 management:
   endpoints:
     web:

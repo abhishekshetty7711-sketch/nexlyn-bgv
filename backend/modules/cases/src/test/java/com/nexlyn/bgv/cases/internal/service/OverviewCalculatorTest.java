@@ -34,8 +34,8 @@ class OverviewCalculatorTest {
 
     @Test
     void theWorstOutcomeWinsTheOverallStatus() {
-        assertThat(auto(VERIFIED, VERIFIED).overallStatus()).isEqualTo("Completed");
-        assertThat(auto(VERIFIED, CLOSED).overallStatus()).isEqualTo("Completed");
+        assertThat(auto(VERIFIED, VERIFIED).overallStatus()).isEqualTo("Clear");
+        assertThat(auto(VERIFIED, CLOSED).overallStatus()).isEqualTo("Clear");
         assertThat(auto(CLOSED, CLOSED).overallStatus()).isEqualTo("Closed");
         assertThat(auto(VERIFIED, PENDING).overallStatus()).isEqualTo("In Progress");
         assertThat(auto(VERIFIED, IN_PROGRESS, CLOSED).overallStatus()).isEqualTo("In Progress");

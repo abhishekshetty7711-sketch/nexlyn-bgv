@@ -65,6 +65,13 @@ public class CaseInsightService {
         this.policy = policy;
     }
 
+    /** The same answer as {@link #validate} without the caller check, for {@code CaseApi} (its callers check access). */
+    @Transactional(readOnly = true)
+    ValidationResult validationFor(UUID id) {
+        BgvCase c = find(id);
+        return validate(c, candidates.findByCaseId(id).orElseThrow(), checks.summariesOf(id), documentCounts(id));
+    }
+
     @Transactional(readOnly = true)
     public ValidationResult validate(UUID id) {
         policy.check(id, CaseAction.READ);

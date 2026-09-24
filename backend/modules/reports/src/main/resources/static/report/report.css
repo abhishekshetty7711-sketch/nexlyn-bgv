@@ -1,0 +1,1041 @@
+/* Report styles, ported from the reference tool docs/reference/nexlyn-bgv-report-v3.2.html (CLAUDE.md section 6).
+   Only the page and print rules are kept; the editor sidebar, toasts and image editor are not part of a generated report. */
+
+/* reference lines 18-19 */
+@page { size:A4; margin:0; }
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+/* reference lines 35-37 */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* reference lines 47-74 */
+.brand,
+.brand *,
+.brand .lo,
+.brand .svc-txt-plain,
+.brand .tagline,
+.brand .tagline .sep,
+.brand-title,
+.report-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 2. ENTIRE PAGE FOOTER — Legend, page number, footer logo, everything */
+.page-footer,
+.page-footer *,
+.pf-logo,
+.pf-logo *,
+.pf-legend-wrap,
+.pf-legend-wrap *,
+.pf-legend-row,
+.pf-legend-row *,
+.pf-leg,
+.pf-leg *,
+.pf-bottom,
+.pf-bottom *,
+.pf-pagenum,
+.pf-pagenum * {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* reference lines 76-76 */
+body{ font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#1f2937; }
+
+/* reference lines 86-361 */
+/* Enterprise refined status badges — subtle shadow, better weight */
+.status-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: none !important;
+  line-height: 1.2 !important;
+}
+
+/* Refined info cards — subtle depth, cleaner borders */
+.info-card {
+  background: #ffffff !important;
+  border: 1px solid #e5eaf0 !important;
+  box-shadow: 0 1px 2px rgba(12, 45, 107, 0.03) !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  transition: none !important;
+}
+.info-card label {
+  font-size: 10.5px !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin-bottom: 4px !important;
+}
+.info-card .val {
+  color: #0c2d6b !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Enterprise section headers — refined divider, better spacing */
+.section-header {
+  border-bottom: 2px solid #0c2d6b !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 16px !important;
+  gap: 12px !important;
+}
+.section-header h2, .section-header .section-title {
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+  color: #0c2d6b !important;
+}
+
+/* Sub-section titles — enterprise refinement */
+.sub-section-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #0c2d6b !important;
+  letter-spacing: -0.005em !important;
+  margin-bottom: 10px !important;
+}
+
+/* Refined checks table — enterprise polish */
+.checks-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid #e5eaf0 !important;
+  box-shadow: 0 1px 2px rgba(12, 45, 107, 0.03) !important;
+}
+.checks-table th {
+  background: #f8fafc !important;
+  color: #0c2d6b !important;
+  font-weight: 700 !important;
+  font-size: 10.5px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  padding: 10px 16px !important;
+  border-bottom: 2px solid #e5eaf0 !important;
+  text-align: left !important;
+}
+.checks-table td {
+  padding: 8px 16px !important;
+  font-size: 12px !important;
+  color: #1f2937 !important;
+  border-bottom: 1px solid #eef2f6 !important;
+}
+.checks-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+.checks-table tbody tr:hover td {
+  background: #fafbfc !important;
+}
+
+/* Details grid — enterprise refinement */
+.details-grid {
+  gap: 10px !important;
+}
+.det-row {
+  background: #ffffff !important;
+  border: 1px solid #e5eaf0 !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 1px 2px rgba(12, 45, 107, 0.02) !important;
+}
+.det-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin-bottom: 4px !important;
+}
+.det-val {
+  font-size: 12.5px !important;
+  color: #0c2d6b !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.005em !important;
+}
+
+/* Summary cards — enterprise polish */
+.sum-card {
+  background: #ffffff !important;
+  border: 1px solid #e5eaf0 !important;
+  box-shadow: 0 2px 4px rgba(12, 45, 107, 0.04) !important;
+  border-radius: 12px !important;
+  padding: 14px 12px !important;
+}
+.sum-card-title {
+  font-weight: 700 !important;
+  color: #0c2d6b !important;
+  letter-spacing: -0.01em !important;
+}
+.sum-card-desc {
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+/* Detail section title bars — enterprise refinement */
+.detail-section-title {
+  background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%) !important;
+  border-left: 3px solid #0c2d6b !important;
+  border-top: 1px solid #e5eaf0 !important;
+  border-right: 1px solid #e5eaf0 !important;
+  border-bottom: 1px solid #e5eaf0 !important;
+  box-shadow: 0 1px 2px rgba(12, 45, 107, 0.03) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  gap: 10px !important;
+}
+.det-title-text {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #0c2d6b !important;
+  letter-spacing: -0.01em !important;
+}
+.det-doc-name {
+  color: #64748b !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  margin-left: 6px !important;
+}
+
+/* Status box (Page 1 pill) — enterprise refinement */
+.status-box {
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.10) !important;
+  border-width: 1px !important;
+  padding: 12px 44px !important;
+}
+.status-text h2 {
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+  font-size: 16px !important;
+}
+.status-text p {
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+}
+
+/* Doc-frame — enterprise polish */
+.doc-frame {
+  border: 1px solid #e5eaf0 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(12, 45, 107, 0.04) !important;
+}
+.doc-frame-header {
+  background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%) !important;
+  border-bottom: 1px solid #e5eaf0 !important;
+  font-weight: 700 !important;
+  color: #0c2d6b !important;
+  letter-spacing: -0.005em !important;
+  padding: 8px 14px !important;
+  font-size: 11.5px !important;
+}
+
+/* Group icon in detail — enterprise refinement */
+.detail-group-icon {
+  gap: 10px !important;
+}
+.dg-icon {
+  background: linear-gradient(135deg, #f0f4fa 0%, #e0e7ef 100%) !important;
+  border: 1px solid #dbe3ec !important;
+  box-shadow: 0 1px 2px rgba(12, 45, 107, 0.04) !important;
+  border-radius: 8px !important;
+}
+.dg-content label {
+  font-size: 10.5px !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* Overview cards — enterprise polish */
+.overview-card {
+  background: #ffffff !important;
+  border: 1px solid #e5eaf0 !important;
+  box-shadow: 0 1px 3px rgba(12, 45, 107, 0.04) !important;
+  border-radius: 10px !important;
+}
+.ov-stat-text label {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+.ov-stat-text .val {
+  color: #0c2d6b !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Analyst Remarks & Final Recommendation — enterprise refinement */
+#analystRemarks, #finalRecommendation,
+#analystRemarksDedicated, #finalRecommendationDedicated {
+  color: #1f2937 !important;
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0 !important;
+}
+
+/* Improve badge styles for all 6 statuses — cleaner enterprise look */
+.badge-verified,
+.badge-discrepancy,
+.badge-unverified,
+.badge-closed,
+.badge-pending,
+.badge-inprogress {
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  padding: 4px 12px !important;
+  border-radius: 12px !important;
+}
+
+/* Print CSS — preserve enterprise polish in PDF exports */
+@media print {
+  .status-badge,
+  .info-card,
+  .checks-table,
+  .det-row,
+  .sum-card,
+  .detail-section-title,
+  .doc-frame,
+  .overview-card,
+  .dg-icon {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  /* Keep borders visible in print for enterprise clean look */
+  .checks-table,
+  .info-card,
+  .det-row,
+  .sum-card,
+  .doc-frame {
+    border: 1px solid #dde5ea !important;
+  }
+}
+
+/* reference lines 390-407 */
+:root {
+  --color-primary: #0c2d6b;
+  --color-primary-light: #e8eef6;
+  --color-success-bg: #d1fae5;
+  --color-success-border: #6ee7b7;
+  --color-success-text: #059669;
+  --color-info-bg: #dbeafe;
+  --color-info-text: #2563eb;
+  --color-text-primary: #111827;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-border: #e5eaf0;
+  --color-border-light: #f0f2f5;
+  --color-bg-card: #fafbfc;
+  --color-bg-overview: #f0f4f9;
+  --color-danger: #dc2626;
+  --color-warning: #b45309;
+}
+
+/* reference lines 410-621 */
+.page{
+  width:210mm;
+  height:297mm;
+  background:white;
+  margin:0 auto 24px;
+  padding:10mm 14mm 0;
+  box-shadow:0 2px 20px rgba(0,0,0,0.08);
+  border-radius:4px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+/* Reserve space for absolute footer on page 1 */
+#page1{
+  padding-bottom:52px;
+}
+
+/* ── BRAND ── */
+.brand{ display:inline-flex; align-items:center; gap:12px; text-decoration:none; }
+.brand .logo-img{ height:68px; width:68px; object-fit:contain; display:block; flex:none; }
+.brand .wm{ display:inline-flex; flex-direction:column; align-items:center; }
+.brand .wm .lo{ font-size:28px; font-weight:900; letter-spacing:.06em; color:#0c2d6b; text-transform:uppercase; line-height:1; white-space:nowrap; }
+.brand .wm .svc-txt-plain{ font-size:11px; font-weight:700; letter-spacing:.28em; padding-left:.28em; color:#0c2d6b; text-transform:uppercase; white-space:nowrap; margin-top:4px; }
+.brand .wm .tagline{ font-size:8px; letter-spacing:.13em; padding-left:.13em; color:#6b7280; text-transform:uppercase; margin-top:4px; font-weight:500; white-space:nowrap; }
+.brand .wm .tagline .sep{ color:#0c2d6b; margin:0 4px; font-weight:700; }
+.report-title{ font-size:28px; font-weight:700; color:#0c2d6b; }
+.report-title span{ font-weight:400; color:#1a56a0; }
+
+/* ── DIVIDER ── */
+.divider{ height:0; border-bottom:1.5px solid #0c2d6b; margin-bottom:14px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+/* ── TOP HEADER ── */
+.top-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-shrink:0; }
+
+/* ── INFO CARDS ── */
+.top-info{ display:grid; grid-template-columns:1fr 1fr 1.5fr; gap:14px; margin-bottom:14px; flex-shrink:0; }
+.info-card{ background:#f5f8fa; border:1px solid #dfe7ea; border-radius:10px; padding:8px 12px; }
+.info-card label{ display:block; font-size:11px; color:#6b7280; margin-bottom:3px; font-weight:500; }
+.info-card .val{ font-size:14px; color:#0c2d6b; font-weight:700; line-height:1.15; word-wrap:break-word; }
+
+/* ── STATUS BOX ── */
+.status-row{ display:flex; justify-content:center; margin-bottom:14px; flex-shrink:0; }
+.status-box{ display:inline-flex; align-items:center; justify-content:center; gap:8px; background:#d1fae5; border:1px solid #6ee7b7; padding:10px 40px; border-radius:50px; }
+.status-text h2{ color:#059669; font-size:15px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:7px; }
+.status-text p{ color:#059669; font-size:11px; margin-top:3px; text-align:center; }
+
+/* ── SECTION HEADER ── */
+.section-header{ display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:7px; border-bottom:2px solid #0c2d6b; flex-shrink:0; }
+.section-icon{ width:28px; height:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.section-icon svg{ width:24px; height:24px; fill:none; stroke:#0c2d6b; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.section-title{ font-size:16px; color:#0c2d6b; font-weight:700; }
+
+/* ── CANDIDATE CARD ── */
+.candidate-card{ border:1px solid #dde5ea; border-radius:14px; padding:14px; display:grid; grid-template-columns:130px 1fr 1fr; gap:16px; align-items:start; margin-bottom:20px; flex-shrink:0; }
+.photo-wrap{ width:130px; height:155px; border-radius:10px; overflow:hidden; border:2px dashed #9db6c3; position:relative; cursor:pointer; background:#f6fafb; display:flex; align-items:center; justify-content:center; transition:border .2s; }
+.photo-wrap.has-photo{ border:none; }
+.photo-wrap input[type=file]{ display:none; }
+.photo-wrap img{ width:100%; height:100%; object-fit:cover; }
+.photo-overlay{ position:absolute; bottom:0; width:100%; background:rgba(12,45,107,.85); color:white; text-align:center; padding:7px; font-size:10px; font-weight:600; transition:opacity .2s; }
+.photo-wrap.has-photo .photo-overlay{ opacity:0; }
+.photo-wrap.has-photo:hover .photo-overlay{ opacity:1; content:'Change Photo'; }
+.detail-col{ display:flex; flex-direction:column; gap:11px; }
+.detail-group label{ font-size:11px; color:#6b7280; display:block; margin-bottom:3px; font-weight:500; }
+.detail-group .val{ font-size:14px; font-weight:700; color:#111827; }
+.detail-group-icon{ display:flex; align-items:flex-start; gap:9px; }
+.dg-icon{ width:30px; height:30px; background:#dbeafe; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+.dg-icon svg{ width:14px; height:14px; stroke:#2563eb; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.dg-content label{ font-size:11px; color:#6b7280; display:block; margin-bottom:3px; font-weight:500; }
+.dg-content .val{ font-size:14px; font-weight:700; color:#111827; }
+.dg-content .val-sub{ display:flex; gap:18px; margin-top:3px; }
+.dg-content .val-sub span{ font-size:13px; font-weight:600; color:#111827; }
+.dg-content .val-sub small{ font-size:10px; color:#6b7280; display:block; margin-bottom:2px; font-weight:400; }
+
+/* ── OVERVIEW BAR ── */
+.overview-bar{ background:#f0f4f9; border:1px solid #dbe5ea; border-radius:14px; padding:9px 14px; display:grid; grid-template-columns:auto 1fr; align-items:center; margin-bottom:20px; overflow:hidden; flex-shrink:0; }
+.overview-main{ display:flex; align-items:center; gap:10px; padding-right:14px; border-right:1px solid #ccd6dd; white-space:nowrap; }
+.ov-big-icon{ width:42px; height:42px; background:#e8eef6; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ov-big-icon svg{ width:20px; height:20px; stroke:#0c2d6b; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.ov-label{ font-size:12px; font-weight:700; color:#0c2d6b; line-height:1.3; }
+.overview-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
+.ov-stat{ display:flex; align-items:center; gap:8px; padding:4px 10px; border-right:1px solid #ccd6dd; min-width:0; }
+.ov-stat:last-child{ border-right:none; }
+.ov-stat-icon{ width:34px; height:34px; background:#dbeafe; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ov-stat-icon svg{ width:17px; height:17px; stroke:#2563eb; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+.ov-stat-text label{ font-size:10px; color:#6b7280; display:block; font-weight:500; white-space:normal; line-height:1.3; margin-bottom:2px; }
+.ov-stat-text .val{ font-size:17px; font-weight:700; color:#0c2d6b; }
+
+/* ── SUMMARY CARDS ── */
+.summary-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; flex-shrink:0; }
+.summary-grid.single-card{ grid-template-columns:minmax(0,420px); justify-content:center; }
+.summary-card{ border:1px solid #dde5ea; border-radius:14px; padding:14px; background:white; display:flex; flex-direction:column; align-items:center; text-align:center; justify-content:flex-start; }
+/* Compact 6-card layout */
+.summary-grid.compact .summary-card{ padding:10px 8px; border-radius:10px; }
+.summary-grid.compact .sum-icon{ width:36px !important; height:36px !important; margin-bottom:6px; }
+.summary-grid.compact .sum-icon svg{ width:18px !important; height:18px !important; }
+.summary-grid.compact .sum-card-title{ font-size:12px !important; margin-bottom:2px; }
+.summary-grid.compact .sum-card-desc{ font-size:10px !important; margin-bottom:4px; }
+.summary-grid.compact .sum-divider{ margin:0 0 5px; }
+.summary-grid.compact .status-badge{ font-size:10px !important; padding:4px 12px !important; }
+.sum-icon{ width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-bottom:10px; }
+.sum-icon svg{ width:22px; height:22px; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.sum-card-title{ font-size:14px; font-weight:700; color:#0c2d6b; margin-bottom:4px; }
+.sum-card-desc{ font-size:11px; color:#4b5563; margin-bottom:6px; line-height:1.5; }
+.sum-divider{ height:1px; background:#e8edf0; width:100%; margin:0 0 8px; }
+.status-badge{ padding:6px 16px; border-radius:50px; font-weight:700; font-size:11px; display:inline-flex; align-items:center; gap:5px; }
+.badge-verified{ background:#d1fae5; border:1px solid #6ee7b7; color:#059669; }
+.badge-pending{ background:#fffbeb; border:1px solid #fcd34d; color:#b45309; }
+.badge-unverified{ background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; }
+.badge-inprogress{ background:#eff6ff; border:1px solid #93c5fd; color:#1d4ed8; }
+/* NEW badges — Discrepancy (data mismatch) & Closed (case closed) */
+.badge-discrepancy{ background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; }
+.badge-closed{ background:#f3f4f6; border:1px solid #d1d5db; color:#374151; }
+
+/* ── REMARKS ── */
+.remarks-card{ border:1px solid #dde5ea; border-radius:14px; padding:12px 16px; background:#f8fbfc; display:flex; align-items:flex-start; gap:10px; margin-top:12px; margin-bottom:10px; flex-shrink:0; }
+.remarks-icon{ width:36px; height:36px; background:#dbeafe; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.remarks-icon svg{ width:18px; height:18px; stroke:#2563eb; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.remarks-content h3{ font-size:13px; font-weight:700; color:#0c2d6b; margin-bottom:4px; }
+.remarks-content p{ font-size:11.5px; color:#374151; line-height:1.5; }
+
+/* ── PAGE FOOTER ── */
+.page-footer{
+  background:white;
+  padding:5px 14mm 8px;
+}
+/* Page 1 footer — full width, pinned to bottom, breathing space */
+#page1 .page-footer{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  padding:5px 14mm 8px;
+  background:white;
+  border-top:1.5px solid #e5eaf0;
+}
+/* Detail pages use absolute-positioned footer */
+.page.detail-page{
+  padding-bottom:62px;
+  position:relative;
+}
+.page.detail-page .page-footer{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  padding:5px 14mm 8px;
+  background:white;
+  border-top:1.5px solid #e5eaf0;
+}
+/* Supporting doc area fills remaining space */
+.doc-upload-area{
+  flex:1;
+  min-height:160px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  cursor:pointer;
+  position:relative;
+}
+.doc-frame{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.doc-section-wrap{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  margin-top:10px;
+}
+.pf-legend-wrap{
+  display:flex;
+  width:100%;
+  padding-bottom:6px;
+  margin-bottom:6px;
+}
+.pf-legend-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+}
+.pf-leg{
+  font-size:10px;
+  font-weight:600;
+  white-space:nowrap;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  letter-spacing:0.01em;
+}
+.verified-leg{ color:#15803d; }
+.disc-leg{ color:#dc2626; }
+.unable-leg{ color:#b45309; }
+.closed-leg{ color:#6b7280; }
+.pf-bottom{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.pf-logo{
+  display:flex; align-items:center; gap:4px;
+}
+.pf-pagenum{
+  font-size:9.5px; color:#6b7280; font-weight:400;
+}
+.pf-pagenum strong{ color:#0c2d6b; font-size:10px; font-weight:600; }
+
+/* reference lines 637-733 */
+.doc-img-preview{
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  cursor:zoom-in;
+  border-radius:4px;
+  transition:opacity .15s;
+}
+.doc-img-preview:hover{ opacity:0.85; }
+
+.detail-section-title{
+  display:flex; align-items:center; gap:12px;
+  background:linear-gradient(to right, #ffffff 0%, #f5fbf8 100%);
+  border:1px solid #e5eaf0;
+  border-left:4px solid #059669;
+  border-radius:10px;
+  padding:12px 16px;
+  margin-bottom:14px;
+  flex-wrap:nowrap;
+  box-shadow:0 1px 3px rgba(12,45,107,0.04);
+}
+.det-icon{ width:40px; height:40px; background:#d1fae5; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.det-icon svg{ width:20px; height:20px; stroke:#059669; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.det-title-text{ font-size:15px; font-weight:700; color:#0c2d6b; flex:none; }
+.det-doc-name{ font-size:12px; font-weight:500; color:#6b7280; margin-left:4px; }
+.checks-table{ width:auto; max-width:65%; border-collapse:collapse; margin-bottom:16px; font-size:12px; }
+.checks-table thead tr{ background:#f0f4f9; }
+.checks-table th{ padding:7px 16px; text-align:left; font-weight:700; color:#0c2d6b; font-size:11px; text-transform:uppercase; letter-spacing:.04em; min-width:140px; }
+.checks-table td{ padding:6px 16px; border-bottom:1px solid #eef0f2; color:#374151; }
+.checks-table tr:last-child td{ border-bottom:none; }
+.tick-green{ color:#15803d; font-weight:700; margin-right:4px; }
+.details-grid{ display:grid; grid-template-columns:160px 200px; gap:0; margin-bottom:14px; border:1px solid #e5eaf0; border-radius:10px; overflow:hidden; width:auto; max-width:65%; }
+.det-row{ display:contents; }
+.det-row .det-label{ font-size:11px; color:#6b7280; padding:7px 16px; border-bottom:1px solid #f0f2f5; background:#f0f4f9; font-weight:700; white-space:nowrap; text-transform:uppercase; letter-spacing:.03em; font-size:10.5px; }
+.det-row .det-val{ font-size:12px; color:#111827; padding:7px 16px; border-bottom:1px solid #f0f2f5; font-weight:600; }
+.sub-section-title{ font-size:13px; font-weight:700; color:#0c2d6b; margin-bottom:8px; }
+/* ══════════════════════════════════════════════════════════════════════
+   DOC-FRAME — Hybrid sizing (Option A + B)
+   ──────────────────────────────────────────────────────────────────────
+   • min-height: 200px → nice empty state (Option B floor)
+   • max-height: 380px → never overflows into footer (Option B ceiling)
+   • height: auto     → sizes to content when image loaded (Option A)
+   • Flex layout adjusted so upload area does NOT force expansion
+   ══════════════════════════════════════════════════════════════════════ */
+.doc-frame{
+  border:1px solid #dde5ea;
+  border-radius:10px;
+  overflow:hidden;
+  margin-bottom:14px;
+  display:flex;
+  flex-direction:column;
+  min-height:200px;      /* Floor — empty state looks nice */
+  max-height:380px;      /* Ceiling — never bleeds into footer */
+  height:auto;           /* Auto-size to content (Option A) */
+}
+/* Larger variant — used when user enables "Use Larger Box".
+   Bigger box for full-page image display (eCourts screenshots, etc.). */
+.doc-frame.doc-frame-large{
+  min-height:600px;
+  max-height:800px;
+}
+.doc-frame-header{ background:#f5f8fa; padding:8px 14px; font-size:11px; font-weight:600; color:#4b5563; border-bottom:1px solid #dde5ea; text-align:center; flex-shrink:0; }
+.doc-upload-area{
+  min-height:80px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  cursor:pointer;
+  position:relative;
+  transition:background .15s;
+  flex:0 1 auto;         /* Do NOT force expansion — grow only if needed */
+  overflow:hidden;       /* Contain images that might exceed frame */
+}
+.doc-upload-area:hover{ background:#f0f9ff; }
+.doc-upload-area.drag-over{ background:#dbeafe; border:2px dashed #2563eb; border-radius:8px; }
+.doc-upload-area input{ position:absolute; top:0; left:0; right:0; bottom:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:10; pointer-events:auto; }
+.doc-upload-area img{
+  max-width:100%; max-height:100%; width:auto; height:auto;
+  object-fit:contain; cursor:zoom-in; display:block;
+  /* ── HIGH QUALITY RENDERING (Image Quality Bundle) ── */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: bicubic;
+  /* Smooth transforms for zoom */
+  transform-origin: center center;
+  transition: transform 0.15s ease;
+}
+.doc-img-wrap img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  -ms-interpolation-mode: bicubic;
+  transform-origin: center center;
+}
+.doc-placeholder{ color:#9ca3af; font-size:12px; text-align:center; pointer-events:none; z-index:1; position:relative; }
+
+
+/* reference lines 756-798 */
+@media print{
+  .sidebar, #printHide{ display:none !important; }
+  .app-wrap{ display:block; }
+  .pages-area{ margin-right:0; padding:0; }
+  .page{ margin:0; box-shadow:none; border-radius:0; page-break-after:always; break-after:page; }
+  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     PDF EXPORT FIX — Prevent ghost/duplicate pages
+     ──────────────────────────────────────────────────────────────────────
+     Problem: When a .page element has inline `display:none` (e.g. hidden
+     dedicatedRemarksPage when ≤2 groups), some browsers STILL reserve a
+     printable page for it because `.page { page-break-after:always }` is
+     applied at the class level. Result: an empty/duplicate page in PDF.
+
+     Fix: Strictly hide such pages in print (no size, no break, no visual).
+     ══════════════════════════════════════════════════════════════════════ */
+  .page[style*="display:none"],
+  .page[style*="display: none"],
+  #dedicatedRemarksPage[style*="display:none"],
+  #dedicatedRemarksPage[style*="display: none"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    break-before: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Hide password modal during print */
+  #pdfPwdModal { display: none !important; }
+  /* Also ensure the very last .page doesn't force an extra blank page */
+  .page:last-of-type {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+}
+
+/* reference lines 1016-1054 */
+.final-rec-card{
+  border:1px solid #6ee7b7;
+  border-left:4px solid #059669;
+  border-radius:14px;
+  padding:12px 16px;
+  background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:10px;
+  margin-bottom:10px;
+  flex-shrink:0;
+  box-shadow:0 1px 3px rgba(5,150,105,0.06);
+}
+.final-rec-icon{
+  width:36px; height:36px;
+  background:#d1fae5;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.final-rec-content{ flex:1; }
+.final-rec-content h3{
+  font-size:13px;
+  font-weight:700;
+  color:#059669;
+  margin:0 0 4px;
+  letter-spacing:0.01em;
+}
+.final-rec-content p{
+  font-size:11.5px;
+  color:#047857;
+  line-height:1.6;
+  margin:0;
+  font-weight:500;
+}
+.final-rec-content p strong{ color:#065f46; font-weight:700; }
+
+/* reference lines 1057-1093 */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .page:last-of-type {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+  /* Hide sidebar in print (already has #printHide) */
+  #printHide, .sidebar {
+    display: none !important;
+  }
+  /* Hide editor overlays */
+  #fsEditor, #toast-container {
+    display: none !important;
+  }
+}
+/* ── HIGH-QUALITY IMAGE PRINT RENDERING ── */
+@media print {
+  img, .doc-img-wrap img, .doc-upload-area img {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: bicubic;
+  }
+  /* Sharper text in PDF */
+  body, .page, .det-val, .det-label, .checks-table, .info-card .val {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* Prevent images splitting across pages */
+  .doc-img-wrap, .doc-frame {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* reference lines 1102-1356 */
+.watermark-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  display: none;
+}
+.with-watermark .watermark-layer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.watermark-layer .wm-text {
+  font-size: 92px;
+  font-weight: 800;
+  color: #0c2d6b;
+  opacity: 0.055;
+  transform: rotate(-30deg);
+  white-space: nowrap;
+  letter-spacing: 0.08em;
+  user-select: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.with-watermark .page > *:not(.watermark-layer) {
+  position: relative;
+  z-index: 1;
+}
+
+@media print {
+  /* ── 1. PAGE GEOMETRY ── Professional A4 with proper safety margins */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Print HTML/body — no scrollbars, no chrome bleed */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    width: 210mm !important;
+    height: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Force universal exact color reproduction */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* ── 2. PAGE ELEMENT ── Sharp edges, no shadows, exact dimensions */
+  .page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 10mm 14mm 12mm 14mm !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+  }
+  .page:last-of-type {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     SERVICES PAGE — Edge-to-edge layout (no side padding)
+     ──────────────────────────────────────────────────────────────────────
+     The Services page has its own edge-to-edge header + internal padding
+     built into each section. Applying the standard .page padding squeezes
+     the layout inward, making cards look congested in PDF export.
+     Fix: Remove the forced padding for #servicesPage only.
+     ══════════════════════════════════════════════════════════════════════ */
+  #servicesPage {
+    padding: 0 !important;
+  }
+
+  /* ── 3. SHARP VECTOR TEXT — Enterprise typography ── */
+  body, .page, .page * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    font-kerning: normal;
+  }
+
+  /* Prevent widows and orphans — no lonely lines at page boundaries */
+  p, .details-grid, .info-card, .doc-frame, .det-row, .det-grid {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* ── 4. IMAGE QUALITY — High DPI, sharp rendering ── */
+  img {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: bicubic;
+    max-width: 100%;
+    height: auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Vector graphics (SVG) — always crisp */
+  svg {
+    shape-rendering: geometricPrecision;
+    text-rendering: geometricPrecision;
+    image-rendering: optimizeQuality;
+  }
+
+  /* Document/photo frames — never split */
+  .doc-frame, .doc-img-wrap, .doc-upload-area,
+  .photo-wrap, .company-logo, .company-logo img {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     DOC-FRAME — Print/PDF specific hardening
+     ──────────────────────────────────────────────────────────────────────
+     Base CSS already handles hybrid sizing (min:200px, max:380px, auto).
+     Print CSS adds:
+     • Redundant box-shadow border (renders reliably in PDF even if
+       actual border gets clipped by rounded-corner + overflow interaction)
+     • Explicit background colors (browsers strip backgrounds by default)
+     • Guaranteed footer clearance (24px bottom margin)
+     • Never split across pages
+     ══════════════════════════════════════════════════════════════════════ */
+  .doc-frame {
+    border: 1px solid #dde5ea !important;
+    box-shadow: inset 0 0 0 1px #dde5ea !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin-bottom: 24px !important;       /* Extra footer clearance in PDF */
+    max-height: 360px !important;         /* Slightly stricter in print */
+    background: #ffffff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  /* Larger variant — near-full-page height for big images */
+  .doc-frame.doc-frame-large {
+    max-height: 800px !important;
+    min-height: 600px !important;
+  }
+  .doc-frame-header {
+    border-bottom: 1px solid #dde5ea !important;
+    background: #f5f8fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    flex-shrink: 0 !important;
+  }
+  .doc-upload-area {
+    flex: 0 1 auto !important;
+    overflow: hidden !important;
+  }
+  .doc-upload-area img {
+    max-height: 280px !important;         /* Cap image height to fit in frame */
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+  /* In the larger box variant, allow images to be taller too */
+  .doc-frame.doc-frame-large .doc-upload-area img {
+    max-height: 700px !important;
+  }
+
+  /* ── 5. PERFECT PAGE BREAKS ── Critical UI blocks never split ── */
+  .summary-card, .info-card, .details-grid, .checks-table tr,
+  .attestation-block, .attestation-box, .signature-block,
+  .remarks-card, .final-rec-card, .status-badge, .overview-bar,
+  .sub-section-title, .section-header, .section-title-bar {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Section headers never orphaned at page bottom */
+  h1, h2, h3, h4, h5, h6,
+  .sub-section-title, .section-header {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* ── 6. TABLE HEADER REPETITION ── */
+  /* Any <table> with <thead> repeats headers across pages */
+  table {
+    border-collapse: collapse;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  thead {
+    display: table-header-group; /* Repeats on every printed page */
+  }
+  tfoot {
+    display: table-footer-group; /* Repeats on every printed page */
+  }
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* ── 7. HIDE UI CHROME IN PRINT ── */
+  .sidebar, #printHide, #fsEditor, #toast-container,
+  .sb-toggle, [data-print-hide], .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Editor overlays fully hidden */
+  #fsEditor { position: absolute !important; left: -99999px !important; }
+
+  /* ── 8. WATERMARK PRINT SUPPORT ── */
+  .with-watermark .watermark-layer {
+    display: flex !important;
+  }
+
+  /* ── 9. LINKS ── */
+  a, a:link, a:visited {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* ── 10. FIX POTENTIAL BLEEDING ── */
+  .pages-area {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+  .app-wrap {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* ── 11. FONT WEIGHT FIDELITY ── Force weights don't fall back */
+  strong, b, .fw-bold { font-weight: 700 !important; }
+  .fw-semibold { font-weight: 600 !important; }
+  .fw-medium { font-weight: 500 !important; }
+}
+
+/* ═══════ END PDF & PRINT OPTIMIZATION LAYER ═══════ */
+
+/* ── Nexlyn additions (not in the reference tool) ── */
+/* A long title wraps inside its bar instead of pushing the status badge off the page (the reference keeps it on one line). */
+.det-title-text{ flex:1 1 auto; min-width:0; }

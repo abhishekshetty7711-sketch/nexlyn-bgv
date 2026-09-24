@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="'Nexlyn Verification Report ' + ${doc.reportId}">Nexlyn Verification Report</title>
+<style th:utext="${css}"></style>
+</head>
+<body th:classappend="${doc.watermark} ? 'with-watermark' : ''">
+<div class="pages-area" id="pagesArea">
+<th:block th:each="page : ${doc.pages}" th:switch="${page.kind}">
+  <th:block th:case="'cover'"><th:block th:replace="~{report/pages :: cover(page=${page})}"></th:block></th:block>
+  <th:block th:case="'remarks'"><th:block th:replace="~{report/pages :: remarksPage(page=${page})}"></th:block></th:block>
+  <th:block th:case="'overflow'"><th:block th:replace="~{report/pages :: overflowPage(page=${page})}"></th:block></th:block>
+  <th:block th:case="'detail'"><th:block th:replace="~{report/pages :: detailPage(page=${page})}"></th:block></th:block>
+  <th:block th:case="'document'"><th:block th:replace="~{report/pages :: documentPage(page=${page})}"></th:block></th:block>
+  <th:block th:case="'services'"><th:block th:replace="~{report/pages :: servicesPage(page=${page})}"></th:block></th:block>
+</th:block>
+</div>
+</body>
+</html>

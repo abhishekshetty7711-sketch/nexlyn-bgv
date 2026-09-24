@@ -30,4 +30,10 @@ public interface CaseApi {
 
     /** Removes the candidate's photo. Returns the removed document id, if there was one. */
     Optional<UUID> clearCandidatePhoto(UUID caseId);
+
+    /** Everything the report needs, read in one consistent pass. Throws when the case does not exist. */
+    CaseReport reportOf(UUID caseId);
+
+    /** The errors and warnings of the case (CLAUDE.md section 7.1). Throws when the case does not exist. */
+    CaseValidation validationOf(UUID caseId);
 }

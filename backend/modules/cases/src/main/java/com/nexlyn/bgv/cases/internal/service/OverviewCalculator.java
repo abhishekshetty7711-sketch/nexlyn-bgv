@@ -11,7 +11,7 @@ import java.util.List;
  * <p>Rules (decision D-022): <b>Total</b> = number of checks. <b>Completed</b> = checks that have an
  * outcome (everything except Pending and In Progress). <b>Overall status</b>, first match wins: no
  * checks = "Pending"; any Discrepancy = "Discrepancy"; any Unable to Verify = "Unable to Verify";
- * any Pending or In Progress = "In Progress"; all Closed = "Closed"; otherwise "Completed".
+ * any Pending or In Progress = "In Progress"; all Closed = "Closed"; otherwise "Clear" (the word the reference tool prints, D-032).
  */
 public final class OverviewCalculator {
 
@@ -51,6 +51,6 @@ public final class OverviewCalculator {
         if (statuses.stream().allMatch(status -> status == CheckStatus.CLOSED)) {
             return CheckStatus.CLOSED.label();
         }
-        return "Completed";
+        return "Clear";
     }
 }
