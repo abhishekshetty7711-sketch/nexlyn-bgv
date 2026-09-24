@@ -3,13 +3,19 @@
 > This file is the single source of truth for building the Nexlyn BGV Platform.
 > Read it fully at the start of every session. Follow the locked decisions exactly.
 > If something here conflicts with a request, ask the user before deviating.
-> Do NOT create or change anything outside the phase the user asks for.
+> Work through the phases in order under the autonomy rules in section 0.
 
 ---
 
 ## 0. How to work on this project
 
-- Build **phase by phase** (see §15). Only implement the phase the user names. Stop and summarise when a phase is done.
+- **Autonomous mode (authorized by the owner, 2026-09-24).** Work through the phases and steps in §15 **in order, without stopping to ask for approval** between steps or phases.
+  - **Decide for yourself.** Where a choice is needed, pick the recommended option and keep going. Write every such decision in `docs/DECISIONS.md` (ID, date, step, decision, alternatives, why, how to reverse) so the owner can review it later.
+  - **Keep records.** Read `docs/PROGRESS.md` and `docs/DECISIONS.md` at the start of every session and continue from "Next step". Update `docs/PROGRESS.md` after every step.
+  - **Commit after each step** (Conventional Commits, `Co-Authored-By` line) once `./mvnw verify` (and, for frontend work, `npm run build && npm test`) pass. Never commit a red build.
+  - **Stop and ask ONLY when the owner personally has to act or the action cannot be undone**, for example: changing antivirus or other security-software settings; installing system software or anything needing admin rights or a reboot; entering, choosing or supplying real passwords, keys or credentials; anything that would delete or overwrite data (dropping databases or Docker volumes, deleting files outside build output); pushing to a remote, deploying, or spending money.
+  - **Never weaken a locked decision (§2) or a security rule (§11) to avoid asking.** If a step seems to need that, log a compliant alternative in `docs/DECISIONS.md`; if none exists, stop and ask.
+  - When stopped or done, give a short summary of what was built, what was decided, and what (if anything) needs the owner.
 - Before writing code in an area, read the relevant section of this file and the existing code in that module.
 - The original tool is at `docs/reference/nexlyn-bgv-report-v3.2.html` (and its notes at `docs/reference/ALL_data_of_bgv.md`). Port report layout, CSS, pagination and formatting rules **from that source**, not from memory.
 - Every phase must compile, pass tests (`./mvnw verify`, `npm run build && npm test`) and start with `docker compose up` before it is called done.
@@ -728,7 +734,7 @@ Prod (now): one machine — Nginx (TLS) + frontend + backend containers; Postgre
 
 ---
 
-## 15. Build phases (implement ONLY the phase the user asks for)
+## 15. Build phases (build in order; autonomous mode per §0)
 
 | Phase | Scope | Done when |
 |---|---|---|
