@@ -1,24 +1,68 @@
-import { render, screen } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
-import { AppLayout } from './AppLayout'
+import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { fakeAuth, mockFetch, renderRoutes } from '@/test/testUtils'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
+import { AppLayout } from './AppLayout'
+
+const routes = [{ path: '/', element: <AppLayout />, children: [{ index: true, element: <DashboardPage /> }] }]
 
 describe('AppLayout', () => {
-  it('renders the nav and the routed page', () => {
-    const router = createMemoryRouter([
-      { path: '/', element: <AppLayout />, children: [{ index: true, element: <DashboardPage /> }] },
-    ])
-    const queryClient = new QueryClient()
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>,
-    )
+  it('renders the nav, the routed page and who is signed in', () => {
+    mockFetch({ 'GET /actuator/health': () => ({ body: { status: 'UP' } }) })
+    renderRoutes(routes, { auth: fakeAuth() })
 
     expect(screen.getByText('Nexlyn BGV')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
+    expect(screen.getByText('Olivia Owner')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Change password' })).toBeInTheDocument()
+  })
+
+  it('shows only the menu entries the admin can use', () => {
+    mockFetch({})
+    renderRoutes(routes, { auth: fakeAuth({ permissions: ['CASE_READ_ASSIGNED'] }) })
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+
+    expect(nav).toHaveTextContent('Dashboard')
+    expect(nav).toHaveTextContent('Cases')
+    expect(nav).not.toHaveTextContent('Admins')
+    expect(nav).not.toHaveTextContent('Roles')
+    expect(nav).not.toHaveTextContent('Audit Log')
+  })
+
+  it('shows the management entries to a super admin', () => {
+    mockFetch({})
+    renderRoutes(routes, { auth: fakeAuth({ permissions: ['USER_MANAGE', 'ROLE_MANAGE', 'AUDIT_READ', 'CASE_READ_ALL'] }) })
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    for (const label of ['Cases', 'Clients', 'Admins', 'Roles', 'Audit Log']) {
+      expect(nav).toHaveTextContent(label)
+    }
+  })
+
+  it('signs out when asked', async () => {
+    mockFetch({})
+    const signOut = vi.fn().mockResolvedValue(undefined)
+    renderRoutes(routes, { auth: fakeAuth({ signOut }) })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    expect(signOut).toHaveBeenCalledTimes(1)
+  })
+
+  it('warns before an idle sign-out and lets the admin stay signed in', async () => {
+    mockFetch({})
+    const staySignedIn = vi.fn()
+    renderRoutes(routes, { auth: fakeAuth({ idleSecondsLeft: 42, staySignedIn }) })
+
+    const dialog = screen.getByRole('dialog', { name: 'Still there?' })
+    expect(dialog).toHaveTextContent('signed out in 42 seconds')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Stay signed in' }))
+    expect(staySignedIn).toHaveBeenCalled()
+  })
+
+  it('shows no warning while the admin is active', () => {
+    mockFetch({})
+    renderRoutes(routes, { auth: fakeAuth({ idleSecondsLeft: null }) })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

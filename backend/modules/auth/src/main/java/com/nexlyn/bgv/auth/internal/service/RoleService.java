@@ -70,6 +70,8 @@ public class RoleService {
                 .toList();
     }
 
+    /** Read-only, and also open to user-managers, who must see the roles to assign them. */
+    @PreAuthorize("hasAnyAuthority('ROLE_MANAGE', 'USER_MANAGE')")
     @Transactional(readOnly = true)
     public List<RoleView> list() {
         Map<UUID, Long> members = memberCounts();

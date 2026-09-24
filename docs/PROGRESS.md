@@ -10,7 +10,7 @@ _Last updated: 2026-09-24_
 | Phase | Status |
 |---|---|
 | 1. Foundation | **Done** (commit `db0689b`). Stack starts with `./scripts/local-up.sh -d`; MinIO off by default (D-002). |
-| 2. Auth & RBAC | **In progress** |
+| 2. Auth & RBAC | **Done** (steps 2a-2f). Done-when met: security tests cover unauthenticated, wrong permission, refresh-token reuse and lockout. 106 auth + 6 common + 5 app backend tests, 97 frontend tests. Only the Docker-image rebuild check is pending (see open issues). |
 | 3. Clients & Case workspace core | Not started |
 | 4. Checks | Not started |
 | 5. Documents | Not started |
@@ -27,11 +27,11 @@ _Last updated: 2026-09-24_
 | 2c. 2FA and tokens (TOTP, backup codes, JWT, refresh rotation, CSRF, `/api/auth/*`) | **Done.** 71 auth tests + 6 common tests + full-app smoke test pass. |
 | 2d. Authorization (`SecurityFilterChain`, `@PreAuthorize`, `CaseAccessPolicy`, headers, CORS, `GET /api/me`) | **Done.** 86 auth tests + 5 app tests pass. Covers unauthenticated, wrong permission, expired/tampered/revoked tokens, per-case rule, CORS, headers. |
 | 2e. Admin management and audit (invites, admin/role CRUD, session revocation, audit persistence) | **Done.** 106 auth tests + 6 common + 5 app tests pass. |
-| 2f. Frontend (login/2FA, AuthProvider, ProtectedRoute, Can, idle logout, admin/role screens) | Not started |
+| 2f. Frontend (login/2FA, AuthProvider, ProtectedRoute, Can, idle logout, admin/role screens) | **Done.** Login with 2FA, first-time setup (QR + backup codes), invitation accept, change password, admins, roles, audit log. 97 tests, lint and build clean. |
 
 ## Next step
 
-Start 2f (frontend): login and 2FA screens (including first-time setup with QR code and backup codes), invitation-accept page, `AuthProvider` with the access token in memory and silent refresh, `ProtectedRoute`, `Can`, idle logout with cross-tab sync, change-password, and the admin / role / audit-log screens. It uses the API documented in `docs/DECISIONS.md` D-014, D-019, D-020. Phase 3 must implement `CaseAssignmentLookup` (see D-019).
+Start **Phase 3: Clients & Case workspace core** (CLAUDE.md section 15, with sections 7, 9.2 and 10 "schema cases"): `cases` module with clients, cases, candidate, verification period, overview, remarks, settings, Report ID generator, assignments, validation and progress; frontend case list and workspace sections 1, 2, 3, 5, 6, 7. The `cases` module must implement `CaseAssignmentLookup` (D-019) and call `CaseAccessPolicy.check(...)` in every case-scoped service method.
 
 ## Open issues and things only the owner can do
 

@@ -260,7 +260,8 @@ class AdminManagementIntegrationTest {
         for (MockHttpServletRequestBuilder request : List.of(
                 get("/api/admins"), get("/api/admins/" + some), post("/api/admins/" + some + "/disable"),
                 post("/api/admins/" + some + "/revoke-sessions"), get("/api/admins/invitations"),
-                get("/api/roles"), get("/api/permissions"), delete("/api/roles/" + some), get("/api/audit-log"))) {
+                get("/api/roles"), get("/api/roles/" + some), get("/api/permissions"), delete("/api/roles/" + some),
+                get("/api/audit-log"))) {
             MvcResult result = send(request, nobody, null);
             assertThat(status(result)).as(result.getRequest().getRequestURI()).isEqualTo(403);
             assertThat(code(result)).isEqualTo("FORBIDDEN");
@@ -271,7 +272,9 @@ class AdminManagementIntegrationTest {
         // Holding only one of the management permissions is not enough for the others.
         String userManager = tokenFor(ownerId, OWNER, "USER_MANAGE");
         assertThat(status(send(get("/api/admins"), userManager, null))).isEqualTo(200);
-        assertThat(status(send(get("/api/roles"), userManager, null))).isEqualTo(403);
+        assertThat(status(send(get("/api/roles"), userManager, null))).as("role list is readable to assign roles").isEqualTo(200);
+        assertThat(status(send(get("/api/permissions"), userManager, null))).isEqualTo(403);
+        assertThat(status(send(post("/api/roles"), userManager, Map.of("code", "NEW_ROLE", "name", "N", "permissions", List.of())))).isEqualTo(403);
         assertThat(status(send(get("/api/audit-log"), userManager, null))).isEqualTo(403);
     }
 
