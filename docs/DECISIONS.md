@@ -88,3 +88,13 @@ the autonomy rule in `CLAUDE.md` section 0 (review when convenient).
 
 ### D-018 — Bulk queries must not clear the Hibernate session — *auto, 2026-09-24, Phase 2c*
 - `@Modifying(clearAutomatically = true)` detached the already-loaded admin and caused a `LazyInitializationException` (found by the flow tests). The auth repositories use `flushAutomatically = true` only. Remember this for every future bulk update or delete.
+
+### D-019 — Phase 2d authorization design — *auto, 2026-09-24, Phase 2d*
+- **Filter chain:** everything under `/api/**` needs a valid bearer token, except `/api/auth/{login,refresh,logout,2fa/**}` (they authenticate themselves) and `/actuator/health`. Other actuator endpoints need `SETTINGS_MANAGE`. Any path outside `/api` and `/actuator` is denied. Anonymous callers get 401 even for paths that do not exist, so route names are not leaked.
+- **Session check on every request:** the access-token filter also verifies the session is still alive (`SessionService.isSessionActive`, one small query). That is what makes logout, admin disable and theft detection take effect immediately instead of after the 15-minute token lifetime. Fine for one instance; add a short cache if load ever requires it.
+- **CSRF protection is off for `/api/**`** because it is stateless and authenticated by the `Authorization` header, not a cookie. The cookie endpoints under `/api/auth` do their own double-submit check (D-014).
+- **Security headers:** CSP `default-src 'none'; frame-ancestors 'none'` (the API only returns JSON), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, HSTS 1 year (only sent over HTTPS), and no-cache defaults. The frontend's own CSP will come from Nginx (section 11.5).
+- **CORS:** exactly one allowed origin from `nexlyn.cors.allowed-origin` (with credentials, for the refresh cookie). If it is blank, no cross-origin access at all.
+- **`CaseAccessPolicy`:** public interface in the auth root package. Rule: the admin needs the permission for the action, and unless they hold `CASE_READ_ALL` the case must be assigned to them. Assignments live in the `cases` schema, so the `cases` module (Phase 3) must implement the small SPI `CaseAssignmentLookup`. Until it exists nobody counts as assigned. A nonexistent case behaves like an unassigned one (403), so guessing ids reveals nothing.
+- **`Permission` enum** in `bgv-common` mirrors the seeded permissions; a test fails if the enum and the database drift apart (a typo in `hasAuthority(...)` would otherwise silently lock everyone out).
+- `JwtAuthenticationFilter` is created inside `SecurityConfig` and is deliberately not a Spring bean (a bean would be registered twice).

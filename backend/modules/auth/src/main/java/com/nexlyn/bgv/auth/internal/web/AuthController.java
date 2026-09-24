@@ -118,8 +118,8 @@ public class AuthController {
 
     private static ResponseEntity<ApiError> error(FlowResult.Failure<?> failure) {
         HttpStatus status = switch (failure.code()) {
-            case INVALID_CREDENTIALS, INVALID_CHALLENGE, INVALID_CODE, INVALID_REFRESH_TOKEN -> HttpStatus.UNAUTHORIZED;
-            case CSRF_FAILED -> HttpStatus.FORBIDDEN;
+            case UNAUTHENTICATED, INVALID_CREDENTIALS, INVALID_CHALLENGE, INVALID_CODE, INVALID_REFRESH_TOKEN -> HttpStatus.UNAUTHORIZED;
+            case FORBIDDEN, CSRF_FAILED -> HttpStatus.FORBIDDEN;
             case ACCOUNT_LOCKED -> HttpStatus.LOCKED;
             case RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
             case VALIDATION_FAILED -> HttpStatus.BAD_REQUEST;
@@ -135,6 +135,8 @@ public class AuthController {
     /** Generic on purpose: the same text for a wrong password, unknown email and disabled account. */
     private static String message(ErrorCode code) {
         return switch (code) {
+            case UNAUTHENTICATED -> "Authentication is required.";
+            case FORBIDDEN -> "You do not have permission to do this.";
             case INVALID_CREDENTIALS -> "Invalid email or password.";
             case ACCOUNT_LOCKED -> "This account is temporarily locked. Try again later.";
             case INVALID_CHALLENGE -> "Your sign-in step expired. Please sign in again.";

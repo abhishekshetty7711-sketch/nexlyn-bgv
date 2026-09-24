@@ -1,5 +1,6 @@
 package com.nexlyn.bgv.auth.internal.config;
 
+import com.nexlyn.bgv.common.security.Permission;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -56,6 +58,21 @@ class AuthMigrationTest {
     void seedsTheFiveSystemRolesAndTwentyOnePermissions() throws SQLException {
         assertThat(count("SELECT count(*) FROM auth.roles WHERE system_role")).isEqualTo(5);
         assertThat(count("SELECT count(*) FROM auth.permissions")).isEqualTo(21);
+    }
+
+    @Test
+    void thePermissionEnumMatchesTheSeededPermissionsExactly() throws SQLException {
+        // A typo in @PreAuthorize("hasAuthority(...)") would silently lock everyone out, so the code
+        // list and the database list must never drift apart.
+        try (Connection c = connect(); Statement s = c.createStatement();
+             ResultSet rs = s.executeQuery("SELECT code FROM auth.permissions")) {
+            java.util.List<String> seeded = new java.util.ArrayList<>();
+            while (rs.next()) {
+                seeded.add(rs.getString(1));
+            }
+            assertThat(seeded).containsExactlyInAnyOrderElementsOf(
+                    Arrays.stream(Permission.values()).map(Enum::name).toList());
+        }
     }
 
     @Test

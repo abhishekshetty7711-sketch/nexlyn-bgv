@@ -4,6 +4,8 @@ package com.nexlyn.bgv.common.error;
 public enum ErrorCode {
     VALIDATION_FAILED,
     RATE_LIMITED,
+    UNAUTHENTICATED,
+    FORBIDDEN,
     INVALID_CREDENTIALS,
     ACCOUNT_LOCKED,
     INVALID_CHALLENGE,

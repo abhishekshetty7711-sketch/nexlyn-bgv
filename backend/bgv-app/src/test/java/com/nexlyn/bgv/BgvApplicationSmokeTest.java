@@ -64,6 +64,16 @@ class BgvApplicationSmokeTest {
     }
 
     @Test
+    void theApiIsClosedByDefaultAndOnlyHealthIsPublic() throws Exception {
+        MvcResult me = mvc.perform(get("/api/me")).andReturn();
+        assertThat(me.getResponse().getStatus()).isEqualTo(401);
+        assertThat(me.getResponse().getContentAsString()).contains("UNAUTHENTICATED");
+        assertThat(mvc.perform(get("/actuator/env")).andReturn().getResponse().getStatus()).isEqualTo(401);
+        assertThat(mvc.perform(get("/actuator/health")).andReturn().getResponse().getHeader("X-Content-Type-Options"))
+                .isEqualTo("nosniff");
+    }
+
+    @Test
     void everyModuleHasItsOwnMigrationHistory() {
         List<String> schemas = jdbc.queryForList(
                 "SELECT table_schema FROM information_schema.tables WHERE table_name = 'flyway_schema_history'", String.class);

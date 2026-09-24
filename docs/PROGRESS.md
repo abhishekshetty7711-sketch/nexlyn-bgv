@@ -25,13 +25,13 @@ _Last updated: 2026-09-24_
 | 2a. Database (tables + seeded roles/permissions) | Done (`b07a34c`) |
 | 2b. Passwords, lockout, rate limiting, bootstrap admin | Done (`bae6348`, `faffc6c`) |
 | 2c. 2FA and tokens (TOTP, backup codes, JWT, refresh rotation, CSRF, `/api/auth/*`) | **Done.** 71 auth tests + 6 common tests + full-app smoke test pass. |
-| 2d. Authorization (`SecurityFilterChain`, `@PreAuthorize`, `CaseAccessPolicy`, headers, CORS, `GET /api/me`) | Not started |
+| 2d. Authorization (`SecurityFilterChain`, `@PreAuthorize`, `CaseAccessPolicy`, headers, CORS, `GET /api/me`) | **Done.** 86 auth tests + 5 app tests pass. Covers unauthenticated, wrong permission, expired/tampered/revoked tokens, per-case rule, CORS, headers. |
 | 2e. Admin management and audit (invites, admin/role CRUD, session revocation, audit persistence) | Not started |
 | 2f. Frontend (login/2FA, AuthProvider, ProtectedRoute, Can, idle logout, admin/role screens) | Not started |
 
 ## Next step
 
-Start 2d: `SecurityFilterChain`, `@PreAuthorize`, `CaseAccessPolicy`, security headers, CORS, `GET /api/me`, and an access-token filter that also checks `SessionService.isSessionActive`. Then 2e, 2f.
+Start 2e: invites (24 h, single use, accept flow with password + 2FA setup), admin CRUD and disable, role CRUD with permission assignment, session revocation, and the audit listener that persists `AuditEvent`s to `auth.audit_log` plus the audit read endpoint. Then 2f (frontend). Phase 3 must implement `CaseAssignmentLookup` (see D-019).
 
 ## Open issues and things only the owner can do
 
