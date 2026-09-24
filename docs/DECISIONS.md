@@ -120,3 +120,29 @@ the autonomy rule in `CLAUDE.md` section 0 (review when convenient).
 - **Cases and Clients** menu entries exist but show a "coming soon" page until Phase 3.
 - **Tooling:** `qrcode.react` and `@testing-library/user-event` added; `tsconfig.app.json` sets `strict` explicitly; the dev server proxies `/api` and `/actuator/health` to the backend (same origin, like production); Vitest is limited to 2 workers because this PC (6 GB shared with Docker and an IDE) runs out of memory otherwise; on this PC npm needs `NODE_OPTIONS=--use-system-ca` while Avast HTTPS scanning is on (same idea as D-015).
 - **Known, deferred:** the production bundle is 556 kB (one chunk). Split the admin pages with lazy routes when it starts to matter (Phase 8).
+
+### D-022 — Overview numbers worked out from the checks — *auto, 2026-09-24, Phase 3b*
+- The spec says Total, Completed and Overall Status are automatic with manual override but not how. Chosen rules (`OverviewCalculator`): **Total** = number of checks. **Completed** = checks with an outcome (everything except Pending and In Progress). **Overall status**, first match wins: no checks = "Pending"; any Discrepancy = "Discrepancy"; any Unable to Verify = "Unable to Verify"; any Pending / In Progress = "In Progress"; all Closed = "Closed"; otherwise "Completed". Check against the reference HTML tool in Phase 6 and adjust if it differs.
+
+### D-023 — Case model choices — *auto, 2026-09-24, Phase 3b*
+- **Report IDs** `NX-YYYY-NNNN`: one atomic counter per year (year in Indian time). Editable, unique ignoring case, **and never reused even after a case is deleted**. A generated ID that clashes with a hand-typed one is skipped.
+- **`cases.company_display_name`** (nullable) added: overrides the client's printed name for one report ("Company name ... prefilled" in section 1). Empty = use the client's name.
+- **The creator of a case becomes its PREPARER**, whatever their permissions (so an analyst can see their own case, and the maker of a report is always on record for the maker-checker rule).
+- **Assignments:** any role (preparer or reviewer) grants visibility; one admin cannot hold both roles on one case; only active admins can be assigned; finalized cases cannot be reassigned. Assignment changes do not change the case version.
+- **Soft delete only**, needs `CASE_DELETE`, and a finalized report can never be deleted.
+- **Client** is required on every case and must be active when chosen (an inactive client already on a case may stay).
+
+### D-024 — Saving sections safely — *auto, 2026-09-24, Phase 3b*
+- Every section save carries the `version` the caller last saw; a stale version gets 409 "changed by someone else", and two truly simultaneous saves are caught by the database lock (also 409). Each save moves the version (even if only one section changed, so a colleague's save to any other section also invalidates a stale editor: the whole case is one unit) and answers with the whole updated case so the screen never drifts.
+- Cases are editable only while DRAFT or CHANGES_REQUESTED; otherwise 409 with an explanation. Reading always works.
+- Audit: one `CASE_SECTION_SAVED:<section>` event per save with before/after, and the case id in the audit row. Snapshots deliberately leave out phone numbers and remark text (lengths only).
+- Remarks are sanitised on the server to bold-only HTML (`BoldOnlyHtml`); running it twice changes nothing, so repeated edits never pile up entities.
+
+### D-025 — Progress and validation — *auto, 2026-09-24, Phase 3b*
+- Validation follows section 7.1 exactly. Until Phase 4 exists, every case shows the error "Add at least one verification check", and a missing candidate photo stays a warning until Phase 5 (this is correct, not a bug).
+- Progress percentage = data sections that have been saved (report info, candidate, period, checks, overview, remarks, settings) out of 7. A saved section that still has validation issues shows a warning mark. "Generate Report" is an action, not counted.
+- The checks source is a small interface (`ChecksSummary`) that returns nothing until Phase 4 replaces it.
+
+### D-026 — Case list and visibility — *auto, 2026-09-24, Phase 3b*
+- Visibility is enforced inside the database query (admins without `CASE_READ_ALL` only ever get cases assigned to them), on top of the per-case `CaseAccessPolicy` check. Search (`q`) matches Report ID, candidate name and employee ID, ignores case, and treats `%` and `_` as ordinary characters. Page size capped at 100; newest change first.
+- Cases module tests forge access tokens with the auth module's public test-visible classes (`JwtService`, `SessionService`); this is a test-only shortcut, the production code only uses auth's published API (`AuthApi`, `CaseAccessPolicy`, `AdminDirectory`, `AuditEvent`).

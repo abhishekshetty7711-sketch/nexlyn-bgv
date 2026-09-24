@@ -11,7 +11,7 @@ _Last updated: 2026-09-24_
 |---|---|
 | 1. Foundation | **Done** (commit `db0689b`). Stack starts with `./scripts/local-up.sh -d`; MinIO off by default (D-002). |
 | 2. Auth & RBAC | **Done** (steps 2a-2f). Done-when met: security tests cover unauthenticated, wrong permission, refresh-token reuse and lockout. 106 auth + 6 common + 5 app backend tests, 97 frontend tests. Only the Docker-image rebuild check is pending (see open issues). |
-| 3. Clients & Case workspace core | **In progress:** 3a done (clients, cases schema, shared validators); 3b (cases, sections, assignments, progress, validation) and 3c (frontend) to do |
+| 3. Clients & Case workspace core | **In progress:** 3a done (clients, cases schema, shared validators); 3b done (cases, sections 1-3 and 5-7, report ID generator, assignments, progress, validation; 41 cases tests); 3c (frontend: case list, workspace, clients, assignments) to do |
 | 4. Checks | Not started |
 | 5. Documents | Not started |
 | 6. Reports | Not started |
