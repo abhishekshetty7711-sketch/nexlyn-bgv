@@ -24,7 +24,8 @@ public final class CaseViews {
 
     public record CandidateView(String fullName, ParentType parentType, String parentName, String employeeId,
                                 LocalDate dob, String phone, String phoneDisplay, String street, String city,
-                                String state, String pin, String country, boolean hasPhoto) {
+                                String state, String pin, String country, boolean hasPhoto,
+                                UUID photoDocumentId) {
     }
 
     public record PeriodView(boolean show, LocalDate start, LocalDate end) {

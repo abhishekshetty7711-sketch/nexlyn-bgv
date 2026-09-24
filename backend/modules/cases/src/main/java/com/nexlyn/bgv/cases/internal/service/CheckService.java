@@ -2,6 +2,9 @@ package com.nexlyn.bgv.cases.internal.service;
 
 import com.nexlyn.bgv.auth.AdminPrincipal;
 import com.nexlyn.bgv.auth.AuditEvent;
+import com.nexlyn.bgv.cases.CaseDocumentLookup;
+import com.nexlyn.bgv.cases.CheckDeletedEvent;
+import com.nexlyn.bgv.cases.FreeImageRemovedEvent;
 import com.nexlyn.bgv.auth.AuthApi;
 import com.nexlyn.bgv.auth.CaseAccessPolicy;
 import com.nexlyn.bgv.auth.CaseAction;
@@ -35,6 +38,7 @@ import com.nexlyn.bgv.common.error.ErrorCode;
 import com.nexlyn.bgv.common.masking.PiiMasker;
 import com.nexlyn.bgv.common.security.Permission;
 import com.nexlyn.bgv.common.validation.BoldOnlyHtml;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -70,6 +74,7 @@ public class CheckService {
             + "guaranteed due to limitations in record availability and updates. This report is issued solely for background "
             + "verification purposes.";
     private static final int MAX_CHECKS_PER_CASE = 50;
+    private static final int MAX_FREE_SECTIONS = 30;
     private static final int MAX_DETAILS = 30;
     private static final LocalDate EARLIEST = LocalDate.of(1900, 1, 1);
     private static final LocalDate LATEST = LocalDate.of(2100, 12, 31);
@@ -99,12 +104,14 @@ public class CheckService {
     private final AuthApi auth;
     private final ApplicationEventPublisher events;
     private final Clock clock;
+    private final ObjectProvider<CaseDocumentLookup> documentLookup;
 
     public CheckService(CaseRepository cases, VerificationCheckRepository checks, CheckFieldRepository fields,
                         CheckDetailRepository details, CheckFreeSectionRepository freeSections, CandidateRepository candidates,
                         CheckTypeRegistry registry, CheckViewAssembler assembler,
                         @Qualifier("piiEncryptor") AesGcmEncryptor encryptor, CaseAccessPolicy policy, AuthApi auth,
-                        ApplicationEventPublisher events, Clock clock) {
+                        ApplicationEventPublisher events, Clock clock, ObjectProvider<CaseDocumentLookup> documentLookup) {
+        this.documentLookup = documentLookup;
         this.cases = cases;
         this.checks = checks;
         this.fields = fields;
@@ -293,6 +300,7 @@ public class CheckService {
         freeSections.deleteAllByCheckId(checkId);
         checks.delete(check);
         checks.flush();
+        events.publishEvent(new CheckDeletedEvent(caseId, checkId)); // the documents module retires the files of this check
         touch(c, auth.requireCurrentAdmin());
         events.publishEvent(new AuditEvent("CHECK_DELETED", null, null, "CHECK", checkId.toString(), caseId, null, null,
                 Map.of("type", check.getType(), "title", check.getTitle()), null));
@@ -302,16 +310,27 @@ public class CheckService {
 
     @PreAuthorize("hasAuthority('CHECK_UPDATE')")
     @Transactional
-    public CheckView addFreeSection(UUID caseId, UUID checkId, FreeSectionKind kind, String text) {
+    public CheckView addFreeSection(UUID caseId, UUID checkId, FreeSectionKind kind, String text, UUID documentId) {
         policy.check(caseId, CaseAction.UPDATE_CHECK);
         BgvCase c = openCase(caseId);
         VerificationCheck check = findCheck(caseId, checkId);
-        if (kind != FreeSectionKind.TEXT) {
-            throw invalid("kind", "image sections need document upload, which is not available yet");
-        }
         List<CheckFreeSection> existing = freeSections.findAllByCheckIdOrderBySortOrderAsc(checkId);
+        if (existing.size() >= MAX_FREE_SECTIONS) {
+            throw new ApiException(ErrorCode.CONFLICT, "A check can have at most " + MAX_FREE_SECTIONS + " extra blocks.");
+        }
         int next = existing.isEmpty() ? 0 : existing.get(existing.size() - 1).getSortOrder() + 1;
-        freeSections.saveAndFlush(new CheckFreeSection(checkId, FreeSectionKind.TEXT, requiredText("text", text), next));
+        if (kind == FreeSectionKind.IMAGE) {
+            CaseDocumentLookup lookup = documentLookup.getIfAvailable();
+            if (documentId == null || lookup == null || !lookup.isFreeImageOf(documentId, caseId, checkId)) {
+                throw invalid("documentId", "must be an image uploaded for this check");
+            }
+            if (existing.stream().anyMatch(section -> documentId.equals(section.getDocumentId()))) {
+                throw invalid("documentId", "is already used by another block");
+            }
+            freeSections.saveAndFlush(CheckFreeSection.image(checkId, documentId, next));
+        } else {
+            freeSections.saveAndFlush(new CheckFreeSection(checkId, FreeSectionKind.TEXT, requiredText("text", text), next));
+        }
         return freeSectionsChanged(c, check, "FREE_SECTION_ADDED");
     }
 
@@ -341,6 +360,9 @@ public class CheckService {
                 .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Section not found."));
         freeSections.delete(section);
         freeSections.flush();
+        if (section.getKind() == FreeSectionKind.IMAGE && section.getDocumentId() != null) {
+            events.publishEvent(new FreeImageRemovedEvent(caseId, checkId, section.getDocumentId()));
+        }
         return freeSectionsChanged(c, check, "FREE_SECTION_DELETED");
     }
 

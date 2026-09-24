@@ -149,7 +149,8 @@ public class AuthController {
             case INVALID_REFRESH_TOKEN -> "Your session has ended. Please sign in again.";
             case CSRF_FAILED -> "Missing or invalid CSRF token.";
             case RATE_LIMITED -> "Too many requests. Please try again later.";
-            case VALIDATION_FAILED, WEAK_PASSWORD, NOT_FOUND, CONFLICT, INVALID_INVITATION -> "The request could not be completed.";
+            case VALIDATION_FAILED, WEAK_PASSWORD, NOT_FOUND, CONFLICT, INVALID_INVITATION, FILE_TOO_LARGE, UNSUPPORTED_FILE,
+                 SERVICE_UNAVAILABLE -> "The request could not be completed.";
         };
     }
 

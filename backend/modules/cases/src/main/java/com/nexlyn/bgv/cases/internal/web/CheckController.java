@@ -66,7 +66,7 @@ public class CheckController {
     record OrderRequest(@NotNull @Size(max = 100) List<UUID> ids) {
     }
 
-    record FreeSectionRequest(@NotNull FreeSectionKind kind, @Size(max = 5000) String text) {
+    record FreeSectionRequest(@NotNull FreeSectionKind kind, @Size(max = 5000) String text, UUID documentId) {
     }
 
     record FreeSectionTextRequest(@Size(max = 5000) String text) {
@@ -120,7 +120,7 @@ public class CheckController {
     @PostMapping("/cases/{id}/checks/{checkId}/free-sections")
     public ResponseEntity<CheckView> addFreeSection(@PathVariable UUID id, @PathVariable UUID checkId,
                                                     @Valid @RequestBody FreeSectionRequest body) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(checks.addFreeSection(id, checkId, body.kind(), body.text()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(checks.addFreeSection(id, checkId, body.kind(), body.text(), body.documentId()));
     }
 
     @PutMapping("/cases/{id}/checks/{checkId}/free-sections/{sectionId}")

@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "nexlyn-local",
+      "credentials": [
+        { "accessKey": "local", "secretKey": "local-dev-secret" }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

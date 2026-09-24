@@ -73,7 +73,8 @@ class CaseViewAssembler {
         return new CandidateView(candidate.getFullName(), candidate.getParentType(), candidate.getParentName(),
                 candidate.getEmployeeId(), candidate.getDob(), candidate.getPhone(),
                 IndianPhone.format(candidate.getPhone()), candidate.getStreet(), candidate.getCity(),
-                candidate.getState(), candidate.getPin(), candidate.getCountry(), candidate.getPhotoDocumentId() != null);
+                candidate.getState(), candidate.getPin(), candidate.getCountry(), candidate.getPhotoDocumentId() != null,
+                candidate.getPhotoDocumentId());
     }
 
     /** Assignment lines with the admins' names filled in (looked up through the auth module's public directory). */

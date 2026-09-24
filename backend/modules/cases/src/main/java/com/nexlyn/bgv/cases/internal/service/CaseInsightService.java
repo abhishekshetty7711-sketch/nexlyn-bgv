@@ -2,6 +2,7 @@ package com.nexlyn.bgv.cases.internal.service;
 
 import com.nexlyn.bgv.auth.CaseAccessPolicy;
 import com.nexlyn.bgv.auth.CaseAction;
+import com.nexlyn.bgv.cases.CaseDocumentLookup;
 import com.nexlyn.bgv.cases.internal.domain.BgvCase;
 import com.nexlyn.bgv.cases.internal.domain.Candidate;
 import com.nexlyn.bgv.cases.internal.domain.ParentType;
@@ -14,6 +15,7 @@ import com.nexlyn.bgv.cases.internal.service.CaseViews.ValidationResult;
 import com.nexlyn.bgv.common.enums.CheckStatus;
 import com.nexlyn.bgv.common.error.ApiException;
 import com.nexlyn.bgv.common.error.ErrorCode;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,9 +54,11 @@ public class CaseInsightService {
     private final CandidateRepository candidates;
     private final ChecksSummary checks;
     private final CaseAccessPolicy policy;
+    private final ObjectProvider<CaseDocumentLookup> documentLookup;
 
     public CaseInsightService(CaseRepository cases, CandidateRepository candidates, ChecksSummary checks,
-                              CaseAccessPolicy policy) {
+                              CaseAccessPolicy policy, ObjectProvider<CaseDocumentLookup> documentLookup) {
+        this.documentLookup = documentLookup;
         this.cases = cases;
         this.candidates = candidates;
         this.checks = checks;
@@ -65,7 +69,7 @@ public class CaseInsightService {
     public ValidationResult validate(UUID id) {
         policy.check(id, CaseAction.READ);
         BgvCase c = find(id);
-        return validate(c, candidates.findByCaseId(id).orElseThrow(), checks.summariesOf(id));
+        return validate(c, candidates.findByCaseId(id).orElseThrow(), checks.summariesOf(id), documentCounts(id));
     }
 
     @Transactional(readOnly = true)
@@ -74,7 +78,7 @@ public class CaseInsightService {
         BgvCase c = find(id);
         List<ChecksSummary.CheckSummary> summaries = checks.summariesOf(id);
         List<CheckStatus> statuses = summaries.stream().map(ChecksSummary.CheckSummary::status).toList();
-        ValidationResult validation = validate(c, candidates.findByCaseId(id).orElseThrow(), summaries);
+        ValidationResult validation = validate(c, candidates.findByCaseId(id).orElseThrow(), summaries, documentCounts(id));
 
         Map<String, Integer> issues = new LinkedHashMap<>();
         for (ValidationIssue issue : concat(validation)) {
@@ -108,7 +112,14 @@ public class CaseInsightService {
 
     // ---- the rules of section 7.1 ---------------------------------------------------------------
 
-    static ValidationResult validate(BgvCase c, Candidate candidate, List<ChecksSummary.CheckSummary> checkSummaries) {
+    /** Documents per check, or null when the documents module is not there (the warning is then skipped). */
+    private Map<UUID, Long> documentCounts(UUID caseId) {
+        CaseDocumentLookup lookup = documentLookup.getIfAvailable();
+        return lookup == null ? null : lookup.supportingDocumentCounts(caseId);
+    }
+
+    static ValidationResult validate(BgvCase c, Candidate candidate, List<ChecksSummary.CheckSummary> checkSummaries,
+                                     Map<UUID, Long> documentCounts) {
         List<ValidationIssue> errors = new ArrayList<>();
         List<ValidationIssue> warnings = new ArrayList<>();
 
@@ -165,6 +176,9 @@ public class CaseInsightService {
             }
             if (!check.status().isConcluded()) {
                 warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":status", name + ": status is still " + check.status().label() + "."));
+            }
+            if (documentCounts != null && documentCounts.getOrDefault(check.id(), 0L) == 0L) {
+                warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":documents", name + ": no supporting document is attached."));
             }
             for (String label : check.missingRequired()) {
                 warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":" + label, name + ": " + label + " is missing."));

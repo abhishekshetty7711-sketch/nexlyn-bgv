@@ -22,6 +22,9 @@ public final class ApiErrors {
             case FORBIDDEN, CSRF_FAILED -> HttpStatus.FORBIDDEN;
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
             case CONFLICT -> HttpStatus.CONFLICT;
+            case FILE_TOO_LARGE -> HttpStatus.PAYLOAD_TOO_LARGE;
+            case UNSUPPORTED_FILE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+            case SERVICE_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
             case ACCOUNT_LOCKED -> HttpStatus.LOCKED;
             case RATE_LIMITED -> HttpStatus.TOO_MANY_REQUESTS;
             case VALIDATION_FAILED, WEAK_PASSWORD, INVALID_INVITATION -> HttpStatus.BAD_REQUEST;

@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 import java.util.UUID;
 
-/** A repeatable free block on a check's detail page (text now, images with the documents phase). */
+/** A repeatable free block on a check's detail page (text, or an image held by the documents module). */
 @Entity
 @Table(schema = "cases", name = "check_free_sections")
 public class CheckFreeSection {
@@ -44,6 +44,13 @@ public class CheckFreeSection {
         this.kind = kind;
         this.textValue = textValue;
         this.sortOrder = sortOrder;
+    }
+
+    /** An image block: the picture is a document held by the documents module. */
+    public static CheckFreeSection image(UUID checkId, UUID documentId, int sortOrder) {
+        CheckFreeSection section = new CheckFreeSection(checkId, FreeSectionKind.IMAGE, null, sortOrder);
+        section.documentId = documentId;
+        return section;
     }
 
     public void setTextValue(String textValue) {

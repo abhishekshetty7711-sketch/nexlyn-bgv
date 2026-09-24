@@ -19,6 +19,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # The default local file store: SeaweedFS with its S3 API (the app only speaks S3, so AWS S3 in prod needs
+  # no code change). MinIO below is kept for anyone who has a working image (profile "storage").
+  storage:
+    image: chrislusf/seaweedfs:latest
+    restart: unless-stopped
+    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=128 -volume.max=20
+    ports:
+      - "8333:8333"
+    volumes:
+      - storagedata:/data
+      # Signed requests are refused unless an identity is configured; these are throw-away local credentials.
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 8333 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
   minio:
     image: minio/minio:latest
     # MinIO is behind the "storage" profile: its public images were withdrawn, so it is
@@ -62,6 +80,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      storage:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: local
       DB_HOST: postgres
@@ -69,10 +89,14 @@ services:
       DB_NAME: ${DB_NAME:-nexlyn_bgv}
       DB_USERNAME: ${DB_USERNAME:-nexlyn}
       DB_PASSWORD: ${DB_PASSWORD:-nexlyn_dev_password}
-      S3_ENDPOINT: http://minio:9000
+      # Local file store (private: only reachable inside the compose network unless the port above is published).
+      S3_ENDPOINT: http://storage:8333
       S3_BUCKET: ${S3_BUCKET:-nexlyn-bgv}
-      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin_dev_password}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-local}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-local-dev-secret}
+      S3_PATH_STYLE: "true"
+      S3_SSE: "false"
+      S3_CREATE_BUCKET: "true"
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
       BOOTSTRAP_SUPERADMIN_EMAIL: ${BOOTSTRAP_SUPERADMIN_EMAIL:-}
       BOOTSTRAP_SUPERADMIN_PASSWORD: ${BOOTSTRAP_SUPERADMIN_PASSWORD:-}
@@ -96,3 +120,4 @@ services:
 volumes:
   pgdata:
   miniodata:
+  storagedata:

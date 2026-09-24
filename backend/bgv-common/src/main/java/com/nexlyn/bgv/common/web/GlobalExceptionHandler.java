@@ -8,6 +8,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -43,7 +46,14 @@ public class GlobalExceptionHandler {
         return ApiErrors.response(ErrorCode.VALIDATION_FAILED, "The request is not valid.", List.of(), null);
     }
 
-    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    /** A file bigger than the server-wide multipart limit (the per-file rule in the documents module is separate). */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> tooLarge(MaxUploadSizeExceededException e) {
+        return ApiErrors.response(ErrorCode.FILE_TOO_LARGE, "That file is too large.", List.of(), null);
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+            MissingServletRequestPartException.class, MissingServletRequestParameterException.class})
     ResponseEntity<ApiError> unreadable(Exception e) {
         return ApiErrors.response(ErrorCode.VALIDATION_FAILED, "The request is missing or malformed.", List.of(), null);
     }
