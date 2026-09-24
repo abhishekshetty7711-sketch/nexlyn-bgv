@@ -1,0 +1,104 @@
+name: nexlyn-bgv-prod
+
+# Production on ONE machine (CLAUDE.md section 14): the database is AWS RDS and the files are AWS S3, so this
+# file only runs the three containers of the application. Everything secret comes from ".env" (see
+# .env.example) or the machine's secret store; nothing secret is in this file or in git.
+#
+#   docker compose --env-file .env up -d --build
+#
+# Needs about 4 GB of memory: the backend can use up to 2 GB (of which the report printer takes a few
+# hundred MB at a time), the web containers very little.
+
+x-hardening: &hardening
+  restart: unless-stopped
+  init: true                          # a proper PID 1 that reaps child processes (Chromium starts some)
+  read_only: true                     # nothing can write to the container's own disk...
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  backend:
+    <<: *hardening
+    build:
+      context: ../../backend
+      dockerfile: bgv-app/Dockerfile
+    image: ${BACKEND_IMAGE:-nexlyn-bgv-backend:latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_REGION: ${S3_REGION:-ap-south-1}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_SSE: ${S3_SSE:-true}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_KEY_ID: ${JWT_KEY_ID}
+      # Only while rotating the signing key (docs/runbooks/key-rotation.md): the old public key, so tokens signed
+      # with it stay valid until they expire.
+      NEXLYN_AUTH_JWT_PREVIOUS_KEYS_0_KEY_ID: ${JWT_PREVIOUS_KEY_ID:-}
+      NEXLYN_AUTH_JWT_PREVIOUS_KEYS_0_PUBLIC_KEY: ${JWT_PREVIOUS_PUBLIC_KEY:-}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      BOOTSTRAP_SUPERADMIN_EMAIL: ${BOOTSTRAP_SUPERADMIN_EMAIL:-}
+      BOOTSTRAP_SUPERADMIN_PASSWORD: ${BOOTSTRAP_SUPERADMIN_PASSWORD:-}
+      REPORT_MAX_CONCURRENT_RENDERS: ${REPORT_MAX_CONCURRENT_RENDERS:-2}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    # ...except these two: the JVM and the report printer need scratch space, and it vanishes on restart.
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+      - /home/nexlyn:size=256m,uid=10001,gid=10001
+    mem_limit: 2560m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
+    networks: [internal]
+
+  frontend:
+    <<: *hardening
+    build:
+      context: ../../frontend
+    image: ${FRONTEND_IMAGE:-nexlyn-bgv-frontend:latest}
+    tmpfs:
+      - /tmp
+    depends_on:
+      backend:
+        condition: service_healthy
+    mem_limit: 128m
+    networks: [internal]
+
+  proxy:
+    <<: *hardening
+    image: nginxinc/nginx-unprivileged:1.27-alpine
+    # The unprivileged image cannot bind ports below 1024, so it listens on 8080 / 8443 and Docker maps 80 / 443.
+    ports:
+      - "80:8080"
+      - "443:8443"
+    volumes:
+      - ./nginx/nexlyn.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${TLS_CERT_DIR}:/etc/nginx/certs:ro          # fullchain.pem and privkey.pem
+      - ${ACME_WEBROOT:-./acme}:/var/www/acme:ro     # for certificate renewal (Let's Encrypt webroot)
+    tmpfs:
+      - /tmp
+    depends_on:
+      - frontend
+    mem_limit: 128m
+    networks: [internal]
+
+# One private network. Only the proxy publishes ports; the backend has none, so it cannot be reached from outside
+# (it can still reach RDS and S3).
+networks:
+  internal: {}

@@ -1,0 +1,6 @@
+**/target/
+**/hs_err_pid*.log
+**/replay_pid*.log
+**/.idea/
+**/*.iml
+.mvn/wrapper/*.jar
