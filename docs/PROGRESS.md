@@ -18,6 +18,13 @@ _Last updated: 2026-09-25_
 | 7. Workflow | **Done** (7a-7d). Done-when met: maker-checker is enforced by tests (preparer, creator, submitter, later-added preparer, super admin). 14 workflow + 7 dashboard + 12 finalize tests among 81 reports, 43 documents, 113+ cases, 23 common, 106+ auth and 5 app backend tests; 269 frontend tests. |
 | 8. Hardening & deploy | **Done as far as it can be done without the owner** (8a-8c, D-034): NCSC password list, correlation ids, JSON logs, proxy-aware prod config, nightly purge of retired documents, lazy routes, Dockerfiles, prod compose + nginx (TLS, rate limits), CI / security / dependabot / manual deploy workflows, backup script, runbooks, PDF load test (about 10 s per heavy report). NOT verified here: building the images, TLS, the AWS side and running the workflows (owner-only items below). |
 
+## Final state after Phase 8 (2026-09-25)
+
+- **Tests:** backend `./mvnw verify` is green: common 27, auth 108, cases 113, documents 48, reports 81, app 7 (384). Frontend: 269 tests, type check, lint and build clean, `npm audit` reports 0 vulnerabilities. The PDF load test (tag `load`) is run by hand.
+- **Never run from here:** the Docker image builds, the GitHub workflows, TLS, RDS / S3 in AWS, and the browser-in-Docker PDF path. Everything else is covered by tests.
+- **Not built (by design, "Later" in CLAUDE.md section 15):** third-party verification vendors, notifications (e-mail / in-app), risk score and other roadmap polish, module extraction, browser end-to-end tests, an antivirus scan of uploads, the OpenAPI-generated client.
+- **Only the owner can do:** see "Open issues and things only the owner can do" below.
+
 ## Phase 2 steps
 
 | Step | Status |
