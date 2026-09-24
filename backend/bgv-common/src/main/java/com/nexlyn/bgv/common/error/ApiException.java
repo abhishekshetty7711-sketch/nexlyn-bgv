@@ -1,7 +1,4 @@
-package com.nexlyn.bgv.auth.internal.service;
-
-import com.nexlyn.bgv.common.error.ApiError;
-import com.nexlyn.bgv.common.error.ErrorCode;
+package com.nexlyn.bgv.common.error;
 
 import java.time.Duration;
 import java.util.List;

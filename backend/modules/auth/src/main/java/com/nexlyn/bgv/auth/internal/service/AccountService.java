@@ -6,6 +6,7 @@ import com.nexlyn.bgv.auth.AuthApi;
 import com.nexlyn.bgv.auth.internal.domain.Admin;
 import com.nexlyn.bgv.auth.internal.repository.AdminRepository;
 import com.nexlyn.bgv.common.error.ApiError;
+import com.nexlyn.bgv.common.error.ApiException;
 import com.nexlyn.bgv.common.error.ErrorCode;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;

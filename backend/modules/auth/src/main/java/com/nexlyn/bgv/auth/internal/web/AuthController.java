@@ -13,6 +13,7 @@ import com.nexlyn.bgv.auth.internal.web.AuthDtos.SetupRequest;
 import com.nexlyn.bgv.auth.internal.web.AuthDtos.SetupResponse;
 import com.nexlyn.bgv.auth.internal.web.AuthDtos.TokenResponse;
 import com.nexlyn.bgv.common.error.ApiError;
+import com.nexlyn.bgv.common.web.ApiErrors;
 import com.nexlyn.bgv.common.error.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

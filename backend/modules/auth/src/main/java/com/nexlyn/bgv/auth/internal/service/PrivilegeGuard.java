@@ -4,6 +4,7 @@ import com.nexlyn.bgv.auth.AdminPrincipal;
 import com.nexlyn.bgv.auth.internal.domain.AdminStatus;
 import com.nexlyn.bgv.auth.internal.domain.Role;
 import com.nexlyn.bgv.auth.internal.repository.AdminRepository;
+import com.nexlyn.bgv.common.error.ApiException;
 import com.nexlyn.bgv.common.error.ErrorCode;
 import com.nexlyn.bgv.common.security.Permission;
 import org.springframework.stereotype.Component;
