@@ -4,10 +4,12 @@ interface DialogProps {
   title: string
   onClose: () => void
   children: ReactNode
+  /** `wide` for content such as a report preview. */
+  size?: 'normal' | 'wide'
 }
 
 /** A simple modal: covers the page, closes on Escape, and is announced to screen readers. */
-export function Dialog({ title, onClose, children }: DialogProps) {
+export function Dialog({ title, onClose, children, size = 'normal' }: DialogProps) {
   const titleId = useId()
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export function Dialog({ title, onClose, children }: DialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-5 shadow-xl"
+        className={`max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white p-5 shadow-xl ${size === 'wide' ? 'max-w-5xl' : 'max-w-lg'}`}
       >
         <h2 id={titleId} className="mb-4 text-lg font-semibold text-slate-900">
           {title}

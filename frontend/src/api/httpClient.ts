@@ -60,8 +60,8 @@ export interface RequestOptions {
   headers?: Record<string, string>
   /** Sent as a multipart body (file uploads). The browser sets the content type and boundary. */
   form?: FormData
-  /** How to read a successful answer: JSON (default) or the raw bytes (files). */
-  as?: 'json' | 'blob'
+  /** How to read a successful answer: JSON (default), the raw bytes (files) or plain text (HTML). */
+  as?: 'json' | 'blob' | 'text'
   /** Public endpoints (login, ...) pass `false`: no bearer token, and no refresh-and-retry on 401. */
   auth?: boolean
 }
@@ -122,6 +122,9 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
   if (options.as === 'blob') {
     return (await response.blob()) as T
+  }
+  if (options.as === 'text') {
+    return (await response.text()) as T
   }
   return (await response.json()) as T
 }

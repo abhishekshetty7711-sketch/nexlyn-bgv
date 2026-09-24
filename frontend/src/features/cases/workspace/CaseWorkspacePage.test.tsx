@@ -30,6 +30,7 @@ function serve(initial: CaseView, extra: Record<string, FakeHandler> = {}): Setu
     'GET /api/cases/c-1/progress': () => ({ body: progressFixture() }),
     'GET /api/cases/c-1/validation': () => ({ body: validationFixture() }),
     'GET /api/cases/c-1/checks': () => ({ body: [] }),
+    'GET /api/cases/c-1/reports': () => ({ body: [] }),
     'GET /api/check-types': () => ({ body: [] }),
     'GET /api/clients': () => ({ body: CLIENTS }),
     'GET /api/assignable-admins': () => ({ body: ADMINS }),
@@ -349,7 +350,7 @@ describe('CaseWorkspacePage', () => {
 
   it('lists what blocks the report and jumps to the section that needs work', async () => {
     const setup = serve(caseFixture())
-    open(setup, { route: '/cases/c-1?section=generate' })
+    open(setup, { route: '/cases/c-1?section=generate', permissions: [...EDITOR, 'REPORT_GENERATE'] })
 
     const errors = await screen.findByRole('region', { name: 'Errors' })
     expect(within(errors).getByText("Candidate's full name is required.")).toBeInTheDocument()
@@ -357,6 +358,7 @@ describe('CaseWorkspacePage', () => {
     expect(within(screen.getByRole('region', { name: 'Warnings' })).getByText('Analyst remarks are empty.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Submit for review' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Generate draft PDF' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled()
 
     await userEvent.click(within(errors).getAllByRole('button', { name: 'Go to section' })[0]!)
     expect(await screen.findByRole('form', { name: '2. Candidate details' })).toBeInTheDocument()

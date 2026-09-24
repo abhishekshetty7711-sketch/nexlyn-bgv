@@ -14,7 +14,7 @@ _Last updated: 2026-09-24_
 | 3. Clients & Case workspace core | **Done** (3a-3c). Done-when met: every section saves and loads, validation follows section 7.1. 41 cases + 16 common + 106 auth + 5 app backend tests; 155 frontend tests. |
 | 4. Checks | **Done** (4a-4c). Done-when met: all 18 types can be added and saved (backend tests add and save every type; frontend renders any definition). 92 cases + 23 common + 106 auth + 5 app backend tests; 197 frontend tests. |
 | 5. Documents | **Done** (5a-5c). Done-when met: files are stored in an S3-compatible bucket and never public (tests against S3Mock and SeaweedFS). 43 documents + 92 cases + 23 common + 106 auth + 5 app backend tests; 233 frontend tests. The Docker image has not been rebuilt with this code yet (needs Avast HTTPS scanning off, see open issues). |
-| 6. Reports | Not started |
+| 6. Reports | **Done** (6a-6d). Done-when met: a fixture case renders to a PDF whose layout matches the reference tool (printed both and compared page by page); the browser's page count equals the plan; cut-off pages are detected. 69 reports + 43 documents + 92 cases + 23 common + 106 auth + 5 app backend tests; 247 frontend tests. Finalize (protected final PDF) belongs to Phase 7. |
 | 7. Workflow | Not started |
 | 8. Hardening & deploy | Not started |
 
@@ -31,7 +31,7 @@ _Last updated: 2026-09-24_
 
 ## Next step
 
-Start **Phase 6: Reports** (CLAUDE.md section 15, with sections 6, 9.4, 13 and 10 tables `report_jobs`, `report_versions`): port the layout, CSS, pagination and formatting rules from the original HTML tool into Thymeleaf templates, `ReportModelAssembler` (uses `CaseApi` and documents), `PaginationService`, Playwright Chromium render, watermark, PDFBox AES-256 encryption, background jobs, versions, preview endpoint; frontend Generate section (preview, generate, version list). **The reference file is not in the repo:** `docs/reference/` is empty (see open issues). Build everything that does not depend on it first (assembler, model, job executor, versions, encryption, endpoints), then port the layout from the copies named below once the owner has confirmed they hold no real candidate data. Cases and Documents also need a public read API for the assembler (`CaseApi` / a new `DocumentApi` in the root package): add it in this phase.
+Start **Phase 7: Workflow** (CLAUDE.md section 15, with sections 11.3, 9.2 workflow rows, 9.4 finalize): `WorkflowService` in `cases` (DRAFT to IN_REVIEW to APPROVED to FINALIZED, CHANGES_REQUESTED back to DRAFT; submit needs `REPORT_SUBMIT_FOR_REVIEW`, approve and request-changes need `REPORT_APPROVE`, the preparer can never approve or finalize, case data locks outside DRAFT / CHANGES_REQUESTED, FINALIZED is immutable and changes need reopening into a new version), `POST /api/cases/{id}/submit-review`, `/approve`, `/request-changes`, reports `POST /api/cases/{id}/reports/{version}/finalize {openPassword?}` (APPROVED only; encrypts with `PdfEncryptionService`, marks the version FINAL, moves the case to FINALIZED; needs `REPORT_FINALIZE` and separation of duties), version history, final-download permission (already enforced), audit events for every transition; frontend: enable "Submit for review" in Section 8 plus approve / request-changes / finalize actions with the comment box, reviewer comment display, dashboard widgets (counts by lifecycle and status, due dates and TAT alerts, my assigned cases). Maker-checker must be enforced by tests.
 
 ## Open issues and things only the owner can do
 

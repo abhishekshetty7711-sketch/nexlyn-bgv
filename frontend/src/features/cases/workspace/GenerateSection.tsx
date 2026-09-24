@@ -2,12 +2,14 @@ import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
+import { ReportPanel } from '../../reports/ReportPanel'
 import { useValidation } from '../api'
 import type { SectionKey, ValidationIssue } from '../types'
 import { isSectionKey } from '../types'
 
 interface GenerateSectionProps {
   caseId: string
+  reportId: string
   onGoToSection: (section: SectionKey, checkId?: string | null) => void
 }
 
@@ -39,7 +41,7 @@ function IssueList({ issues, tone, onGoTo }: { issues: ValidationIssue[]; tone: 
 }
 
 /** Section 8: what still blocks the report (errors) or deserves a second look (warnings). */
-export function GenerateSection({ caseId, onGoToSection }: GenerateSectionProps) {
+export function GenerateSection({ caseId, reportId, onGoToSection }: GenerateSectionProps) {
   const validation = useValidation(caseId)
   const result = validation.data
 
@@ -63,18 +65,7 @@ export function GenerateSection({ caseId, onGoToSection }: GenerateSectionProps)
           </section>
         </>
       )}
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" disabled>
-          Preview
-        </Button>
-        <Button type="button" variant="outline" disabled>
-          Generate draft PDF
-        </Button>
-        <Button type="button" disabled>
-          Submit for review
-        </Button>
-      </div>
-      <p className="text-xs text-slate-500">Report preview and generation, and the review workflow, arrive in later build phases.</p>
+      <ReportPanel caseId={caseId} reportId={reportId} hasErrors={!result || result.errors.length > 0} warningCount={result?.warnings.length ?? 0} />
     </div>
   )
 }
