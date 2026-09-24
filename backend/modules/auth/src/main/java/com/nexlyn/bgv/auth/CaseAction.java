@@ -12,5 +12,6 @@ public enum CaseAction {
     GENERATE_REPORT,
     SUBMIT_FOR_REVIEW,
     APPROVE,
-    FINALIZE
+    FINALIZE,
+    REOPEN
 }

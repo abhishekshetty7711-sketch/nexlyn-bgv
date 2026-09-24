@@ -45,13 +45,31 @@ public final class CaseViews {
     public record AssignmentView(UUID adminId, String fullName, String email, CaseRole role, Instant assignedAt) {
     }
 
+    /** What the current admin may do with this case right now (the same rules the server enforces on each call). */
+    public record WorkflowActions(boolean canSubmit, boolean canApprove, boolean canRequestChanges, boolean canFinalize,
+                                  boolean canReopen) {
+        public static WorkflowActions none() {
+            return new WorkflowActions(false, false, false, false, false);
+        }
+    }
+
+    /** Who took the review steps and when, and what the current admin may do next. */
+    public record WorkflowInfo(Instant submittedAt, String submittedByName, Instant reviewedAt, String reviewedByName,
+                               Instant approvedAt, Instant finalizedAt, String finalizedByName, WorkflowActions actions) {
+    }
+
+    /** One line of a case's history. */
+    public record HistoryEntry(String action, CaseLifecycle from, CaseLifecycle to, UUID actorId, String actorName,
+                               String comment, Integer reportVersion, Instant at) {
+    }
+
     /** The whole workspace of one case. {@code version} must be sent back with every save. */
     public record CaseView(UUID id, String reportId, CaseLifecycle lifecycle, boolean editable, long version,
                            LocalDate issueDate, LocalDate dueDate, String reviewComment, ClientRef client,
                            String companyDisplayName, CandidateView candidate, PeriodView period,
                            OverviewView overview, RemarksView remarks, SettingsView settings,
                            List<AssignmentView> assignments, Map<String, String> savedSections,
-                           Instant createdAt, Instant updatedAt) {
+                           Instant createdAt, Instant updatedAt, WorkflowInfo workflow) {
     }
 
     /** One line of the case list. */

@@ -3,6 +3,8 @@ package com.nexlyn.bgv.cases.internal.service;
 import com.nexlyn.bgv.cases.CaseApi;
 import com.nexlyn.bgv.cases.CaseReport;
 import com.nexlyn.bgv.cases.CaseValidation;
+import com.nexlyn.bgv.cases.internal.domain.CaseStatusHistory;
+import com.nexlyn.bgv.common.enums.CaseLifecycle;
 import com.nexlyn.bgv.common.error.ApiException;
 import com.nexlyn.bgv.common.error.ErrorCode;
 import com.nexlyn.bgv.cases.internal.domain.BgvCase;
@@ -29,9 +31,12 @@ class CaseApiImpl implements CaseApi {
     private final CaseViewAssembler caseViews;
     private final CheckViewAssembler checkViews;
     private final CaseInsightService insight;
+    private final WorkflowService workflow;
 
     CaseApiImpl(CaseRepository cases, VerificationCheckRepository checks, CandidateRepository candidates,
-                CaseViewAssembler caseViews, CheckViewAssembler checkViews, CaseInsightService insight) {
+                CaseViewAssembler caseViews, CheckViewAssembler checkViews, CaseInsightService insight,
+                WorkflowService workflow) {
+        this.workflow = workflow;
         this.cases = cases;
         this.checks = checks;
         this.candidates = candidates;
@@ -46,6 +51,12 @@ class CaseApiImpl implements CaseApi {
         return checks.findById(checkId)
                 .map(VerificationCheck::getCaseId)
                 .filter(this::caseExists);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CaseLifecycle> lifecycleOf(UUID caseId) {
+        return cases.findByIdAndDeletedAtIsNull(caseId).map(BgvCase::getLifecycle);
     }
 
     @Override
@@ -136,5 +147,27 @@ class CaseApiImpl implements CaseApi {
         return new CaseValidation(
                 result.errors().stream().map(i -> new CaseValidation.Issue(i.section(), i.field(), i.message())).toList(),
                 result.warnings().stream().map(i -> new CaseValidation.Issue(i.section(), i.field(), i.message())).toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.time.Instant requireCanFinalize(UUID caseId, UUID adminId) {
+        BgvCase c = cases.findByIdAndDeletedAtIsNull(caseId).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Case not found."));
+        if (c.getLifecycle() != CaseLifecycle.APPROVED) {
+            throw new ApiException(ErrorCode.CONFLICT, "Only an approved case can be finalized. This case is "
+                    + c.getLifecycle().name().toLowerCase().replace('_', ' ') + ".");
+        }
+        workflow.requireChecker(c, adminId, "finalize");
+        return c.getApprovedAt();
+    }
+
+    @Override
+    @Transactional
+    public void markFinalized(UUID caseId, UUID adminId, int reportVersion) {
+        BgvCase c = cases.findByIdAndDeletedAtIsNull(caseId).orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Case not found."));
+        workflow.requireChecker(c, adminId, "finalize");
+        CaseLifecycle before = c.getLifecycle();
+        c.finalizeCase(adminId, java.time.Instant.now());
+        workflow.record(c, CaseStatusHistory.Action.FINALIZE, before, adminId, null, reportVersion, "CASE_FINALIZED");
     }
 }

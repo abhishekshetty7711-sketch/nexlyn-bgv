@@ -159,6 +159,8 @@ public abstract class ReportsIntegrationTestBase {
         jdbc.update("DELETE FROM reports.report_jobs");
         jdbc.update("DELETE FROM reports.report_versions");
         jdbc.update("DELETE FROM documents.documents");
+        // The status history is append-only (a trigger refuses DELETE), so tests empty it with TRUNCATE.
+        jdbc.update("TRUNCATE cases.case_status_history");
         jdbc.update("DELETE FROM cases.check_free_sections");
         jdbc.update("DELETE FROM cases.check_details");
         jdbc.update("DELETE FROM cases.check_fields");

@@ -15,6 +15,7 @@ import com.nexlyn.bgv.reports.internal.assemble.ReportModelAssembler;
 import com.nexlyn.bgv.reports.internal.domain.ReportJob;
 import com.nexlyn.bgv.reports.internal.domain.ReportVersion;
 import com.nexlyn.bgv.reports.internal.render.HtmlRenderer;
+import com.nexlyn.bgv.reports.internal.render.PdfEncryptionService;
 import com.nexlyn.bgv.reports.internal.repository.ReportJobRepository;
 import com.nexlyn.bgv.reports.internal.repository.ReportVersionRepository;
 import com.nexlyn.bgv.reports.internal.service.ReportViews.Download;
@@ -23,9 +24,12 @@ import com.nexlyn.bgv.reports.internal.service.ReportViews.VersionView;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -58,13 +62,18 @@ public class ReportService {
     private final ReportJobExecutor executor;
     private final ReportJobRunner runner;
     private final FileStorage storage;
+    private final PdfEncryptionService encryption;
+    private final TransactionTemplate tx;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
     public ReportService(CaseApi cases, ReportModelAssembler assembler, HtmlRenderer html, CaseAccessPolicy policy,
                          AuthApi auth, AdminDirectory directory, ReportJobRepository jobs, ReportVersionRepository versions,
                          ReportJobExecutor executor, ReportJobRunner runner, FileStorage storage,
+                         PdfEncryptionService encryption, TransactionTemplate tx,
                          ApplicationEventPublisher events, Clock clock) {
+        this.encryption = encryption;
+        this.tx = tx;
         this.cases = cases;
         this.assembler = assembler;
         this.html = html;
@@ -107,6 +116,9 @@ public class ReportService {
     @PreAuthorize("hasAuthority('REPORT_GENERATE')")
     public JobView requestDraft(UUID caseId, boolean acknowledgeWarnings) {
         policy.check(caseId, CaseAction.GENERATE_REPORT);
+        if (cases.lifecycleOf(caseId).orElse(null) == com.nexlyn.bgv.common.enums.CaseLifecycle.FINALIZED) {
+            throw new ApiException(ErrorCode.CONFLICT, "This case is finalized. Reopen it to change it and make a new report.");
+        }
         CaseValidation validation = validationOf(caseId);
         if (!validation.errors().isEmpty()) {
             throw new ApiException(ErrorCode.CONFLICT, "The report cannot be generated yet: "
@@ -174,6 +186,81 @@ public class ReportService {
         events.publishEvent(new AuditEvent("REPORT_DOWNLOADED", null, null, "CASE", caseId.toString(), caseId, null, null, null,
                 Map.of("version", version, "kind", stored.getKind().name())));
         return new Download(bytes, filename(stored), finalReport);
+    }
+
+    // ---- finalizing ------------------------------------------------------------------------------------------
+
+    private static final int MIN_OPEN_PASSWORD = 8;
+    private static final int MAX_OPEN_PASSWORD = 128;
+
+    /**
+     * Turns a draft into the final report (CLAUDE.md sections 9.4 and 11.3): the case must be APPROVED and the
+     * finalizer must not be one of its preparers; the draft must have been made after the approval (so it shows
+     * exactly what was approved); the PDF is protected with AES-256 and an optional open password; it is stored as a
+     * NEW version marked FINAL (the draft stays as it was) and the case becomes FINALIZED. All or nothing: if
+     * the case cannot be finalized, no final report is left behind.
+     */
+    @PreAuthorize("hasAuthority('REPORT_FINALIZE')")
+    public VersionView finalizeVersion(UUID caseId, int version, String openPassword) {
+        policy.check(caseId, CaseAction.FINALIZE);
+        UUID me = auth.requireCurrentAdmin().id();
+        String password = openPassword == null || openPassword.isBlank() ? null : openPassword;
+        if (password != null && (password.length() < MIN_OPEN_PASSWORD || password.length() > MAX_OPEN_PASSWORD)) {
+            throw new ApiException(ErrorCode.VALIDATION_FAILED, "The request is not valid.",
+                    java.util.List.of(new com.nexlyn.bgv.common.error.ApiError.FieldError("openPassword",
+                            "must be " + MIN_OPEN_PASSWORD + " to " + MAX_OPEN_PASSWORD + " characters, or left empty")), null);
+        }
+        Instant approvedAt = cases.requireCanFinalize(caseId, me);
+        ReportVersion draft = versions.findByCaseIdAndVersion(caseId, version)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "That report version does not exist."));
+        if (draft.getKind() != ReportVersion.Kind.DRAFT) {
+            throw new ApiException(ErrorCode.CONFLICT, "That version is already a final report.");
+        }
+        if (approvedAt != null && draft.getGeneratedAt().isBefore(approvedAt)) {
+            throw new ApiException(ErrorCode.CONFLICT, "That report was made before the case was approved. "
+                    + "Generate a fresh draft of the approved case, check it, and finalize that one.");
+        }
+        byte[] plain = storage.get(draft.getPdfStorageKey());
+        if (!ReportJobRunner.sha256(plain).equals(draft.getSha256())) {
+            throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, "The stored draft did not pass its integrity check, so it was not finalized.");
+        }
+        byte[] protectedPdf = encryption.protect(plain, password); // fails loudly; never an unprotected file
+
+        int number = versions.latestVersion(caseId) + 1;
+        String key = "reports/" + caseId + "/v" + number + ".pdf";
+        storage.put(key, protectedPdf, "application/pdf");
+        try {
+            ReportVersion saved = tx.execute(status -> {
+                ReportVersion result = versions.saveAndFlush(ReportVersion.finalOf(draft, number, key, ReportJobRunner.sha256(protectedPdf),
+                        protectedPdf.length, true, me, Instant.now(clock)));
+                cases.markFinalized(caseId, me, number);
+                events.publishEvent(new AuditEvent("REPORT_FINALIZED", null, null, "CASE", caseId.toString(), caseId, null, null, null,
+                        Map.of("version", number, "fromDraft", version, "openPassword", password != null)));
+                return result;
+            });
+            return versionView(saved);
+        } catch (ObjectOptimisticLockingFailureException | DataIntegrityViolationException clash) {
+            deleteQuietly(key);
+            throw new ApiException(ErrorCode.CONFLICT, "The case was changed at the same moment. Reload it and try again.");
+        } catch (RuntimeException failure) {
+            deleteQuietly(key); // nothing refers to the new file: do not leave it behind
+            throw failure;
+        }
+    }
+
+    private void deleteQuietly(String key) {
+        try {
+            storage.delete(key);
+        } catch (RuntimeException ignored) {
+            // the orphaned file is harmless (private, never referenced)
+        }
+    }
+
+    private VersionView versionView(ReportVersion v) {
+        var who = directory.find(java.util.List.of(v.getGeneratedBy())).get(v.getGeneratedBy());
+        return new VersionView(v.getVersion(), v.getKind(), v.getSizeBytes(), v.getPageCount(), v.isEncrypted(), v.getGeneratedBy(),
+                who == null ? "Unknown admin" : who.fullName(), v.getGeneratedAt(), v.getFinalizedAt(),
+                v.getWarnings() == null ? java.util.List.of() : v.getWarnings());
     }
 
     // ---- helpers ---------------------------------------------------------------------------------------------

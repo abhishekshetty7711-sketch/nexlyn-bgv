@@ -2,6 +2,8 @@ package com.nexlyn.bgv.cases.internal.service;
 
 import com.nexlyn.bgv.auth.AdminDirectory;
 import com.nexlyn.bgv.auth.AdminDirectory.AdminSummary;
+import com.nexlyn.bgv.auth.AdminPrincipal;
+import com.nexlyn.bgv.auth.AuthApi;
 import com.nexlyn.bgv.cases.internal.domain.BgvCase;
 import com.nexlyn.bgv.cases.internal.domain.Candidate;
 import com.nexlyn.bgv.cases.internal.domain.CaseAssignment;
@@ -17,6 +19,7 @@ import com.nexlyn.bgv.cases.internal.service.CaseViews.OverviewView;
 import com.nexlyn.bgv.cases.internal.service.CaseViews.PeriodView;
 import com.nexlyn.bgv.cases.internal.service.CaseViews.RemarksView;
 import com.nexlyn.bgv.cases.internal.service.CaseViews.SettingsView;
+import com.nexlyn.bgv.cases.internal.service.CaseViews.WorkflowInfo;
 import com.nexlyn.bgv.common.error.ApiException;
 import com.nexlyn.bgv.common.error.ErrorCode;
 import com.nexlyn.bgv.common.validation.IndianPhone;
@@ -38,9 +41,13 @@ class CaseViewAssembler {
     private final CaseAssignmentRepository assignments;
     private final AdminDirectory directory;
     private final ChecksSummary checks;
+    private final WorkflowRules rules;
+    private final AuthApi auth;
 
     CaseViewAssembler(ClientRepository clients, CandidateRepository candidates, CaseAssignmentRepository assignments,
-                      AdminDirectory directory, ChecksSummary checks) {
+                      AdminDirectory directory, ChecksSummary checks, WorkflowRules rules, AuthApi auth) {
+        this.rules = rules;
+        this.auth = auth;
         this.clients = clients;
         this.candidates = candidates;
         this.assignments = assignments;
@@ -66,7 +73,26 @@ class CaseViewAssembler {
                 new RemarksView(c.getAnalystRemarks(), c.getFinalRecommendation()),
                 new SettingsView(c.getLayoutCards(), c.getDateFormat(), c.isWatermarkEnabled(), c.getWatermarkText()),
                 assignmentViews(assignments.findAllByKeyCaseId(c.getId())),
-                c.getSavedSections(), c.getCreatedAt(), c.getUpdatedAt());
+                c.getSavedSections(), c.getCreatedAt(), c.getUpdatedAt(), workflow(c));
+    }
+
+    /** Who took each review step (names through the auth directory) and what the current admin may do next. */
+    private WorkflowInfo workflow(BgvCase c) {
+        List<UUID> people = java.util.stream.Stream.of(c.getSubmittedBy(), c.getReviewedBy(), c.getFinalizedBy())
+                .filter(java.util.Objects::nonNull).toList();
+        Map<UUID, AdminSummary> names = people.isEmpty() ? Map.of() : directory.find(people);
+        UUID me = auth.currentAdmin().map(AdminPrincipal::id).orElse(null);
+        return new WorkflowInfo(c.getSubmittedAt(), nameOf(names, c.getSubmittedBy()), c.getReviewedAt(),
+                nameOf(names, c.getReviewedBy()), c.getApprovedAt(), c.getFinalizedAt(), nameOf(names, c.getFinalizedBy()),
+                rules.actionsFor(c, me));
+    }
+
+    private static String nameOf(Map<UUID, AdminSummary> names, UUID id) {
+        if (id == null) {
+            return null;
+        }
+        AdminSummary person = names.get(id);
+        return person == null ? "Unknown admin" : person.fullName();
     }
 
     static CandidateView candidateView(Candidate candidate) {

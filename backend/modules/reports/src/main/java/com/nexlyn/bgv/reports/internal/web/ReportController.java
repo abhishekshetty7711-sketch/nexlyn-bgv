@@ -29,6 +29,10 @@ public class ReportController {
     record GenerateRequest(boolean acknowledgeWarnings) {
     }
 
+    /** {@code openPassword} is optional; it is used to protect the file and is never stored or logged. */
+    record FinalizeRequest(String openPassword) {
+    }
+
     private final ReportService reports;
 
     public ReportController(ReportService reports) {
@@ -53,6 +57,11 @@ public class ReportController {
     public ResponseEntity<JobView> generate(@PathVariable UUID id, @RequestBody(required = false) GenerateRequest body) {
         boolean acknowledged = body != null && body.acknowledgeWarnings();
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(reports.requestDraft(id, acknowledged));
+    }
+
+    @PostMapping("/{version}/finalize")
+    public VersionView finalizeVersion(@PathVariable UUID id, @PathVariable int version, @RequestBody(required = false) FinalizeRequest body) {
+        return reports.finalizeVersion(id, version, body == null ? null : body.openPassword());
     }
 
     @GetMapping("/jobs/{jobId}")

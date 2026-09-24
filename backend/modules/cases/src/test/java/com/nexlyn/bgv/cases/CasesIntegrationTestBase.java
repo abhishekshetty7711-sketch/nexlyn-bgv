@@ -72,6 +72,8 @@ public abstract class CasesIntegrationTestBase {
     @BeforeEach
     void cleanCases() {
         // Children first; audit rows cannot be deleted (append-only), tests filter them by time instead.
+        // The status history is append-only (a trigger refuses DELETE), so tests empty it with TRUNCATE.
+        jdbc.update("TRUNCATE cases.case_status_history");
         jdbc.update("DELETE FROM cases.check_free_sections");
         jdbc.update("DELETE FROM cases.check_details");
         jdbc.update("DELETE FROM cases.check_fields");

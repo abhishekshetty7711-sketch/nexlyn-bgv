@@ -68,7 +68,7 @@ class CaseAccessPolicyImpl implements CaseAccessPolicy {
             case GENERATE_REPORT -> List.of(Permission.REPORT_GENERATE);
             case SUBMIT_FOR_REVIEW -> List.of(Permission.REPORT_SUBMIT_FOR_REVIEW);
             case APPROVE -> List.of(Permission.REPORT_APPROVE);
-            case FINALIZE -> List.of(Permission.REPORT_FINALIZE);
+            case FINALIZE, REOPEN -> List.of(Permission.REPORT_FINALIZE);
         };
     }
 }

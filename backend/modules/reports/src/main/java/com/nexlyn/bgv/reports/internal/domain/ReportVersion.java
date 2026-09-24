@@ -91,6 +91,16 @@ public class ReportVersion {
         this.snapshot = snapshot;
     }
 
+    /** The final, protected version of a draft: same pages and snapshot, new file, marked final by the person who finalized it. */
+    public static ReportVersion finalOf(ReportVersion draft, int version, String pdfStorageKey, String sha256, long sizeBytes,
+                                        boolean encrypted, UUID finalizedBy, Instant now) {
+        ReportVersion result = new ReportVersion(draft.caseId, version, Kind.FINAL, pdfStorageKey, sha256, sizeBytes,
+                draft.pageCount, encrypted, finalizedBy, now, draft.warnings, draft.snapshot);
+        result.finalizedBy = finalizedBy;
+        result.finalizedAt = now;
+        return result;
+    }
+
     public UUID getId() {
         return id;
     }

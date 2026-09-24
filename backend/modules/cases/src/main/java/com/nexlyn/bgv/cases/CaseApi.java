@@ -16,6 +16,9 @@ public interface CaseApi {
     /** True when the case exists and is not deleted. */
     boolean caseExists(UUID caseId);
 
+    /** Where the case is in its life; empty when it does not exist. */
+    Optional<com.nexlyn.bgv.common.enums.CaseLifecycle> lifecycleOf(UUID caseId);
+
     /** True when the case exists, is not deleted, and is in draft or changes-requested (case data may change). */
     boolean isEditable(UUID caseId);
 
@@ -36,4 +39,14 @@ public interface CaseApi {
 
     /** The errors and warnings of the case (CLAUDE.md section 7.1). Throws when the case does not exist. */
     CaseValidation validationOf(UUID caseId);
+
+    /**
+     * Checks that this admin may finalize the case now: it is APPROVED and the admin did not prepare it (the
+     * maker-checker rule). Returns the moment it was approved, so the caller can make sure the report it
+     * finalizes was made after that. Throws a plain-language error otherwise.
+     */
+    java.time.Instant requireCanFinalize(UUID caseId, UUID adminId);
+
+    /** APPROVED to FINALIZED: writes the history line and the audit event. Call inside the caller's transaction. */
+    void markFinalized(UUID caseId, UUID adminId, int reportVersion);
 }

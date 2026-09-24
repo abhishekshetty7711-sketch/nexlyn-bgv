@@ -120,23 +120,28 @@ public class CaseService {
         Page<BgvCase> result = cases.findAll(specification(filter, me.id(), readAll), PageRequest.of(Math.max(page, 0),
                 Math.min(Math.max(size, 1), MAX_PAGE_SIZE), Sort.by(Sort.Direction.DESC, "updatedAt")));
 
-        List<UUID> ids = result.getContent().stream().map(BgvCase::getId).toList();
+        return new PageResponse<>(rows(result.getContent()), result.getNumber(), result.getSize(), result.getTotalElements());
+    }
+
+    /** List lines for these cases (candidate, client and assignments looked up in bulk). Reads only: the caller has already limited which cases. */
+    List<CaseRow> rows(List<BgvCase> content) {
+        List<UUID> ids = content.stream().map(BgvCase::getId).toList();
         Map<UUID, Candidate> candidateByCase = candidates.findAllByCaseIdIn(ids).stream()
                 .collect(Collectors.toMap(Candidate::getCaseId, Function.identity()));
-        Map<UUID, Client> clientById = clients.findAllById(result.getContent().stream().map(BgvCase::getClientId).distinct().toList())
+        Map<UUID, Client> clientById = clients.findAllById(content.stream().map(BgvCase::getClientId).distinct().toList())
                 .stream().collect(Collectors.toMap(Client::getId, Function.identity()));
         Map<UUID, List<CaseAssignment>> assignedByCase = assignments.findAllByKeyCaseIdIn(ids).stream()
                 .collect(Collectors.groupingBy(CaseAssignment::getCaseId));
 
         List<CaseRow> rows = new ArrayList<>();
-        for (BgvCase c : result.getContent()) {
+        for (BgvCase c : content) {
             Candidate candidate = candidateByCase.get(c.getId());
             List<AssignmentView> people = assembler.assignmentViews(assignedByCase.getOrDefault(c.getId(), List.of()));
             rows.add(new CaseRow(c.getId(), c.getReportId(), clientById.get(c.getClientId()).getName(),
                     candidate == null ? null : candidate.getFullName(), candidate == null ? null : candidate.getEmployeeId(),
                     c.getLifecycle(), c.getIssueDate(), c.getDueDate(), people, c.getSavedSections().size(), c.getUpdatedAt()));
         }
-        return new PageResponse<>(rows, result.getNumber(), result.getSize(), result.getTotalElements());
+        return rows;
     }
 
     @PreAuthorize("hasAnyAuthority('CASE_READ_ALL', 'CASE_READ_ASSIGNED')")
@@ -199,7 +204,7 @@ public class CaseService {
         };
     }
 
-    private static Predicate assignedTo(Root<BgvCase> root, Subquery<UUID> sub,
+    static Predicate assignedTo(Root<BgvCase> root, Subquery<UUID> sub,
                                         jakarta.persistence.criteria.CriteriaBuilder cb, UUID adminId) {
         Root<CaseAssignment> a = sub.from(CaseAssignment.class);
         sub.select(a.get("key").get("caseId")).where(

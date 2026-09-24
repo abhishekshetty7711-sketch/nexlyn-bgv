@@ -73,6 +73,7 @@ public class CaseAssignmentService {
             throw new ApiException(ErrorCode.VALIDATION_FAILED, "Choose an active admin.",
                     List.of(new ApiError.FieldError("adminId", "is not an active admin")), null);
         }
+        requireEditablePreparers(c, role);
         List<CaseAssignment> existing = assignments.findAllByKeyCaseIdAndKeyAdminId(caseId, adminId);
         if (existing.stream().anyMatch(a -> a.getRole() != role)) {
             throw new ApiException(ErrorCode.CONFLICT,
@@ -94,6 +95,7 @@ public class CaseAssignmentService {
         List<CaseAssignment> toRemove = assignments.findAllByKeyCaseIdAndKeyAdminId(caseId, adminId).stream()
                 .filter(a -> role == null || a.getRole() == role)
                 .toList();
+        toRemove.forEach(a -> requireEditablePreparers(c, a.getRole()));
         if (!toRemove.isEmpty()) {
             assignments.deleteAll(toRemove);
             assignments.flush();
@@ -101,6 +103,13 @@ public class CaseAssignmentService {
                     Map.of("adminId", adminId.toString(), "roles", toRemove.stream().map(a -> a.getRole().name()).toList()), null));
         }
         return assembler.view(c);
+    }
+
+    /** The preparers of a case in review or approved are what the maker-checker rule is measured against, so they cannot change then. */
+    private static void requireEditablePreparers(BgvCase c, CaseRole role) {
+        if (role == CaseRole.PREPARER && (c.getLifecycle() == CaseLifecycle.IN_REVIEW || c.getLifecycle() == CaseLifecycle.APPROVED)) {
+            throw new ApiException(ErrorCode.CONFLICT, "The preparer cannot be changed while the case is in review or approved.");
+        }
     }
 
     private BgvCase findOpen(UUID caseId) {

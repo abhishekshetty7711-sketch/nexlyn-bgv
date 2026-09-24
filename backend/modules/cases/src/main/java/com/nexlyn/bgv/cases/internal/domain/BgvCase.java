@@ -104,6 +104,27 @@ public class BgvCase {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @Column(name = "submitted_by")
+    private UUID submittedBy;
+
+    @Column(name = "submitted_at")
+    private Instant submittedAt;
+
+    @Column(name = "reviewed_by")
+    private UUID reviewedBy;
+
+    @Column(name = "reviewed_at")
+    private Instant reviewedAt;
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    @Column(name = "finalized_by")
+    private UUID finalizedBy;
+
+    @Column(name = "finalized_at")
+    private Instant finalizedAt;
+
     /** Section key to the moment it was last saved; drives the navigator's saved / not-started marks. */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "saved_sections", nullable = false, columnDefinition = "jsonb")
@@ -202,6 +223,80 @@ public class BgvCase {
         this.deletedAt = now;
     }
 
+    // ---- the review workflow (CLAUDE.md section 11.3) ----------------------------------------------
+    // Each step checks where the case is and refuses otherwise; who may take the step is the service's job.
+
+    /** The preparer hands the case over: DRAFT or CHANGES_REQUESTED to IN_REVIEW. */
+    public void submitForReview(UUID by, Instant now) {
+        requireState("sent for review", CaseLifecycle.DRAFT, CaseLifecycle.CHANGES_REQUESTED);
+        this.lifecycle = CaseLifecycle.IN_REVIEW;
+        this.submittedBy = by;
+        this.submittedAt = now;
+        this.reviewComment = null;
+        this.approvedAt = null;
+        touchWorkflow(by, now);
+    }
+
+    /** IN_REVIEW to APPROVED. */
+    public void approve(UUID by, String comment, Instant now) {
+        requireState("approved", CaseLifecycle.IN_REVIEW);
+        this.lifecycle = CaseLifecycle.APPROVED;
+        this.reviewedBy = by;
+        this.reviewedAt = now;
+        this.approvedAt = now;
+        this.reviewComment = comment;
+        touchWorkflow(by, now);
+    }
+
+    /** IN_REVIEW back to the preparer. */
+    public void requestChanges(UUID by, String comment, Instant now) {
+        requireState("sent back for changes", CaseLifecycle.IN_REVIEW);
+        this.lifecycle = CaseLifecycle.CHANGES_REQUESTED;
+        this.reviewedBy = by;
+        this.reviewedAt = now;
+        this.approvedAt = null;
+        this.reviewComment = comment;
+        touchWorkflow(by, now);
+    }
+
+    /** APPROVED to FINALIZED: from here nothing changes any more. */
+    public void finalizeCase(UUID by, Instant now) {
+        requireState("finalized", CaseLifecycle.APPROVED);
+        this.lifecycle = CaseLifecycle.FINALIZED;
+        this.finalizedBy = by;
+        this.finalizedAt = now;
+        touchWorkflow(by, now);
+    }
+
+    /** FINALIZED to DRAFT, to make changes and go through review again. The old reports stay. */
+    public void reopen(UUID by, String reason, Instant now) {
+        requireState("reopened", CaseLifecycle.FINALIZED);
+        this.lifecycle = CaseLifecycle.DRAFT;
+        this.submittedBy = null;
+        this.submittedAt = null;
+        this.reviewedBy = null;
+        this.reviewedAt = null;
+        this.approvedAt = null;
+        this.finalizedBy = null;
+        this.finalizedAt = null;
+        this.reviewComment = "Reopened: " + reason;
+        touchWorkflow(by, now);
+    }
+
+    private void requireState(String what, CaseLifecycle... allowed) {
+        for (CaseLifecycle state : allowed) {
+            if (lifecycle == state) {
+                return;
+            }
+        }
+        throw new IllegalStateException("A case in state " + lifecycle + " cannot be " + what);
+    }
+
+    private void touchWorkflow(UUID by, Instant now) {
+        this.updatedBy = by;
+        this.updatedAt = now;
+    }
+
     // ---- reads ------------------------------------------------------------------------------
 
     public UUID getId() {
@@ -294,6 +389,38 @@ public class BgvCase {
 
     public LocalDate getDueDate() {
         return dueDate;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public UUID getSubmittedBy() {
+        return submittedBy;
+    }
+
+    public Instant getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public UUID getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public Instant getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public Instant getApprovedAt() {
+        return approvedAt;
+    }
+
+    public UUID getFinalizedBy() {
+        return finalizedBy;
+    }
+
+    public Instant getFinalizedAt() {
+        return finalizedAt;
     }
 
     public Map<String, String> getSavedSections() {
