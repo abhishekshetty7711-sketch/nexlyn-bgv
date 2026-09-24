@@ -1,0 +1,74 @@
+import { describeError } from '@/api/errors'
+import { Alert } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { useValidation } from '../api'
+import type { SectionKey, ValidationIssue } from '../types'
+import { isSectionKey } from '../types'
+
+interface GenerateSectionProps {
+  caseId: string
+  onGoToSection: (section: SectionKey) => void
+}
+
+function IssueList({ issues, tone, onGoTo }: { issues: ValidationIssue[]; tone: 'error' | 'warning'; onGoTo: (s: SectionKey) => void }) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {issues.map((issue) => (
+        <li key={`${issue.section}/${issue.field}`}>
+          <Alert variant={tone}>
+            <div className="flex items-center justify-between gap-3">
+              <span>{issue.message}</span>
+              {isSectionKey(issue.section) && (
+                <Button type="button" size="sm" variant="outline" onClick={() => onGoTo(issue.section as SectionKey)}>
+                  Go to section
+                </Button>
+              )}
+            </div>
+          </Alert>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Section 8: what still blocks the report (errors) or deserves a second look (warnings). */
+export function GenerateSection({ caseId, onGoToSection }: GenerateSectionProps) {
+  const validation = useValidation(caseId)
+  const result = validation.data
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="border-b border-slate-200 pb-3">
+        <h2 className="text-lg font-semibold text-slate-900">8. Generate report</h2>
+        <p className="text-sm text-slate-500">Errors must be fixed before a report can be generated or submitted. Warnings can be accepted.</p>
+      </div>
+      {validation.isLoading && <Spinner />}
+      {validation.isError && <Alert variant="error">{describeError(validation.error)}</Alert>}
+      {result && (
+        <>
+          <section aria-label="Errors" className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-red-700">Errors ({result.errors.length})</h3>
+            {result.errors.length === 0 ? <p className="text-sm text-slate-500">No blocking problems.</p> : <IssueList issues={result.errors} tone="error" onGoTo={onGoToSection} />}
+          </section>
+          <section aria-label="Warnings" className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-amber-700">Warnings ({result.warnings.length})</h3>
+            {result.warnings.length === 0 ? <p className="text-sm text-slate-500">Nothing to double-check.</p> : <IssueList issues={result.warnings} tone="warning" onGoTo={onGoToSection} />}
+          </section>
+        </>
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" disabled>
+          Preview
+        </Button>
+        <Button type="button" variant="outline" disabled>
+          Generate draft PDF
+        </Button>
+        <Button type="button" disabled>
+          Submit for review
+        </Button>
+      </div>
+      <p className="text-xs text-slate-500">Report preview and generation, and the review workflow, arrive in later build phases.</p>
+    </div>
+  )
+}

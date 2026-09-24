@@ -11,7 +11,7 @@ _Last updated: 2026-09-24_
 |---|---|
 | 1. Foundation | **Done** (commit `db0689b`). Stack starts with `./scripts/local-up.sh -d`; MinIO off by default (D-002). |
 | 2. Auth & RBAC | **Done** (steps 2a-2f). Done-when met: security tests cover unauthenticated, wrong permission, refresh-token reuse and lockout. 106 auth + 6 common + 5 app backend tests, 97 frontend tests. Only the Docker-image rebuild check is pending (see open issues). |
-| 3. Clients & Case workspace core | **In progress:** 3a done (clients, cases schema, shared validators); 3b done (cases, sections 1-3 and 5-7, report ID generator, assignments, progress, validation; 41 cases tests); 3c (frontend: case list, workspace, clients, assignments) to do |
+| 3. Clients & Case workspace core | **Done** (3a-3c). Done-when met: every section saves and loads, validation follows section 7.1. 41 cases + 16 common + 106 auth + 5 app backend tests; 155 frontend tests. |
 | 4. Checks | Not started |
 | 5. Documents | Not started |
 | 6. Reports | Not started |
@@ -31,7 +31,7 @@ _Last updated: 2026-09-24_
 
 ## Next step
 
-Start **Phase 3: Clients & Case workspace core** (CLAUDE.md section 15, with sections 7, 9.2 and 10 "schema cases"): `cases` module with clients, cases, candidate, verification period, overview, remarks, settings, Report ID generator, assignments, validation and progress; frontend case list and workspace sections 1, 2, 3, 5, 6, 7. The `cases` module must implement `CaseAssignmentLookup` (D-019) and call `CaseAccessPolicy.check(...)` in every case-scoped service method.
+Start **Phase 4: Checks** (CLAUDE.md section 15, with sections 8 and 9.2, and 10 tables `verification_checks`, `check_fields`, `check_details`, `check_free_sections`): check type registry (YAML) and payload records, add / save / reorder / delete checks, prefill from the candidate, date master, free sections, attestation (needs `ATTESTATION_APPLY`), PII encryption / masking / reveal (needs `PII_UNMASK`, audited, uses `AesGcmEncryptor`); frontend workspace section 4 with dynamic forms. Replace `ChecksSummary.NoChecks` with the real source (D-025) so the overview numbers, validation and progress use real checks. Also update Section 4's placeholder (`ChecksSection.tsx`) and the "usual checks" field on clients (comma-separated codes today, D-027).
 
 ## Open issues and things only the owner can do
 
