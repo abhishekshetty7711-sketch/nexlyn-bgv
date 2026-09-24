@@ -22,6 +22,14 @@ class PasswordPolicyServiceTest {
     }
 
     @Test
+    void minimumLengthIsTwelveAndCannotBeLoweredByAccident() {
+        assertThat(PasswordPolicyService.MIN_LENGTH).isGreaterThanOrEqualTo(12);
+        // 11 characters (strong mix) is rejected, 12 is accepted.
+        assertThat(policy.check("Tr1cky-Ora1", "a@b.co")).containsExactly(Problem.TOO_SHORT);
+        assertThat(policy.check("Tr1cky-Ora12", "a@b.co")).isEmpty();
+    }
+
+    @Test
     void needsAtLeastThreeCharacterClasses() {
         assertThat(policy.check("alllowercaseletters", "a@b.co")).contains(Problem.NOT_ENOUGH_CHARACTER_TYPES);
         assertThat(policy.check("lowerandUPPERonly", "a@b.co")).contains(Problem.NOT_ENOUGH_CHARACTER_TYPES);

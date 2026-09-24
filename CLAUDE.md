@@ -739,7 +739,7 @@ Prod (now): one machine — Nginx (TLS) + frontend + backend containers; Postgre
 | **5. Documents** | `documents` module: uploads, sniffing, S3/MinIO, signed access, quality badge, crop, reorder, next-page/larger-box; frontend uploader + editor | Files stored in MinIO, never public |
 | **6. Reports** | Port templates/CSS from reference HTML, assembler, pagination, Playwright render, watermark, PDFBox encryption, jobs, versions, preview | Generated PDF visually matches the reference tool for a fixture case |
 | **7. Workflow** | Submit/approve/request changes/finalize with separation of duties, locking, version history, final download permissions; dashboard widgets (counts, due dates, my cases) | Maker-checker enforced by tests |
-| **8. Hardening & deploy** | Prod compose + Nginx TLS, env config, backups, runbooks, dependency scanning, load test of PDF generation, audit log viewer | Deployed on one machine |
+| **8. Hardening & deploy** | Prod compose + Nginx TLS, env config, backups, runbooks, dependency scanning, load test of PDF generation, audit log viewer, **replace the starter common-password list with a full breached-password list (§17 #7)** | Deployed on one machine |
 | **Later** | Third-party verification vendors (§12); enterprise polish from the v3.2 roadmap (risk score, verification timeline, confidence bars, QR verification code, digital signature block, investigator notes, client logo customization); module extraction (§4.4) | — |
 
 ---
@@ -766,3 +766,4 @@ Prod (now): one machine — Nginx (TLS) + frontend + backend containers; Postgre
 4. Report ID format (`NX-YYYY-NNNN` assumed).
 5. Services page content — port as-is from reference HTML unless told otherwise.
 6. RDS vs self-hosted PostgreSQL on the single machine (RDS recommended).
+7. **BEFORE PRODUCTION: swap in a bigger common-password list.** `backend/modules/auth/src/main/resources/common-passwords.txt` is only a ~150-entry starter list. Replace it with a full breached-password list (for example a top 100k–1M list of common passwords, or an offline copy of the HIBP hashes) and re-run the auth tests. Password rules (decided 2026-09-24): minimum 12 characters (never lower), at least 3 of 4 character classes, not equal to the email, not in the list.

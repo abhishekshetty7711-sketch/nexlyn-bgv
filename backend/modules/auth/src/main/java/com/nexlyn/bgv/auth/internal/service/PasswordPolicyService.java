@@ -18,10 +18,14 @@ import java.util.Set;
  * Password rules from CLAUDE.md {@literal §11.4}: at least 12 characters, at least three of the
  * four character classes, not the email address, and not a well-known password. The breached
  * list is a small bundled file checked offline (no password ever leaves the server).
+ *
+ * <p><b>Before production:</b> replace {@code common-passwords.txt} with a full breached-password
+ * list (CLAUDE.md {@literal §17} item 7). The bundled one is only a starter.
  */
 @Service
 public class PasswordPolicyService {
 
+    /** CLAUDE.md {@literal §11.4}: never below 12. A test fails if this is lowered. */
     public static final int MIN_LENGTH = 12;
 
     public enum Problem {
