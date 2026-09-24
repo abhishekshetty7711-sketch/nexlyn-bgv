@@ -20,6 +20,14 @@ nexlyn:
       # First start only, and only when no admin exists. Set in the environment, never in git.
       email: ${BOOTSTRAP_SUPERADMIN_EMAIL:}
       password: ${BOOTSTRAP_SUPERADMIN_PASSWORD:}
+    jwt:
+      # RS256 private key as PEM (newlines may be written as backslash-n). Required in prod.
+      private-key: ${JWT_PRIVATE_KEY:}
+      public-key: ${JWT_PUBLIC_KEY:}
+      key-id: ${JWT_KEY_ID:}
+    totp:
+      # Base64 of 32 random bytes. Required in prod.
+      encryption-key: ${TOTP_ENCRYPTION_KEY:}
 
 management:
   endpoints:

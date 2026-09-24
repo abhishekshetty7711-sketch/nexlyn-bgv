@@ -138,13 +138,13 @@ class AuthServiceIntegrationTest {
     }
 
     @Test
-    void successfulPasswordResetsTheFailureCounters() {
+    void aCorrectPasswordAloneDoesNotResetTheFailureCounters() {
+        // Only a completed login (password + 2FA) resets them - see LoginFlowIntegrationTest.
         login(EMAIL, "Wrong-Password-1!");
         login(EMAIL, "Wrong-Password-1!");
         assertThat(login(EMAIL, PASSWORD)).isInstanceOf(LoginOutcome.PasswordVerified.class);
         Admin owner = admins.findByEmailIgnoreCase(EMAIL).orElseThrow();
-        assertThat(owner.getFailedAttempts()).isZero();
-        assertThat(owner.getLockoutCount()).isZero();
+        assertThat(owner.getFailedAttempts()).isEqualTo(2);
     }
 
     @Test

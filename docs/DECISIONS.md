@@ -73,3 +73,18 @@ the autonomy rule in `CLAUDE.md` section 0 (review when convenient).
 - **Backup codes:** 10 codes of 10 characters (no look-alike characters), stored as Argon2id hashes, single use.
 - **TOTP:** RFC 6238 (SHA-1, 6 digits, 30 s, +-1 step) with replay protection (`totp_secrets.last_used_step`, migration V3). Secrets encrypted with AES-256-GCM.
 - **Keys:** `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` / `JWT_KEY_ID`, `TOTP_ENCRYPTION_KEY` from the environment. Prod refuses to start without them; other profiles generate temporary keys with a warning. `scripts/local-up.sh` creates persistent local keys in the git-ignored `infra/local/.env`.
+
+### D-015 — Host Maven trusts the Windows certificate store while Avast HTTPS scanning is on — *auto, 2026-09-24, Phase 2c*
+- **Context:** Avast re-signs HTTPS traffic with its own root certificate, which the JDK does not trust, so Maven cannot download dependencies. Docker image builds have the same problem.
+- **Decision:** for host builds only, run Maven with `MAVEN_OPTS="-Djavax.net.ssl.trustStoreType=Windows-ROOT"` (uses the Windows certificate store, which already contains the Avast root). It is **not** committed to the repo, because it would break Linux CI.
+- **Docker builds still need Avast HTTPS scanning switched off** (owner action, see PROGRESS.md), or a root-certificate step added to the Dockerfiles.
+- **Reverse:** stop setting `MAVEN_OPTS`.
+
+### D-016 — Extra dependency versions pinned — *auto, 2026-09-24, Phase 2b/2c*
+- Spring Boot does not manage these, so they are pinned in `backend/pom.xml`: Nimbus JOSE JWT 9.40, Bucket4j 8.14.0 (`bucket4j_jdk17-core`), BouncyCastle 1.78.1 (needed by Spring Security Argon2). Caffeine and commons-codec use Boot-managed versions. Revisit during dependency scanning (Phase 8).
+
+### D-017 — Full-application smoke test — *auto, 2026-09-24, Phase 2c*
+- `BgvApplicationSmokeTest` boots every module against a Testcontainers PostgreSQL initialised with the real `infra/local/postgres/init/01-create-schemas.sql`. It checks health, that every module has its own Flyway history, and that the bootstrap admin can start logging in. It stands in for `docker compose up` while image builds are blocked by Avast, and stays useful afterwards.
+
+### D-018 — Bulk queries must not clear the Hibernate session — *auto, 2026-09-24, Phase 2c*
+- `@Modifying(clearAutomatically = true)` detached the already-loaded admin and caused a `LazyInitializationException` (found by the flow tests). The auth repositories use `flushAutomatically = true` only. Remember this for every future bulk update or delete.

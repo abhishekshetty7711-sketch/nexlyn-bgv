@@ -18,8 +18,8 @@ import java.util.Optional;
  * Step one of login: check the password. Handles lockout, per-email rate limiting, the
  * login-attempt record and audit events. Issuing the 2FA challenge and tokens comes after this.
  *
- * <p>The lockout counters are reset here on a correct password. The 2FA step must apply its own
- * failure counting so a stolen password does not give unlimited code guesses.
+ * <p>A correct password does not reset the lockout counters; {@code LoginFlowService} does that once
+ * the second factor has also passed, and counts wrong second-factor codes as failures too.
  */
 @Service
 public class AuthService {
@@ -90,8 +90,8 @@ public class AuthService {
             return new LoginOutcome.InvalidCredentials();
         }
 
-        lockout.recordSuccess(admin);
-        admins.save(admin);
+        // Counters are NOT reset here: only a completed login (password + second factor) resets them,
+        // otherwise a stolen password would allow unlimited second-factor guesses.
         record(email, client, true, "PASSWORD_OK", now);
         return new LoginOutcome.PasswordVerified(admin.getId(), admin.isMfaEnabled());
     }

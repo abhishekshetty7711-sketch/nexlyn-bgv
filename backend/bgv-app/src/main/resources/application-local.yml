@@ -19,6 +19,9 @@ logging:
     com.nexlyn.bgv: DEBUG
 
 nexlyn:
+  auth:
+    cookie:
+      secure: false # plain http on localhost; prod keeps the default (true)
   storage:
     endpoint: ${S3_ENDPOINT:http://localhost:9000}
     bucket: ${S3_BUCKET:nexlyn-bgv}

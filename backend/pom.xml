@@ -25,6 +25,7 @@
     <testcontainers.version>1.21.4</testcontainers.version>
     <bouncycastle.version>1.78.1</bouncycastle.version>
     <bucket4j.version>8.14.0</bucket4j.version>
+    <nimbus-jose-jwt.version>9.40</nimbus-jose-jwt.version>
   </properties>
 
   <modules>

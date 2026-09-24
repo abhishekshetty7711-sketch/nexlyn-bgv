@@ -157,8 +157,16 @@ public class Admin {
         return mfaEnabled;
     }
 
+    public void setMfaEnabled(boolean mfaEnabled) {
+        this.mfaEnabled = mfaEnabled;
+    }
+
     public Instant getLastLoginAt() {
         return lastLoginAt;
+    }
+
+    public void setLastLoginAt(Instant lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
     }
 
     public Set<Role> getRoles() {
