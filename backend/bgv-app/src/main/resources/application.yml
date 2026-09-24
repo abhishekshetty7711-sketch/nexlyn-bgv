@@ -14,6 +14,13 @@ spring:
 server:
   port: 8080
 
+nexlyn:
+  auth:
+    bootstrap:
+      # First start only, and only when no admin exists. Set in the environment, never in git.
+      email: ${BOOTSTRAP_SUPERADMIN_EMAIL:}
+      password: ${BOOTSTRAP_SUPERADMIN_PASSWORD:}
+
 management:
   endpoints:
     web:
