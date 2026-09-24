@@ -72,6 +72,10 @@ public abstract class CasesIntegrationTestBase {
     @BeforeEach
     void cleanCases() {
         // Children first; audit rows cannot be deleted (append-only), tests filter them by time instead.
+        jdbc.update("DELETE FROM cases.check_free_sections");
+        jdbc.update("DELETE FROM cases.check_details");
+        jdbc.update("DELETE FROM cases.check_fields");
+        jdbc.update("DELETE FROM cases.verification_checks");
         jdbc.update("DELETE FROM cases.case_assignments");
         jdbc.update("DELETE FROM cases.candidates");
         jdbc.update("DELETE FROM cases.cases");
@@ -104,6 +108,15 @@ public abstract class CasesIntegrationTestBase {
     /** The owner with every permission. */
     protected String superToken() {
         return tokenFor(ownerId, OWNER, all());
+    }
+
+    /** A map that allows null values (Map.of does not), for request bodies. */
+    protected static java.util.Map<String, Object> obj(Object... keyValues) {
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < keyValues.length; i += 2) {
+            result.put((String) keyValues[i], keyValues[i + 1]);
+        }
+        return result;
     }
 
     // ---- HTTP helpers -----------------------------------------------------------------------------

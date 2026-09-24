@@ -1,0 +1,19 @@
+# Check type EDUCATION. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: EDUCATION
+order: 7
+displayName: "Education Verification"
+documentName: "Degree Certificate"
+iconGroup: education
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: institution, label: "Institution", type: text }
+  - { key: university_board, label: "University / Board", type: text }
+  - { key: degree, label: "Degree", type: text }
+  - { key: specialization, label: "Specialization", type: text }
+  - { key: year_of_passing, label: "Year of Passing", type: number }
+  - { key: roll_number, label: "Roll / Registration No.", type: text }
+  - { key: grade, label: "Grade / %", type: text }
+  - { key: verifier, label: "Verifier", type: text }
+details: []   # the standard details (verification type, document type, dates) are added automatically

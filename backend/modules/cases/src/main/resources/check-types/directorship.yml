@@ -1,0 +1,14 @@
+# Check type DIRECTORSHIP. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: DIRECTORSHIP
+order: 12
+displayName: "Directorship Check"
+documentName: "MCA Records"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Electronic
+fields:
+  - { key: din, label: "DIN", type: text }
+  - { key: companies_found, label: "Companies Found", type: textarea }
+  - { key: status, label: "Status", type: select, options: ["No directorship found", "Directorship found", "Pending"] }
+details: []   # the standard details (verification type, document type, dates) are added automatically

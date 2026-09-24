@@ -1,0 +1,17 @@
+# Check type REFERENCE. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: REFERENCE
+order: 8
+displayName: "Reference Check"
+documentName: "Reference Letter"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: referee_name, label: "Referee Name", type: text }
+  - { key: designation, label: "Designation", type: text }
+  - { key: organisation, label: "Organisation", type: text }
+  - { key: relationship, label: "Relationship", type: text }
+  - { key: contact, label: "Contact", type: text }
+  - { key: feedback, label: "Feedback", type: textarea }
+details: []   # the standard details (verification type, document type, dates) are added automatically

@@ -1,0 +1,16 @@
+# Check type UAN. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: UAN
+order: 9
+displayName: "UAN Check"
+documentName: "EPFO Database"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Electronic
+fields:
+  - { key: uan_number, label: "UAN Number", type: uan, sensitive: true, required: true }
+  - { key: name_as_per_epfo, label: "Name as per EPFO", type: text, prefill: candidate.fullName }
+  - { key: establishments, label: "Establishment(s)", type: textarea }
+  - { key: date_of_joining, label: "Date of Joining (EPFO)", type: date }
+  - { key: date_of_exit, label: "Date of Exit (EPFO)", type: date }
+details: []   # the standard details (verification type, document type, dates) are added automatically

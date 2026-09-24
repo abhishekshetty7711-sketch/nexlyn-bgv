@@ -65,15 +65,16 @@ public class CaseInsightService {
     public ValidationResult validate(UUID id) {
         policy.check(id, CaseAction.READ);
         BgvCase c = find(id);
-        return validate(c, candidates.findByCaseId(id).orElseThrow(), checks.statusesOf(id));
+        return validate(c, candidates.findByCaseId(id).orElseThrow(), checks.summariesOf(id));
     }
 
     @Transactional(readOnly = true)
     public ProgressView progress(UUID id) {
         policy.check(id, CaseAction.READ);
         BgvCase c = find(id);
-        List<CheckStatus> statuses = checks.statusesOf(id);
-        ValidationResult validation = validate(c, candidates.findByCaseId(id).orElseThrow(), statuses);
+        List<ChecksSummary.CheckSummary> summaries = checks.summariesOf(id);
+        List<CheckStatus> statuses = summaries.stream().map(ChecksSummary.CheckSummary::status).toList();
+        ValidationResult validation = validate(c, candidates.findByCaseId(id).orElseThrow(), summaries);
 
         Map<String, Integer> issues = new LinkedHashMap<>();
         for (ValidationIssue issue : concat(validation)) {
@@ -107,7 +108,7 @@ public class CaseInsightService {
 
     // ---- the rules of section 7.1 ---------------------------------------------------------------
 
-    static ValidationResult validate(BgvCase c, Candidate candidate, List<CheckStatus> checkStatuses) {
+    static ValidationResult validate(BgvCase c, Candidate candidate, List<ChecksSummary.CheckSummary> checkSummaries) {
         List<ValidationIssue> errors = new ArrayList<>();
         List<ValidationIssue> warnings = new ArrayList<>();
 
@@ -124,7 +125,7 @@ public class CaseInsightService {
         if (isBlank(candidate.getEmployeeId())) {
             errors.add(new ValidationIssue("candidate", "employeeId", "Employee ID is required."));
         }
-        if (checkStatuses.isEmpty()) {
+        if (checkSummaries.isEmpty()) {
             errors.add(new ValidationIssue("checks", "checks", "Add at least one verification check."));
         }
 
@@ -153,6 +154,21 @@ public class CaseInsightService {
         }
         if (isBlank(c.getFinalRecommendation())) {
             warnings.add(new ValidationIssue("remarks", "finalRecommendation", "Final recommendation is empty."));
+        }
+        for (ChecksSummary.CheckSummary check : checkSummaries) {
+            String name = check.title();
+            if (check.requestedDate() == null) {
+                warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":requestedDate", name + ": requested date is missing."));
+            }
+            if (check.completedDate() == null) {
+                warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":completedDate", name + ": completed date is missing."));
+            }
+            if (!check.status().isConcluded()) {
+                warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":status", name + ": status is still " + check.status().label() + "."));
+            }
+            for (String label : check.missingRequired()) {
+                warnings.add(new ValidationIssue("checks", "check:" + check.id() + ":" + label, name + ": " + label + " is missing."));
+            }
         }
         return new ValidationResult(List.copyOf(errors), List.copyOf(warnings));
     }

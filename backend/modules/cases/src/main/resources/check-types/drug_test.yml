@@ -1,0 +1,19 @@
+# Check type DRUG_TEST. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: DRUG_TEST
+order: 11
+displayName: "Drug Test (5 Panel)"
+documentName: "Drug Test Report"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: sample_date, label: "Sample Date", type: date }
+  - { key: lab, label: "Lab", type: text }
+  - { key: panel_1, label: "Panel 1", type: select, options: ["Negative", "Positive"] }
+  - { key: panel_2, label: "Panel 2", type: select, options: ["Negative", "Positive"] }
+  - { key: panel_3, label: "Panel 3", type: select, options: ["Negative", "Positive"] }
+  - { key: panel_4, label: "Panel 4", type: select, options: ["Negative", "Positive"] }
+  - { key: panel_5, label: "Panel 5", type: select, options: ["Negative", "Positive"] }
+  - { key: overall_result, label: "Overall Result", type: select, options: ["Negative", "Positive", "Inconclusive"] }
+details: []   # the standard details (verification type, document type, dates) are added automatically

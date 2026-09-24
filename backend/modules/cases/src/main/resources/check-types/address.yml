@@ -1,0 +1,21 @@
+# Check type ADDRESS. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: ADDRESS
+order: 5
+displayName: "Address Verification"
+documentName: "Address Proof"
+iconGroup: address
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: street, label: "Street Address", type: text, prefill: candidate.street }
+  - { key: city, label: "City / Town", type: text, prefill: candidate.city }
+  - { key: state, label: "State", type: text, prefill: candidate.state }
+  - { key: pin, label: "PIN Code", type: pin, prefill: candidate.pin }
+  - { key: country, label: "Country", type: text, prefill: candidate.country }
+  - { key: address_type, label: "Address Type", type: select, options: ["Current", "Permanent"] }
+  - { key: period_of_stay, label: "Period of Stay", type: text }
+  - { key: verification_mode, label: "Verification Mode", type: select, options: ["Field", "Postal", "Digital"] }
+  - { key: respondent_name, label: "Respondent Name", type: text }
+  - { key: respondent_relationship, label: "Respondent Relationship", type: text }
+details: []   # the standard details (verification type, document type, dates) are added automatically

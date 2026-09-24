@@ -1,0 +1,15 @@
+# Check type CREDIT. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: CREDIT
+order: 10
+displayName: "Credit Check"
+documentName: "CIBIL Report"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Electronic
+fields:
+  - { key: cibil_score, label: "CIBIL Score", type: number }
+  - { key: report_date, label: "Report Date", type: date }
+  - { key: defaults, label: "Defaults", type: boolean }
+  - { key: summary, label: "Summary", type: textarea }
+details: []   # the standard details (verification type, document type, dates) are added automatically

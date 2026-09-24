@@ -1,0 +1,12 @@
+# Check type GAP_REVIEW. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: GAP_REVIEW
+order: 13
+displayName: "Gap Review"
+documentName: "Employment Gap"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: gaps, label: "Gap Periods", type: repeatable, itemFields: [{ key: from, label: "From", type: date }, { key: to, label: "To", type: date }, { key: reason, label: "Reason", type: text }] }
+details: []   # the standard details (verification type, document type, dates) are added automatically

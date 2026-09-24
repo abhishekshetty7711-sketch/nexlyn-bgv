@@ -29,6 +29,10 @@ nexlyn:
       # Base64 of 32 random bytes. Required in prod.
       encryption-key: ${TOTP_ENCRYPTION_KEY:}
 
+  cases:
+    # Base64 of 32 random bytes. Encrypts Aadhaar, PAN and UAN values at rest. Required in prod.
+    pii-encryption-key: ${PII_ENCRYPTION_KEY:}
+
 management:
   endpoints:
     web:

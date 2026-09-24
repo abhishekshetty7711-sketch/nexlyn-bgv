@@ -1,0 +1,16 @@
+# Check type POLICE. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: POLICE
+order: 4
+displayName: "Police Verification"
+documentName: "Police Record"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: police_station, label: "Police Station", type: text }
+  - { key: jurisdiction, label: "Jurisdiction", type: text }
+  - { key: address, label: "Address", type: textarea, prefill: candidate.street }
+  - { key: search_period, label: "Search Period", type: text }
+  - { key: result, label: "Result", type: select, options: ["Clear", "Adverse record found", "Pending"] }
+details: []   # the standard details (verification type, document type, dates) are added automatically

@@ -1,0 +1,15 @@
+# Check type OIG. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: OIG
+order: 15
+displayName: "OIG Exclusions"
+documentName: "OIG Database"
+iconGroup: unique
+attestationDefault: false
+verificationTypeDefault: Electronic
+fields:
+  - { key: sources_searched, label: "Sources Searched", type: textarea }
+  - { key: search_date, label: "Search Date", type: date }
+  - { key: hits_found, label: "Hits Found", type: boolean }
+  - { key: result_summary, label: "Result Summary", type: textarea }
+details: []   # the standard details (verification type, document type, dates) are added automatically

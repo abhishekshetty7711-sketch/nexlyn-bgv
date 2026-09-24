@@ -1,0 +1,21 @@
+# Check type COURT. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: COURT
+order: 3
+displayName: "Court Record (Permanent Address)"
+documentName: "Court Document"
+iconGroup: court
+attestationDefault: true
+verificationTypeDefault: Standard
+fields:
+  - { key: full_name, label: "Full Name", type: text, prefill: candidate.fullName }
+  - { key: father_name, label: "Father's Name", type: text, prefill: candidate.parentName, labelByParentType: true }
+  - { key: address, label: "Address", type: textarea, prefill: candidate.street }
+  - { key: city, label: "City / Town", type: text, prefill: candidate.city }
+  - { key: state, label: "State", type: text, prefill: candidate.state }
+  - { key: pin, label: "PIN Code", type: pin, prefill: candidate.pin }
+  - { key: country, label: "Country", type: text, prefill: candidate.country }
+  - { key: search_period, label: "Search Period", type: text }
+details:
+  - { label: "Court Type", default: "" }
+  - { label: "Jurisdiction", default: "Permanent Address" }

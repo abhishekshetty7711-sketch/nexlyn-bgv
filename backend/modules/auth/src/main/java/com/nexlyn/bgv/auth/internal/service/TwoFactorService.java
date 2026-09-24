@@ -7,6 +7,7 @@ import com.nexlyn.bgv.auth.internal.domain.TotpSecret;
 import com.nexlyn.bgv.auth.internal.repository.BackupCodeRepository;
 import com.nexlyn.bgv.auth.internal.repository.TotpSecretRepository;
 import com.nexlyn.bgv.common.crypto.AesGcmEncryptor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +50,7 @@ public class TwoFactorService {
     private final SecureRandom random = new SecureRandom();
 
     public TwoFactorService(TotpService totp, TotpSecretRepository secrets, BackupCodeRepository backupCodes,
-                            AesGcmEncryptor encryptor, PasswordHasher hasher, AuthProperties properties, Clock clock) {
+                            @Qualifier("totpEncryptor") AesGcmEncryptor encryptor, PasswordHasher hasher, AuthProperties properties, Clock clock) {
         this.totp = totp;
         this.secrets = secrets;
         this.backupCodes = backupCodes;

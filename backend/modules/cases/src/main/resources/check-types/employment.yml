@@ -1,0 +1,21 @@
+# Check type EMPLOYMENT. The frontend renders its form from this file; changing a field needs no database migration.
+# Field types: text, textarea, date, number, pin, phone, aadhaar, pan, uan, boolean, select, repeatable.
+code: EMPLOYMENT
+order: 6
+displayName: "Employment Verification"
+documentName: "Experience Letter"
+iconGroup: employment
+attestationDefault: false
+verificationTypeDefault: Standard
+fields:
+  - { key: company, label: "Company", type: text }
+  - { key: employee_id, label: "Employee ID", type: text, prefill: candidate.employeeId }
+  - { key: designation, label: "Designation", type: text }
+  - { key: date_of_joining, label: "Date of Joining", type: date }
+  - { key: date_of_leaving, label: "Date of Leaving", type: date }
+  - { key: reason_for_leaving, label: "Reason for Leaving", type: text }
+  - { key: eligible_for_rehire, label: "Eligible for Rehire", type: select, options: ["Yes", "No", "Not disclosed"] }
+  - { key: verifier_name, label: "Verifier Name", type: text }
+  - { key: verifier_designation, label: "Verifier Designation", type: text }
+  - { key: verifier_contact, label: "Verifier Contact", type: text }
+details: []   # the standard details (verification type, document type, dates) are added automatically

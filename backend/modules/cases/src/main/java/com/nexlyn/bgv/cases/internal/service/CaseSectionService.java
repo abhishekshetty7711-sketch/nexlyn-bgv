@@ -73,18 +73,20 @@ public class CaseSectionService {
     private final CandidateRepository candidates;
     private final ClientRepository clients;
     private final CaseViewAssembler assembler;
+    private final CheckPrefillService prefill;
     private final CaseAccessPolicy policy;
     private final AuthApi auth;
     private final ApplicationEventPublisher events;
     private final Clock clock;
 
     public CaseSectionService(CaseRepository cases, CandidateRepository candidates, ClientRepository clients,
-                              CaseViewAssembler assembler, CaseAccessPolicy policy, AuthApi auth,
+                              CaseViewAssembler assembler, CheckPrefillService prefill, CaseAccessPolicy policy, AuthApi auth,
                               ApplicationEventPublisher events, Clock clock) {
         this.cases = cases;
         this.candidates = candidates;
         this.clients = clients;
         this.assembler = assembler;
+        this.prefill = prefill;
         this.policy = policy;
         this.auth = auth;
         this.events = events;
@@ -150,6 +152,7 @@ public class CaseSectionService {
                 blankToNull(in.city()), blankToNull(in.state()), blankToNull(in.pin()),
                 in.country() == null || in.country().isBlank() ? "India" : in.country().trim());
         candidates.saveAndFlush(candidate);
+        prefill.refresh(id, candidate); // checks follow the candidate unless someone typed their own value
         return finish(c, "candidate", before, candidateSnapshot(candidate));
     }
 

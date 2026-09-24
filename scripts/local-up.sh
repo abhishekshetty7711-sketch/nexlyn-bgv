@@ -28,4 +28,16 @@ if ! grep -q '^JWT_PRIVATE_KEY=.' .env; then
   fi
 fi
 
+# The key for Aadhaar / PAN / UAN values is generated separately: it must survive even if the token
+# keys are ever regenerated, because losing it makes stored values unreadable.
+if ! grep -q '^PII_ENCRYPTION_KEY=.' .env && command -v openssl >/dev/null 2>&1; then
+  grep -v '^PII_ENCRYPTION_KEY=' .env > .env.tmp || true
+  {
+    cat .env.tmp
+    printf '%s\n' "PII_ENCRYPTION_KEY=$(openssl rand -base64 32)"
+  } > .env
+  rm -f .env.tmp
+  echo "Generated the PII encryption key in infra/local/.env (back it up: without it stored Aadhaar/PAN values cannot be read)"
+fi
+
 docker compose up --build "$@"
