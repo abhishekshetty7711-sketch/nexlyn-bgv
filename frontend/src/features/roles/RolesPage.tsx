@@ -12,6 +12,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { Can } from '@/features/auth/Can'
+import { usePageTitle } from '@/lib/usePageTitle'
 import {
   type PermissionView,
   type RoleView,
@@ -23,6 +24,7 @@ import {
 } from './api'
 
 export function RolesPage() {
+  usePageTitle('Roles')
   const roles = useRoles()
   const permissions = usePermissions(true)
   const [creating, setCreating] = useState(false)

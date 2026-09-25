@@ -33,6 +33,13 @@ function card(name: string) {
 }
 
 describe('RolesPage', () => {
+  it('names the tab', async () => {
+    mockFetch(handlers())
+    show()
+    await screen.findByRole('heading', { name: 'Analyst' })
+    expect(document.title).toBe('Roles - Nexlyn BGV')
+  })
+
   it('lists built-in and custom roles with their permissions and member counts', async () => {
     mockFetch(handlers())
     show()
