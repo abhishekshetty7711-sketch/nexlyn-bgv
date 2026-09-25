@@ -3,7 +3,7 @@
 Read this file and `docs/DECISIONS.md` at the start of every session, then continue from
 "Next step". Update it (and commit) after every step.
 
-_Last updated: 2026-09-25 (after the demo data script and the report fixes it found, D-035)_
+_Last updated: 2026-09-25 (after the brand and footer font fix, D-036)_
 
 ## Phase status (CLAUDE.md section 15)
 
@@ -20,7 +20,7 @@ _Last updated: 2026-09-25 (after the demo data script and the report fixes it fo
 
 ## Final state after Phase 8 (2026-09-25)
 
-- **Tests:** backend `./mvnw verify` is green: common 27, auth 108, cases 113, documents 48, reports 91, app 7 (394). Demo-data script: 6 Node tests (`node --test scripts/demo-data/*.test.mjs`). Frontend: 269 tests, type check, lint and build clean, `npm audit` reports 0 vulnerabilities. The PDF load test (tag `load`) is run by hand.
+- **Tests:** backend `./mvnw verify` is green: common 27, auth 108, cases 113, documents 48, reports 99, app 7 (402). Demo-data script: 6 Node tests (`node --test scripts/demo-data/*.test.mjs`). Frontend: 269 tests, type check, lint and build clean, `npm audit` reports 0 vulnerabilities. The PDF load test (tag `load`) is run by hand.
 - **Never run from here:** the GitHub workflows, TLS with a real certificate, RDS / S3 in AWS, the production compose file (`infra/prod`, only syntax-checked) and a full sign-in + PDF through the running stack (needs the owner's admin password). Everything else is covered by tests.
 - **Not built (by design, "Later" in CLAUDE.md section 15):** third-party verification vendors, notifications (e-mail / in-app), risk score and other roadmap polish, module extraction, browser end-to-end tests, an antivirus scan of uploads, the OpenAPI-generated client.
 - **Only the owner can do:** see "Open issues and things only the owner can do" below.
@@ -53,6 +53,12 @@ It was run here against a separate throw-away stack (removed afterwards; the own
 3. **documents were cut off** on full pages (a court check always is): the job now moves the last document on such a page to its own page and prints again.
 
 **The owner's running Docker stack was rebuilt with these fixes** (2026-09-25, `./scripts/local-up.sh -d`, data kept; all containers healthy). Not done: the reference tool was not re-driven with the five new cases (its data entry is a browser UI); the HTML preview does not auto-move documents (only the PDF does).
+
+## Report fonts (2026-09-25, D-036)
+
+The owner found that the PDF's brand header looked different from the preview. Cause: the reference tool gives the brand block, the title and the footer **no font file**, only the system stack ('Segoe UI', Arial, ...), so the preview used Segoe UI (Windows) while the Docker container printed Liberation Sans. Fixed: the bundled open-licence **Selawik** (Microsoft's metric-compatible stand-in for Segoe UI, SIL OFL, licence and README in `static/report/fonts/`) is loaded with `@font-face` and used for the brand, title and footer; the `|` separators are drawn bars (their colour was already the reference's navy `#0c2d6b`; the blue/red/orange was screen sub-pixel fringing of a one-pixel glyph). Checked by printing a real report from the rebuilt container: the header matches the preview and the PDF embeds only Selawik and Inter.
+
+Guards added: `ReportFontAudit` (reads the fonts of a finished PDF) with tests that fail if any font is not bundled or not embedded or if the brand/footer words are not Selawik, and a **start-up self-check in the Docker image** (`NEXLYN_REPORTS_FONT_CHECK=fail`): a container whose browser would print in another font does not start. After a deploy, `docker compose logs backend | grep "font check"` should say `Report font check passed`. Known difference: Selawik has no black weight, so NEXLYN prints in Bold (a bit lighter than Segoe UI Black on Windows). The owner's stack was rebuilt with this; the old PDFs in `scripts/demo-data/output/` still show the old header until the reports are generated again in the app.
 
 ## Phase 2 steps
 

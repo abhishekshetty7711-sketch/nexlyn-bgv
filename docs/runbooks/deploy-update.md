@@ -46,6 +46,7 @@ start only after it is healthy.
 docker compose --env-file .env ps                      # all three "healthy" / "running"
 curl -fsS https://YOUR-SITE/actuator/health             # {"status":"UP"}
 docker compose --env-file .env logs --tail 100 backend  # no ERROR lines
+docker compose --env-file .env logs backend | grep "font check"   # "Report font check passed" (about 15 s after start)
 ```
 
 Then sign in, open a case, and generate a draft PDF. Both should work.

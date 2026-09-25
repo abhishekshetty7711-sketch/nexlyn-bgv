@@ -36,7 +36,10 @@ USER nexlyn
 # Inside a container the container itself is the sandbox; Chromium's own sandbox needs privileges the container
 # (correctly) does not have. See docs/runbooks/deploy-update.md for the container restrictions used in production.
 # Nothing is downloaded when the app runs: the browser was installed above, at build time.
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+# At start-up the app prints a sample page with THIS image's browser and refuses to start unless the brand block, title,
+# footer and text come out in the bundled report fonts (Inter, Selawik). Set NEXLYN_REPORTS_FONT_CHECK=warn or off to relax.
+ENV NEXLYN_REPORTS_FONT_CHECK=fail \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
     CHROMIUM_NO_SANDBOX=true \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65 -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"
 

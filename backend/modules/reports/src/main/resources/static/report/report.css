@@ -10,6 +10,9 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Brand block, report title and footer use the bundled Selawik (see static/report/fonts/README.txt). The reference
+   tool named the system stack "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" here, so
+   the printed font depended on the computer (Segoe UI on Windows, Liberation Sans in the Linux container). */
 /* reference lines 47-74 */
 .brand,
 .brand *,
@@ -19,7 +22,7 @@
 .brand .tagline .sep,
 .brand-title,
 .report-title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Selawik', sans-serif;
 }
 
 /* 2. ENTIRE PAGE FOOTER — Legend, page number, footer logo, everything */
@@ -37,7 +40,7 @@
 .pf-bottom *,
 .pf-pagenum,
 .pf-pagenum * {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Selawik', sans-serif;
 }
 
 /* reference lines 76-76 */
@@ -367,7 +370,10 @@ body{ font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-s
 .brand .wm .lo{ font-size:28px; font-weight:900; letter-spacing:.06em; color:#0c2d6b; text-transform:uppercase; line-height:1; white-space:nowrap; }
 .brand .wm .svc-txt-plain{ font-size:11px; font-weight:700; letter-spacing:.28em; padding-left:.28em; color:#0c2d6b; text-transform:uppercase; white-space:nowrap; margin-top:4px; }
 .brand .wm .tagline{ font-size:8px; letter-spacing:.13em; padding-left:.13em; color:#6b7280; text-transform:uppercase; margin-top:4px; font-weight:500; white-space:nowrap; }
-.brand .wm .tagline .sep{ color:#0c2d6b; margin:0 4px; font-weight:700; }
+/* The reference draws the separator with a bold "|" character. A glyph that thin (about one pixel wide) is rendered with
+   coloured sub-pixel fringes by screens and PDF viewers, so it looked blue and red in one place and blue and orange in
+   another although the colour is the same navy everywhere. A drawn bar has one exact colour. */
+.brand .wm .tagline .sep{ display:inline-block; width:1px; height:1em; margin:0 5px; background:#0c2d6b; vertical-align:-0.14em; }
 .report-title{ font-size:28px; font-weight:700; color:#0c2d6b; }
 .report-title span{ font-weight:400; color:#1a56a0; }
 

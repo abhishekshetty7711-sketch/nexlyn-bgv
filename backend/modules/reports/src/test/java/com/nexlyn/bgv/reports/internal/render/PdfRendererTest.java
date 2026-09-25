@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -218,5 +220,60 @@ class PdfRendererTest {
         for (int i = 0; i < document.getNumberOfPages(); i++) {
             ImageIO.write(renderer.renderImageWithDPI(i, 70), "png", folder.resolve("page-" + (i + 1) + ".png").toFile());
         }
+    }
+
+    // ---- fonts: the report must be printed in its own bundled fonts, on every machine -----------------------------------
+    // The brand block and footer of the reference tool name no font file, only the system stack ('Segoe UI', Arial ...), so
+    // the container printed them in Liberation Sans while a Windows browser showed Segoe UI. Selawik is bundled now.
+    // These tests read the fonts out of the finished PDF, so they fail wherever the bundled fonts are not the ones used.
+
+    @Test
+    void everyFontInAReportIsBundledAndEmbedded() throws Exception {
+        byte[] pdfBytes = print(sampleCase()).pdf();
+
+        var fonts = com.nexlyn.bgv.reports.internal.render.ReportFontAudit.inspect(pdfBytes, com.nexlyn.bgv.reports.internal.render.ReportFontAudit.BUNDLED);
+        assertThat(fonts.problems()).as("fonts in the PDF: %s", fonts.families()).isEmpty();
+        assertThat(fonts.families()).containsExactlyInAnyOrder("Inter", "Selawik");
+
+        // the words of the brand block and the title on page 1, and the footer of page 2, are drawn in Selawik
+        var cover = com.nexlyn.bgv.reports.internal.render.ReportFontAudit.familiesOfWords(pdfBytes, 1,
+                List.of("NEXLYN", "SERVICES", "VERIFY", "VALIDATE", "TRUST", "Verification", "Page"));
+        assertThat(cover).hasSize(7).allSatisfy((word, family) -> assertThat(family).as(word).isEqualTo("Selawik"));
+        var inner = com.nexlyn.bgv.reports.internal.render.ReportFontAudit.familiesOfWords(pdfBytes, 2, List.of("Page", "Verified"));
+        assertThat(inner).containsEntry("Page", "Selawik");
+        // while the report's own text stays Inter
+        assertThat(com.nexlyn.bgv.reports.internal.render.ReportFontAudit.familiesOfWords(pdfBytes, 1, List.of("Asha")))
+                .containsEntry("Asha", "Inter");
+    }
+
+    @Test
+    void theFontCheckPageIsPrintedInTheBundledFonts() {
+        byte[] sample = pdf.render(html.fontCheckPage()).pdf();
+        assertThat(com.nexlyn.bgv.reports.internal.render.ReportFontAudit.checkSamplePage(sample)).isEmpty();
+    }
+
+    @Test
+    void aMissingFontIsCaughtInsteadOfPrintedInSomethingElse() {
+        // what a broken container looks like: the brand and footer ask for a font that is not there
+        String broken = html.fontCheckPage().replace("font-family: 'Selawik', sans-serif;", "font-family: 'NoSuchBrandFont', serif;");
+        assertThat(broken).isNotEqualTo(html.fontCheckPage());
+        var problems = com.nexlyn.bgv.reports.internal.render.ReportFontAudit.checkSamplePage(pdf.render(broken).pdf());
+        assertThat(problems).isNotEmpty().anySatisfy(p -> assertThat(p).containsAnyOf("not one of the bundled", "is drawn in"));
+    }
+
+    @Test
+    void theStartUpSelfCheckPassesHereAndStopsAnApplicationWhoseFontsAreBroken() {
+        var good = new com.nexlyn.bgv.reports.internal.render.ReportFontSelfCheck(html, pdf, "fail");
+        assertThatCode(() -> good.run(null)).doesNotThrowAnyException();
+
+        HtmlRenderer brokenHtml = org.mockito.Mockito.spy(html);
+        org.mockito.Mockito.doReturn(html.fontCheckPage().replace("font-family: 'Selawik', sans-serif;", "font-family: 'NoSuchBrandFont', serif;"))
+                .when(brokenHtml).fontCheckPage();
+        assertThatThrownBy(() -> new com.nexlyn.bgv.reports.internal.render.ReportFontSelfCheck(brokenHtml, pdf, "fail").run(null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("font check FAILED");
+        assertThatCode(() -> new com.nexlyn.bgv.reports.internal.render.ReportFontSelfCheck(brokenHtml, pdf, "warn").run(null))
+                .as("warn mode only logs").doesNotThrowAnyException();
+        assertThatCode(() -> new com.nexlyn.bgv.reports.internal.render.ReportFontSelfCheck(brokenHtml, pdf, "off").run(null))
+                .as("off mode does nothing").doesNotThrowAnyException();
     }
 }
