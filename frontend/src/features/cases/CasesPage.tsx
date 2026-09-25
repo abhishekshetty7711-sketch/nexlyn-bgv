@@ -137,7 +137,7 @@ export function CasesPage() {
                     </Link>
                   </td>
                   <td className="px-3 py-2">
-                    <div>{row.candidateName ?? <span className="text-slate-400">Not entered yet</span>}</div>
+                    <div>{row.candidateName ?? <span className="text-slate-500">Not entered yet</span>}</div>
                     {row.employeeId && <div className="text-xs text-slate-500">{row.employeeId}</div>}
                   </td>
                   <td className="px-3 py-2">{row.clientName}</td>

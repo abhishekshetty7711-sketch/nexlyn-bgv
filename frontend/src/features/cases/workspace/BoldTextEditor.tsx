@@ -58,7 +58,7 @@ export function BoldTextEditor({ id, label, value, onChange, disabled, error }: 
         </p>
       )}
       <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-2 text-sm text-slate-700">
-        <span className="mb-1 block text-xs uppercase text-slate-400">Preview</span>
+        <span className="mb-1 block text-xs uppercase text-slate-500">Preview</span>
         <div aria-label={`${label} preview`} className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: preview }} />
       </div>
     </div>

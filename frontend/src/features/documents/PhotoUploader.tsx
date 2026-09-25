@@ -57,7 +57,7 @@ export function PhotoUploader({ caseView }: { caseView: CaseView }) {
         {photoId ? (
           <DocumentImage documentId={photoId} alt="Candidate photo" className="h-28 w-24 rounded-md border border-slate-300" />
         ) : (
-          <span className="flex h-28 w-24 items-center justify-center rounded-md border border-dashed border-slate-300 text-xs text-slate-400">No photo</span>
+          <span className="flex h-28 w-24 items-center justify-center rounded-md border border-dashed border-slate-300 text-xs text-slate-500">No photo</span>
         )}
         <div className="flex flex-col items-start gap-2">
           {canUpload && (

@@ -13,7 +13,7 @@ export function DocumentImage({ documentId, alt, className }: DocumentImageProps
 
   if (image.isError) {
     return (
-      <span role="img" aria-label={`${alt} (could not be loaded)`} className={cn('flex items-center justify-center bg-slate-100 text-xs text-slate-500', className)}>
+      <span role="img" aria-label={`${alt} (could not be loaded)`} className={cn('flex items-center justify-center bg-slate-100 text-xs text-slate-600', className)}>
         Could not load
       </span>
     )

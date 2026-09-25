@@ -1,10 +1,75 @@
 @import "tailwindcss";
 
-:root {
-  --color-brand: #0f172a;
-  --color-brand-accent: #2563eb;
+/* Inter, self-hosted (files in src/assets/fonts, SIL OFL licence beside them): nothing is loaded from the internet, the
+   Content-Security-Policy only allows this site's own fonts (CLAUDE.md 11.5). Latin only; other scripts (Kannada, Hindi)
+   fall back to the system's Noto fonts. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin-700-normal.woff2') format('woff2');
+}
+
+/* Design tokens. Every colour pair used for text or for the outline of a control is checked against the WCAG contrast
+   minimums by src/design/tokens.test.ts, so a change here that makes something hard to read fails the tests. */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Kannada', sans-serif;
+
+  /* Nexlyn navy: 800 is the brand colour of the report (#0c2d6b). */
+  --color-brand-50: #eef3fb;
+  --color-brand-100: #dbe6f7;
+  --color-brand-200: #b9cdeb;
+  --color-brand-600: #1d4ea3;
+  --color-brand-700: #123b85;
+  --color-brand-800: #0c2d6b;
+  --color-brand-900: #071b42;
+
+  /* The outline of an input, select or textarea: at least 3:1 against white and against the page (WCAG 1.4.11). */
+  --color-field: #7b889c;
+  /* Card and divider lines are decoration, not the boundary of a control, so they stay light. */
+  --color-line: #dbe3ee;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-slate-50 font-sans text-slate-900 antialiased;
+}
+
+/* Every interactive thing shows where the keyboard is (components add their own ring; this covers links and the rest). */
+:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+/* People who ask their system for less motion get none. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

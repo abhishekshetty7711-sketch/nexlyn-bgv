@@ -180,7 +180,7 @@ function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disable
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {hasStored ? (
           <>
-            <span data-testid={`${def.key}-current`} className={clearing ? 'font-mono text-slate-400 line-through' : 'font-mono text-slate-900'}>
+            <span data-testid={`${def.key}-current`} className={clearing ? 'font-mono text-slate-500 line-through' : 'font-mono text-slate-900'}>
               {revealed ?? stored?.value}
             </span>
             {revealed === null ? (

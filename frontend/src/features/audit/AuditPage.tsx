@@ -98,7 +98,7 @@ export function AuditPage() {
                   <td className="px-3 py-2 font-mono text-xs">{entry.action}</td>
                   <td className="px-3 py-2 text-xs text-slate-600">
                     {entry.entityType ?? '-'}
-                    {entry.entityId && <div className="break-all text-slate-400">{entry.entityId}</div>}
+                    {entry.entityId && <div className="break-all text-slate-500">{entry.entityId}</div>}
                   </td>
                   <td className="px-3 py-2">
                     {entry.before || entry.after ? (
@@ -109,7 +109,7 @@ export function AuditPage() {
                         </pre>
                       </details>
                     ) : (
-                      <span className="text-xs text-slate-400">-</span>
+                      <span className="text-xs text-slate-500">-</span>
                     )}
                   </td>
                 </tr>

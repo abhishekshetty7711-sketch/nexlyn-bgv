@@ -4,7 +4,7 @@ import type { Progress, SectionKey, SectionState } from '../types'
 import { SECTION_KEYS } from '../types'
 
 const MARKS: Record<SectionState, { symbol: string; label: string; className: string }> = {
-  NOT_STARTED: { symbol: '○', label: 'not started', className: 'text-slate-400' },
+  NOT_STARTED: { symbol: '○', label: 'not started', className: 'text-slate-500' },
   SAVED: { symbol: '●', label: 'saved', className: 'text-emerald-600' },
   WARNING: { symbol: '⚠', label: 'needs attention', className: 'text-amber-600' },
 }
