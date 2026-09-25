@@ -21,6 +21,7 @@
 - Every phase must compile, pass tests (`./mvnw verify`, `npm run build && npm test`) and start with `docker compose up` before it is called done.
 - Never commit secrets. Never weaken a security rule in §11 to make something work — ask instead.
 - Keep this file updated when the user approves a change to a locked decision.
+- Admin-dashboard UI work may use the design skill in `.claude/skills/ui-ux-pro-max`, but only under the four rules of §16.1 (dashboard only, never the PDF report, this file wins, no security changes).
 
 ---
 
@@ -763,6 +764,17 @@ Prod (now): one machine — Nginx (TLS) + frontend + backend containers; Postgre
 - Frontend: feature folders, Zod schemas mirror backend validation, generated API client only (`scripts/generate-api-client.sh`), no `any`.
 - Commit messages: Conventional Commits (`feat(cases): …`, `fix(auth): …`).
 - Never log PII, tokens, passwords, or document contents.
+
+### 16.1 The UI design skill (`.claude/skills/ui-ux-pro-max`) — rules for using it (owner, 2026-09-25)
+
+A third-party design-advice skill (MIT licence, its LICENSE is beside it) is installed in the project. It only gives **recommendations**; it never overrides this file, the owner, or a decision in `docs/DECISIONS.md`.
+
+1. **Only for the admin dashboard UI:** the React + Tailwind + shadcn/ui code in `frontend/`. Nothing else.
+2. **Never on the PDF report.** Do not use the skill for, and do not apply its advice to, the report templates, styles, fonts or images (`backend/modules/reports`: `templates/report/**`, `static/report/**`, the Java that builds pages). The report must match the reference HTML (`docs/reference/nexlyn-bgv-report-v3.2.html`, §6) exactly; the only deviations allowed are bug fixes logged in `docs/DECISIONS.md` (for example D-036).
+3. **This file always wins.** If the skill disagrees with CLAUDE.md, follow CLAUDE.md. In particular the status and source symbols of §6.2 and §7 stay exactly as written (✓ ✕ ⓘ − ⏱ ↻ for check statuses; ★ Master / 🔄 Auto / ✏️ Manual for the date sync badges), even though the skill advises against emoji as icons; and the locked decisions of §2 (React + Tailwind + shadcn/ui, and so on) stay.
+4. **Never change security behaviour.** A restyle may change how something looks, never what it does: sign-in and two-step login, the access token kept in memory only, silent refresh and CSRF, the idle timer (warning at 29 minutes, sign-out at 30), permission checks (`ProtectedRoute`, `<Can>`), masked PII with the audited 30-second reveal, DOMPurify on remarks, and the Content-Security-Policy of §11.5. Where the skill suggests something that would need to relax any of these (for example loading fonts, icons or scripts from a CDN or Google Fonts), do not apply it: fonts and icons are bundled locally.
+
+Practical notes: run it only when asked to change how the admin UI looks or feels; take its advice as input and check it against §2, §6, §7 and §11 first; do not use `--persist --force` (it overwrites saved design decisions) and do not add files it generates to the project without saying so.
 
 ---
 
