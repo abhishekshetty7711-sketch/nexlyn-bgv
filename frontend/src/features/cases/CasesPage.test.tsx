@@ -79,6 +79,20 @@ describe('CasesPage', () => {
     expect(await screen.findByText('workspace opened')).toBeInTheDocument()
   })
 
+  it('shows a loading placeholder first, then the table with proper column headers', async () => {
+    mockFetch({ 'GET /api/cases': () => page([row()]), 'GET /api/clients': () => ({ body: CLIENTS }) })
+    show()
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
+    expect(await screen.findByRole('columnheader', { name: 'Report ID' })).toHaveAttribute('scope', 'col')
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument()
+  })
+
+  it('gives a hint when nothing matches', async () => {
+    mockFetch({ 'GET /api/cases': () => page([]), 'GET /api/clients': () => ({ body: CLIENTS }) })
+    show()
+    expect(await screen.findByText(/Try a different search, or clear the filters/)).toBeInTheDocument()
+  })
+
   it('says so when nothing matches', async () => {
     mockFetch({ 'GET /api/cases': () => page([]), 'GET /api/clients': () => ({ body: CLIENTS }) })
     show()

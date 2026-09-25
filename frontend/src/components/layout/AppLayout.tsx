@@ -28,13 +28,15 @@ export function AppLayout() {
   const { state, hasAnyPermission, signOut, idleSecondsLeft, staySignedIn } = useAuth()
   const me = state.status === 'authenticated' ? state.me : null
   const location = useLocation()
-  const [menuOpen, setMenuOpen] = useState(false)
+  // The path the narrow-screen menu was opened on: going to another page closes it (no state is set in an effect).
+  const [openedOn, setOpenedOn] = useState<string | null>(null)
+  const menuOpen = openedOn === location.pathname
+  const setMenuOpen = (open: boolean) => setOpenedOn(open ? location.pathname : null)
   const main = useRef<HTMLElement>(null)
   const firstRender = useRef(true)
 
   // After moving to another page, the keyboard and screen reader start at the top of the new content (not on the menu).
   useEffect(() => {
-    setMenuOpen(false)
     if (firstRender.current) {
       firstRender.current = false
       return
@@ -45,7 +47,7 @@ export function AppLayout() {
   useEffect(() => {
     if (!menuOpen) return
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false)
+      if (event.key === 'Escape') setOpenedOn(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -64,7 +66,7 @@ export function AppLayout() {
       <header className="sticky top-0 z-20 flex items-center gap-3 bg-brand-800 px-4 py-2.5 text-white lg:hidden">
         <button
           type="button"
-          onClick={() => setMenuOpen((open) => !open)}
+          onClick={() => setMenuOpen(!menuOpen)}
           aria-expanded={menuOpen}
           aria-controls="app-menu"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
