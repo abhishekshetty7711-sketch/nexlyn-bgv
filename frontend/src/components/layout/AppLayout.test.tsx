@@ -19,6 +19,16 @@ describe('AppLayout', () => {
     expect(screen.getByRole('link', { name: 'Change password' })).toBeInTheDocument()
   })
 
+  it('has one main landmark and one named navigation, and no unnamed "complementary" sidebar', () => {
+    mockFetch({})
+    renderRoutes(routes, { auth: fakeAuth() })
+
+    expect(screen.getAllByRole('main')).toHaveLength(1)
+    expect(screen.getAllByRole('navigation')).toHaveLength(1)
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+  })
+
   it('shows only the menu entries the admin can use', () => {
     mockFetch({})
     renderRoutes(routes, { auth: fakeAuth({ permissions: ['CASE_READ_ASSIGNED'] }) })

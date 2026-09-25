@@ -78,7 +78,7 @@ export function AppLayout() {
       </header>
       {menuOpen && <div className="fixed inset-0 z-20 bg-slate-900/50 lg:hidden" aria-hidden onClick={() => setMenuOpen(false)} />}
 
-      <aside
+      <div
         id="app-menu"
         className={cn(
           'fixed inset-y-0 left-0 z-30 flex w-64 shrink-0 -translate-x-full flex-col bg-brand-800 text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0',
@@ -126,7 +126,7 @@ export function AppLayout() {
             </Button>
           </div>
         )}
-      </aside>
+      </div>
 
       <main id="main" ref={main} tabIndex={-1} className="min-w-0 flex-1 p-4 outline-none sm:p-6 lg:p-8">
         <Outlet />
