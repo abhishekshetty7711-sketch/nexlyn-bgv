@@ -32,6 +32,24 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 | awk 'NF {printf "
 
 The same applies (less urgently) to `TOTP_ENCRYPTION_KEY` and `JWT_PRIVATE_KEY`.
 
+### Making the encrypted backup file with the tool
+
+`scripts/backup-keys/backup-keys.mjs` reads the three keys from an `.env`, encrypts them with a passphrase you type (scrypt + AES-256-GCM,
+no extra software), writes one file, opens it again to prove it works, and prints only a short **fingerprint** of each key (never the key).
+Plug in a USB stick, then:
+
+```
+node scripts/backup-keys/backup-keys.mjs backup --out E:            # local stack; on the server add: --env infra/prod/.env
+node scripts/backup-keys/backup-keys.mjs verify --file E:
+exlyn-keys-YYYY-MM-DD.enc     # every quarter: does it still open, and is it the same key?
+node scripts/backup-keys/backup-keys.mjs restore --file E:
+exlyn-keys-YYYY-MM-DD.enc --to C:safeecovered.env
+```
+
+The passphrase is **not stored anywhere**: without it the file cannot be opened. Keep it apart from the file. Make a second copy of the file
+on another stick or with another person. The tool refuses to write inside the project folder, and `*.enc` is git-ignored as a second safety.
+This complements the password-manager and paper copies above; it does not replace them.
+
 ## Who may see them
 
 Only the owner and the person who runs the server. When someone with access leaves, treat every value they could

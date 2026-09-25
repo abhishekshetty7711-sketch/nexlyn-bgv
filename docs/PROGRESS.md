@@ -60,6 +60,10 @@ The owner found that the PDF's brand header looked different from the preview. C
 
 Guards added: `ReportFontAudit` (reads the fonts of a finished PDF) with tests that fail if any font is not bundled or not embedded or if the brand/footer words are not Selawik, and a **start-up self-check in the Docker image** (`NEXLYN_REPORTS_FONT_CHECK=fail`): a container whose browser would print in another font does not start. After a deploy, `docker compose logs backend | grep "font check"` should say `Report font check passed`. Known difference: Selawik has no black weight, so NEXLYN prints in Bold (a bit lighter than Segoe UI Black on Windows). The owner's stack was rebuilt with this; the old PDFs in `scripts/demo-data/output/` still show the old header until the reports are generated again in the app.
 
+## Key backup tool (2026-09-25)
+
+`scripts/backup-keys/backup-keys.mjs` makes an encrypted, offline backup file of `PII_ENCRYPTION_KEY`, `TOTP_ENCRYPTION_KEY` and `JWT_PRIVATE_KEY` (see `docs/runbooks/key-management.md`; 8 Node tests, run with fake keys only). **The owner has not made the backup yet**: it needs a USB stick and a passphrase the owner chooses. Until then the only copy of the local keys is `infra/local/.env` (do this before keeping any data that matters, and before going live with the production keys).
+
 ## Phase 2 steps
 
 | Step | Status |

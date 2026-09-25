@@ -43,3 +43,6 @@ test-results/
 
 # --- demo data output (generated PDFs) ---
 scripts/demo-data/output/
+
+# --- encrypted key backups (belong on a USB stick, never in git) ---
+nexlyn-keys-*.enc
