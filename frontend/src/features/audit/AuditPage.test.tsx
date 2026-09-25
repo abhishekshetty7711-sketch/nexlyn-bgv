@@ -66,6 +66,7 @@ describe('AuditPage', () => {
     expect(screen.getByText('owner@example.com')).toBeInTheDocument()
     expect(screen.getByText('10.0.0.1')).toBeInTheDocument()
     expect(screen.getByText('1 entries, newest first')).toBeInTheDocument()
+    expect(screen.getByText('Before / after')).toHaveClass('py-1') // jsdom has no layout: py-1 makes the toggle at least 24 px tall
     await userEvent.click(screen.getByText('Before / after'))
     expect(screen.getByText(/"status": "DISABLED"/)).toBeInTheDocument()
   })

@@ -106,7 +106,7 @@ export function AuditPage() {
                   <td className="px-3 py-2">
                     {entry.before || entry.after ? (
                       <details>
-                        <summary className="cursor-pointer text-xs text-slate-600">Before / after</summary>
+                        <summary className="cursor-pointer py-1 text-xs text-slate-600">Before / after</summary>
                         <pre className="mt-1 max-w-md overflow-x-auto rounded bg-slate-50 p-2 text-xs">
                           {JSON.stringify({ before: entry.before, after: entry.after }, null, 2)}
                         </pre>
