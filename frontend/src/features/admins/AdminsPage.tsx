@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/AuthContext'
 import { Can } from '@/features/auth/Can'
 import { type RoleView, useRoles } from '@/features/roles/api'
+import { usePageTitle } from '@/lib/usePageTitle'
 import {
   type AdminAction,
   type AdminView,
@@ -40,9 +41,9 @@ const ACTION_TEXT: Record<AdminAction, { title: string; body: string; button: st
     button: 'Unlock',
   },
   'revoke-sessions': {
-    title: 'Sign this admin out everywhere?',
+    title: 'End all sessions of this admin?',
     body: 'All their sessions end now. They can sign in again.',
-    button: 'Sign out everywhere',
+    button: 'End sessions',
   },
 }
 
@@ -55,6 +56,7 @@ function formatWhen(value: string | null): string {
 }
 
 export function AdminsPage() {
+  usePageTitle('Admins')
   const { state } = useAuth()
   const [page, setPage] = useState(0)
   const admins = useAdmins(page)
@@ -142,7 +144,7 @@ export function AdminsPage() {
                           </Button>
                         )}
                         <Button size="sm" variant="ghost" onClick={() => setConfirming({ admin, action: 'revoke-sessions' })}>
-                          Sign out
+                          End sessions
                         </Button>
                       </div>
                     </Can>
@@ -260,7 +262,7 @@ function InviteDialog({ roles, onClose }: { roles: RoleView[]; onClose: () => vo
         onSubmit={form.handleSubmit((values) => invite.mutate({ email: values.email, roleIds }, { onSuccess: setIssued }))}
       >
         {invite.isError && <Alert variant="error">{describeError(invite.error)}</Alert>}
-        <Field label="Email" htmlFor="invite-email" error={form.formState.errors.email?.message}>
+        <Field label="Email" htmlFor="invite-email" required error={form.formState.errors.email?.message}>
           <Input id="invite-email" type="email" aria-invalid={!!form.formState.errors.email} {...form.register('email')} />
         </Field>
         <RolePicker roles={roles} selected={roleIds} onChange={setRoleIds} />

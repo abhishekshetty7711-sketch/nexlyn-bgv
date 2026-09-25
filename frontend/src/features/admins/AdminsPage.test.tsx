@@ -74,6 +74,23 @@ describe('AdminsPage', () => {
     expect(within(row('Cara Locked')).getByRole('button', { name: 'Disable' })).toBeInTheDocument()
   })
 
+  it('names the tab, and calls ending someone\'s sessions "End sessions" so it is not mistaken for your own Sign out', async () => {
+    const fake = mockFetch({ ...baseHandlers(), 'POST /api/admins/a-3/revoke-sessions': () => ({ status: 204 }) })
+    show()
+    await screen.findByText('Cara Locked')
+    expect(document.title).toBe('Admins - Nexlyn BGV')
+    expect(screen.queryByRole('button', { name: 'Sign out' })).not.toBeInTheDocument()
+
+    await userEvent.click(within(row('Cara Locked')).getByRole('button', { name: 'End sessions' }))
+    const dialog = screen.getByRole('dialog', { name: 'End all sessions of this admin?' })
+    expect(dialog).toHaveTextContent('All their sessions end now')
+    expect(fake.mock.calls.some(([url]) => String(url).endsWith('/revoke-sessions'))).toBe(false) // nothing until confirmed
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'End sessions' }))
+    await screen.findByText('Bob Builder')
+    expect(fake.mock.calls.some(([url, init]) => url === '/api/admins/a-3/revoke-sessions' && init?.method === 'POST')).toBe(true)
+  })
+
   it('hides the management buttons from an admin without the permission', async () => {
     mockFetch(baseHandlers())
     show([])
@@ -130,7 +147,7 @@ describe('AdminsPage', () => {
     const create = within(dialog).getByRole('button', { name: 'Create invitation' })
     expect(create).toBeDisabled() // no role chosen yet
 
-    await userEvent.type(within(dialog).getByLabelText('Email'), 'new@example.com')
+    await userEvent.type(within(dialog).getByLabelText('Email (required)'), 'new@example.com')
     await userEvent.click(within(dialog).getByRole('checkbox', { name: /Analyst/ }))
     await userEvent.click(create)
 
@@ -151,7 +168,7 @@ describe('AdminsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Invite admin' }))
     const dialog = screen.getByRole('dialog')
     await userEvent.click(within(dialog).getByRole('checkbox', { name: /Analyst/ }))
-    await userEvent.type(within(dialog).getByLabelText('Email'), 'nope')
+    await userEvent.type(within(dialog).getByLabelText('Email (required)'), 'nope')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Create invitation' }))
 
     expect(await within(dialog).findByText('Enter a valid email address')).toBeInTheDocument()
