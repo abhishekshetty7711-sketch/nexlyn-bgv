@@ -35,7 +35,9 @@ USER nexlyn
 
 # Inside a container the container itself is the sandbox; Chromium's own sandbox needs privileges the container
 # (correctly) does not have. See docs/runbooks/deploy-update.md for the container restrictions used in production.
-ENV CHROMIUM_NO_SANDBOX=true \
+# Nothing is downloaded when the app runs: the browser was installed above, at build time.
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    CHROMIUM_NO_SANDBOX=true \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65 -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"
 
 EXPOSE 8080

@@ -8,7 +8,8 @@ import java.util.Optional;
 /**
  * Finds a Chromium-based browser to print with. Order: the configured path, the {@code CHROMIUM_PATH}
  * environment variable, then the usual install places (Chrome or Edge on Windows, chromium / Chrome on
- * Linux). When nothing is found Playwright uses the Chromium it installs itself (the Docker image has one).
+ * Linux). When nothing is found Playwright uses the Chromium that is already installed in its browser folder (the Docker image
+ * has one in PLAYWRIGHT_BROWSERS_PATH). Nothing is ever downloaded at run time.
  */
 public final class BrowserLocator {
 

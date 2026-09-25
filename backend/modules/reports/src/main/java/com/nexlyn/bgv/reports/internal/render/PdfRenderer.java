@@ -14,10 +14,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * Prints the report HTML to an A4 PDF with a headless Chromium (Playwright for Java, CLAUDE.md section 13,
@@ -65,6 +68,57 @@ public class PdfRenderer {
             })
             """;
 
+    /**
+     * The longest one report may take, browser start-up included. A heavy 19-page report takes about 10 seconds; a
+     * browser that hangs must not hold a render slot (and block the case) forever.
+     */
+    static final Duration RENDER_LIMIT = Duration.ofMinutes(3);
+
+    /**
+     * What the browser driver is told at start. It must NEVER download anything at run time: without this,
+     * {@code Playwright.create()} runs "install" for every browser (Chromium, Firefox and WebKit) and hangs where
+     * the machine has no route to the download site or may not write to the browser folder. The browser comes from
+     * the Docker image (PLAYWRIGHT_BROWSERS_PATH) or from CHROMIUM_PATH.
+     */
+    static Map<String, String> driverEnvironment() {
+        return Map.of("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1");
+    }
+
+    /** Runs {@code work} on its own thread and gives up (interrupting it) when it takes longer than {@code limit}. */
+    static <T> T within(Duration limit, Supplier<T> work) {
+        AtomicReference<T> result = new AtomicReference<>();
+        AtomicReference<Throwable> failure = new AtomicReference<>();
+        Thread worker = new Thread(() -> {
+            try {
+                result.set(work.get());
+            } catch (Throwable t) {
+                failure.set(t);
+            }
+        }, "pdf-render");
+        worker.setDaemon(true);
+        worker.start();
+        try {
+            worker.join(limit.toMillis());
+        } catch (InterruptedException interrupted) {
+            worker.interrupt();
+            Thread.currentThread().interrupt();
+            throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, "The PDF could not be made right now. Please try again in a moment.");
+        }
+        if (worker.isAlive()) {
+            worker.interrupt();
+            log.error("The PDF renderer did not finish within {} and was stopped", limit);
+            throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, "The PDF took too long to make and was stopped. Please try again.");
+        }
+        Throwable problem = failure.get();
+        if (problem instanceof RuntimeException runtime) {
+            throw runtime;
+        }
+        if (problem instanceof Error error) {
+            throw error;
+        }
+        return result.get();
+    }
+
     /** Tolerance in CSS pixels: sub-pixel rounding must not raise false alarms. */
     private static final int TOLERANCE = 3;
 
@@ -84,6 +138,10 @@ public class PdfRenderer {
      * failed" appear for no good reason) is given one more try with a fresh browser before the job fails.
      */
     public Rendered render(String html) {
+        return within(RENDER_LIMIT, () -> renderWithOneRetry(html));
+    }
+
+    private Rendered renderWithOneRetry(String html) {
         try {
             return renderOnce(html);
         } catch (ApiException first) {
@@ -100,8 +158,7 @@ public class PdfRenderer {
 
     private Rendered renderOnce(String html) {
         Optional<Path> browserPath = configuredBrowser();
-        Map<String, String> env = browserPath.isPresent() ? Map.of("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1") : Map.of();
-        try (Playwright playwright = Playwright.create(new Playwright.CreateOptions().setEnv(env))) {
+        try (Playwright playwright = Playwright.create(new Playwright.CreateOptions().setEnv(driverEnvironment()))) {
             BrowserType.LaunchOptions launch = new BrowserType.LaunchOptions().setHeadless(true);
             browserPath.ifPresent(launch::setExecutablePath);
             if (properties.noSandbox()) {

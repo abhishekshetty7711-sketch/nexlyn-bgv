@@ -105,6 +105,46 @@ class PdfRendererTest {
         return ReportFixtures.report(List.of(aadhaar, court, education), photo);
     }
 
+    /** Where the words "Page n of m" of every page sit, as a fraction of the page height from the top (0 = top, 1 = bottom). */
+    private static List<Double> footerPositions(byte[] pdfBytes) throws IOException {
+        List<Double> positions = new java.util.ArrayList<>();
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            for (int page = 1; page <= document.getNumberOfPages(); page++) {
+                final double[] found = {-1};
+                PDFTextStripper stripper = new PDFTextStripper() {
+                    @Override
+                    protected void writeString(String text, List<org.apache.pdfbox.text.TextPosition> textPositions) {
+                        if (text.startsWith("Page ") && found[0] < 0) {
+                            found[0] = textPositions.get(0).getYDirAdj() / document.getPage(0).getMediaBox().getHeight();
+                        }
+                    }
+                };
+                stripper.setStartPage(page);
+                stripper.setEndPage(page);
+                stripper.getText(document);
+                positions.add(found[0]);
+            }
+        }
+        return positions;
+    }
+
+    @Test
+    void everyFooterStaysPinnedToTheBottomOfItsPageEvenWithAWatermark() throws Exception {
+        // an old rule turned the footer into position:relative when a watermark was on, so it floated up under the content
+        CaseReport plain = sampleCase();
+        CaseReport watermarked = ReportFixtures.withSettings(sampleCase(), 4, "NUMERIC", true, "NEXLYN VERIFIED");
+        // many groups: the summary overflows onto its own page, whose content is short (the footer must still be at the bottom)
+        CaseReport overflowing = ReportFixtures.withSettings(
+                ReportFixtures.report(ReportFixtures.manyGroups(6), null), 4, "NUMERIC", true, "NEXLYN VERIFIED");
+
+        for (CaseReport report : List.of(plain, watermarked, overflowing)) {
+            List<Double> positions = footerPositions(print(report).pdf());
+            List<Double> found = positions.stream().filter(y -> y >= 0).toList(); // the services page has its own footer, without a page number
+            assertThat(found).hasSizeGreaterThanOrEqualTo(positions.size() - 1)
+                    .allSatisfy(y -> assertThat(y).as("footer position (0 top, 1 bottom)").isBetween(0.93, 1.0));
+        }
+    }
+
     @Test
     void printsEveryPlannedPageAsA4AndKeepsTheWordsSearchable() throws Exception {
         PdfRenderer.Rendered rendered = print(sampleCase());

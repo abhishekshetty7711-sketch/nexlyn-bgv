@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 class ReportApiIntegrationTest extends ReportsIntegrationTestBase {
 
@@ -293,5 +294,35 @@ class ReportApiIntegrationTest extends ReportsIntegrationTestBase {
         JsonNode version = body(send(get(reportsUrl("")), analyst, null)).get(0);
         assertThat(version.get("pageCount").asInt()).isEqualTo(3);
         assertThat(Arrays.asList(version.get("warnings").size())).containsExactly(0);
+    }
+
+    @Test
+    void aCourtCheckWithItsAttestationAndADocumentIsFittedWithoutAnyManualStep() throws Exception {
+        // The attestation block leaves no room for a supporting document on the detail page. The reference tool prints
+        // it cut off unless the analyst ticks "Move to Next Page"; here the report moves it by itself and says nothing is wrong.
+        assumeTrue(BrowserLocator.find(null).isPresent(), "no Chrome / Chromium / Edge found: set CHROMIUM_PATH to run this test");
+        makeCaseReady();
+        JsonNode court = newCheck(caseId, "COURT", analyst);
+        String courtId = court.get("id").asText();
+        var save = send(put("/api/cases/" + caseId + "/checks/" + courtId), superToken(), obj(
+                "version", court.get("version").asLong(), "title", court.get("title").asText(), "status", "VERIFIED",
+                "remarks", "No criminal or civil record was found against the candidate in the databases that were searched. "
+                        + "The search covered the last seven years and the permanent address given by the candidate.",
+                "hasAttestation", true, "fields", java.util.List.of(), "details", java.util.List.of()));
+        assertThat(status(save)).as(save.getResponse().getContentAsString()).isEqualTo(200);
+        MockMultipartFile file = new MockMultipartFile("file", "court.png", "image/png", ReportFixtures.png(900, 1200, new Color(240, 240, 230)));
+        assertThat(mvc.perform(multipart("/api/checks/" + courtId + "/documents").file(file).header("Authorization", "Bearer " + analyst))
+                .andReturn().getResponse().getStatus()).isEqualTo(201);
+
+        renderer.mode = SwitchablePdfRenderer.Mode.REAL;
+        renderer.delayMillis = 0;
+        JsonNode job = generate(true);
+        assertThat(job.get("status").asText()).as(job.toString()).isEqualTo("DONE");
+        assertThat(job.get("warnings")).as("nothing is cut off").isEmpty();
+
+        JsonNode version = body(send(get(reportsUrl("")), analyst, null)).get(0);
+        // cover, education detail, court detail, the court document on its own page, services
+        assertThat(version.get("pageCount").asInt()).isEqualTo(5);
+        assertThat(version.get("warnings")).isEmpty();
     }
 }

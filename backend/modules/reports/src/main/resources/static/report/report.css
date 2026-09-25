@@ -804,8 +804,15 @@ body{ font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-s
   user-select: none;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-.with-watermark .page > *:not(.watermark-layer) {
+/* Lift everything above the watermark, EXCEPT the footer: it is pinned to the bottom of the page with
+   position:absolute (.page.detail-page .page-footer, #page1 .page-footer). The reference tool's version of this rule
+   also matched the footer and turned it into position:relative, so with a watermark on, every footer floated up
+   under the content, lost its full width and squeezed the document frame above it (fixed here on purpose). */
+.with-watermark .page > *:not(.watermark-layer):not(.page-footer) {
   position: relative;
+  z-index: 1;
+}
+.with-watermark .page > .page-footer {
   z-index: 1;
 }
 

@@ -282,4 +282,36 @@ class ReportModelAssemblerTest {
         ReportDocument custom = assembler.assemble(ReportFixtures.withSettings(ReportFixtures.report(List.of(check), null), 4, "NUMERIC", true, "CONFIDENTIAL"));
         assertThat(custom.watermarkText()).isEqualTo("CONFIDENTIAL");
     }
+
+    // ---- documents moved automatically (the job runner does this when a page does not fit) ----------------------------
+
+    @Test
+    void aForcedDocumentGetsAPageOfItsOwnAndNumbersFollowThePageOrder() {
+        Check court = ReportFixtures.check("COURT", "court", "Court Record", CheckStatus.VERIFIED);
+        var first = documents.attach(court.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), false, false, null);
+        var second = documents.attach(court.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), false, false, null);
+        var report = ReportFixtures.report(List.of(court), null);
+
+        ReportModelAssembler.Assembly none = assembler.assemble(report, java.util.Set.of());
+        assertThat(kinds(none.document())).containsExactly("cover", "detail", "services");
+        assertThat(none.flowDocuments(2)).as("both documents are on the detail page").containsExactly(first, second);
+
+        ReportModelAssembler.Assembly forced = assembler.assemble(report, java.util.Set.of(second));
+        assertThat(kinds(forced.document())).containsExactly("cover", "detail", "document", "services");
+        assertThat(forced.document().pages()).extracting(Page::total).containsOnly(4);
+        assertThat(forced.flowDocuments(2)).containsExactly(first);
+        DocumentPage moved = (DocumentPage) forced.document().pages().get(2);
+        assertThat(moved.frame().header()).contains("Document 2");
+        assertThat(moved.large()).as("the automatically moved document gets the larger box").isTrue();
+    }
+
+    @Test
+    void aDocumentTheAnalystAlreadyMovedIsNotListedAsStayingOnThePage() {
+        Check court = ReportFixtures.check("COURT", "court", "Court Record", CheckStatus.VERIFIED);
+        documents.attach(court.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), true, false, null);
+        var stays = documents.attach(court.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), false, false, null);
+        ReportModelAssembler.Assembly assembly = assembler.assemble(ReportFixtures.report(List.of(court), null), java.util.Set.of());
+        assertThat(assembly.flowDocuments(2)).containsExactly(stays);
+        assertThat(assembly.flowDocuments(1)).as("the cover has none").isEmpty();
+    }
 }

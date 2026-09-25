@@ -9,7 +9,6 @@ import com.nexlyn.bgv.documents.FileStorage;
 import com.nexlyn.bgv.reports.internal.assemble.ReportModelAssembler;
 import com.nexlyn.bgv.reports.internal.domain.ReportJob;
 import com.nexlyn.bgv.reports.internal.domain.ReportVersion;
-import com.nexlyn.bgv.reports.internal.model.ReportPages.ReportDocument;
 import com.nexlyn.bgv.reports.internal.render.HtmlRenderer;
 import com.nexlyn.bgv.reports.internal.render.PdfRenderer;
 import com.nexlyn.bgv.reports.internal.repository.ReportJobRepository;
@@ -25,8 +24,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -82,8 +83,7 @@ public class ReportJobRunner {
             requestedBy = started.getRequestedBy();
 
             CaseReport snapshot = cases.reportOf(caseId);
-            ReportDocument document = assembler.assemble(snapshot);
-            PdfRenderer.Rendered rendered = pdf.render(html.render(document, false));
+            PdfRenderer.Rendered rendered = renderFitting(snapshot);
             List<String> warnings = rendered.overflows().stream()
                     .map(o -> "Page " + o.page() + ": the content does not fit on the page and is cut off. "
                             + "Move a document to its own page or shorten the text, then generate again.")
@@ -118,6 +118,45 @@ public class ReportJobRunner {
                 log.error("Could not record the failure of report job {}: {}", jobId, secondary.toString());
             }
         }
+    }
+
+    /** The most times a page that does not fit is fixed by moving a document, and so the most extra prints a report can cost. */
+    static final int MAX_LAYOUT_PASSES = 4;
+
+    /**
+     * Prints the report; when the browser finds a detail page whose content does not fit (a supporting document that
+     * runs into the footer), the LAST document still on that page is moved to a page of its own and the report is
+     * printed again, until everything fits or nothing more can be moved. What still does not fit is reported as a
+     * warning by the caller. The reference tool leaves this to the analyst ("Move to Next Page"); doing it here means a
+     * court check with its attestation block, which never leaves room for a document, needs no manual step.
+     */
+    private PdfRenderer.Rendered renderFitting(CaseReport snapshot) {
+        Set<UUID> moved = new HashSet<>();
+        ReportModelAssembler.Assembly assembly = assembler.assemble(snapshot, moved);
+        PdfRenderer.Rendered rendered = pdf.render(html.render(assembly.document(), false));
+        for (int pass = 0; pass < MAX_LAYOUT_PASSES && !rendered.overflows().isEmpty(); pass++) {
+            Set<UUID> next = documentsToMove(assembly, rendered.overflows());
+            if (next.isEmpty()) {
+                break; // the content itself is too long: nothing to move
+            }
+            moved.addAll(next);
+            log.info("Report layout: moved {} document(s) to pages of their own (pass {})", next.size(), pass + 1);
+            assembly = assembler.assemble(snapshot, moved);
+            rendered = pdf.render(html.render(assembly.document(), false));
+        }
+        return rendered;
+    }
+
+    /** For every page that does not fit: the last supporting document still on it (a page with none cannot be helped this way). */
+    static Set<UUID> documentsToMove(ReportModelAssembler.Assembly assembly, List<PdfRenderer.PageOverflow> overflows) {
+        Set<UUID> chosen = new HashSet<>();
+        for (PdfRenderer.PageOverflow overflow : overflows) {
+            List<UUID> onPage = assembly.flowDocuments(overflow.page());
+            if (!onPage.isEmpty()) {
+                chosen.add(onPage.get(onPage.size() - 1));
+            }
+        }
+        return chosen;
     }
 
     /** Stores the PDF and its row under the next version number; a clash with a concurrent report takes the next number. */

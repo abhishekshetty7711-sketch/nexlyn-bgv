@@ -32,6 +32,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -58,8 +59,29 @@ public class ReportModelAssembler {
         this.sealSrc = assets.advocateSealDataUri();
     }
 
+    /**
+     * The report and, for each detail page, which supporting documents sit on it (not on pages of their own).
+     * The job runner uses it to move a document to its own page when the browser finds that it does not fit.
+     */
+    public record Assembly(ReportDocument document, Map<Integer, List<UUID>> flowDocumentsByPage) {
+
+        /** The documents that stay on this page, in order (empty when the page has none or is not a detail page). */
+        public List<UUID> flowDocuments(int pageNumber) {
+            return flowDocumentsByPage.getOrDefault(pageNumber, List.of());
+        }
+    }
+
     /** The whole report, page by page. */
     public ReportDocument assemble(CaseReport report) {
+        return assemble(report, Set.of()).document();
+    }
+
+    /**
+     * The whole report, with the documents in {@code forcedToNextPage} placed on pages of their own as if the analyst
+     * had chosen "Move to Next Page" for them (the reference tool leaves that to the analyst, who must notice a
+     * cut-off page; see the job runner).
+     */
+    public Assembly assemble(CaseReport report, Set<UUID> forcedToNextPage) {
         String dateFormat = report.settings().dateFormat();
         List<Check> checks = report.checks();
 
@@ -69,7 +91,7 @@ public class ReportModelAssembler {
         }
         List<String> groups = checks.stream().map(Check::iconGroup).toList();
         List<Integer> moved = checks.stream()
-                .map(c -> (int) docsByCheck.get(c.id()).stream().filter(DocumentInfo::moveToNextPage).count())
+                .map(c -> (int) docsByCheck.get(c.id()).stream().filter(d -> movesToNextPage(d, forcedToNextPage)).count())
                 .toList();
         Pagination.Plan plan = Pagination.plan(groups, moved, report.settings().layoutCards());
         boolean compact = plan.layout() == 6;
@@ -87,12 +109,18 @@ public class ReportModelAssembler {
             List<SummaryCard> cards = overflow.groupIndexes().stream().map(allCards::get).toList();
             pages.add(new OverflowPage(pages.size() + 1, total, cards, compact, overflow.withRemarks() ? remarks : null));
         }
+        Map<Integer, List<UUID>> flowDocuments = new HashMap<>();
         for (Check check : checks) {
-            addCheckPages(pages, total, check, docsByCheck.get(check.id()), dateFormat);
+            addCheckPages(pages, total, check, docsByCheck.get(check.id()), dateFormat, forcedToNextPage, flowDocuments);
         }
         pages.add(new ServicesPage(pages.size() + 1, total));
-        return new ReportDocument(report.reportId(), report.settings().watermarkEnabled(),
-                watermarkText(report.settings().watermarkText()), watermarkSize(watermarkText(report.settings().watermarkText())), List.copyOf(pages));
+        return new Assembly(new ReportDocument(report.reportId(), report.settings().watermarkEnabled(),
+                watermarkText(report.settings().watermarkText()), watermarkSize(watermarkText(report.settings().watermarkText())), List.copyOf(pages)),
+                flowDocuments);
+    }
+
+    private static boolean movesToNextPage(DocumentInfo doc, Set<UUID> forced) {
+        return doc.moveToNextPage() || forced.contains(doc.id());
     }
 
     // ---- page 1 -------------------------------------------------------------------------------------------
@@ -131,15 +159,17 @@ public class ReportModelAssembler {
 
     // ---- a check --------------------------------------------------------------------------------------------
 
-    private void addCheckPages(List<Page> pages, int total, Check check, List<DocumentInfo> docs, String dateFormat) {
+    private void addCheckPages(List<Page> pages, int total, Check check, List<DocumentInfo> docs, String dateFormat,
+                               Set<UUID> forced, Map<Integer, List<UUID>> flowDocuments) {
         String docName = check.cardVerifies();
         var status = ReportFormat.status(check.status());
         TitleBar main = new TitleBar(check.iconGroup(), check.title(), docName, status, false);
         TitleBar continuedBar = new TitleBar(check.iconGroup(), check.title(), docName, status, true);
 
         // Documents on the detail page are numbered 1, 2, 3; moved ones continue the count, in page order.
-        List<DocumentInfo> staying = docs.stream().filter(d -> !d.moveToNextPage()).toList();
-        List<DocumentInfo> movedDocs = docs.stream().filter(DocumentInfo::moveToNextPage).toList();
+        List<DocumentInfo> staying = docs.stream().filter(d -> !movesToNextPage(d, forced)).toList();
+        List<DocumentInfo> movedDocs = docs.stream().filter(d -> movesToNextPage(d, forced)).toList();
+        flowDocuments.put(pages.size() + 1, staying.stream().map(DocumentInfo::id).toList());
         List<Frame> frames = new ArrayList<>();
         for (int i = 0; i < staying.size(); i++) {
             frames.add(frame(staying.get(i), i + 1, docName));
@@ -155,7 +185,9 @@ public class ReportModelAssembler {
 
         for (int i = 0; i < movedDocs.size(); i++) {
             DocumentInfo doc = movedDocs.get(i);
-            pages.add(new DocumentPage(pages.size() + 1, total, continuedBar, frame(doc, staying.size() + i + 1, docName), doc.useLargerBox()));
+            pages.add(new DocumentPage(pages.size() + 1, total, continuedBar, frame(doc, staying.size() + i + 1, docName),
+                    // a document moved here by the job runner has the page to itself, so it gets the big box too
+                    doc.useLargerBox() || (forced.contains(doc.id()) && !doc.moveToNextPage())));
         }
     }
 

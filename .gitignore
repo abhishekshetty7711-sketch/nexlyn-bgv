@@ -40,3 +40,6 @@ logs/
 coverage/
 playwright-report/
 test-results/
+
+# --- demo data output (generated PDFs) ---
+scripts/demo-data/output/
