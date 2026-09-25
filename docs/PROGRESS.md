@@ -52,7 +52,7 @@ It was run here against a separate throw-away stack (removed afterwards; the own
 2. with a **watermark on, every footer floated up** under the content (a rule inherited from the reference tool);
 3. **documents were cut off** on full pages (a court check always is): the job now moves the last document on such a page to its own page and prints again.
 
-**The owner's running Docker stack must be rebuilt to get these fixes** (`./scripts/local-up.sh -d`; data is kept). Not done: the reference tool was not re-driven with the five new cases (its data entry is a browser UI); the HTML preview does not auto-move documents (only the PDF does).
+**The owner's running Docker stack was rebuilt with these fixes** (2026-09-25, `./scripts/local-up.sh -d`, data kept; all containers healthy). Not done: the reference tool was not re-driven with the five new cases (its data entry is a browser UI); the HTML preview does not auto-move documents (only the PDF does).
 
 ## Phase 2 steps
 
