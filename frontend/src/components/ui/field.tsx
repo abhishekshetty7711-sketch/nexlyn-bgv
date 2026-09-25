@@ -6,6 +6,8 @@ interface FieldProps {
   htmlFor: string
   error?: string
   hint?: string
+  /** Says "(required)" after the label, so nobody has to fail a save to find out. Leave off for optional fields. */
+  required?: boolean
   children: ReactNode
 }
 
@@ -16,7 +18,7 @@ type ControlProps = { 'aria-describedby'?: string; 'aria-invalid'?: boolean | 't
  * control (`aria-describedby`) and the control is marked invalid, so a screen reader announces them with the field
  * (WCAG: errors are identified in text, next to the field, and associated with it).
  */
-export function Field({ label, htmlFor, error, hint, children }: FieldProps) {
+export function Field({ label, htmlFor, error, hint, required, children }: FieldProps) {
   const errorId = `${htmlFor}-error`
   const hintId = `${htmlFor}-hint`
   const control = isValidElement<ControlProps>(children)
@@ -31,6 +33,7 @@ export function Field({ label, htmlFor, error, hint, children }: FieldProps) {
     <div className="flex flex-col gap-1">
       <label htmlFor={htmlFor} className="text-sm font-medium text-slate-800">
         {label}
+        {required && <span className="font-normal text-slate-600"> (required)</span>}
       </label>
       {control}
       {hint && !error && (

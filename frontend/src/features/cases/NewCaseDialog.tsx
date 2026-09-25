@@ -36,7 +36,7 @@ export function NewCaseDialog({ onClose }: { onClose: () => void }) {
         {clients.data && clients.data.length === 0 && (
           <Alert variant="info">There are no active clients yet. Add a client first.</Alert>
         )}
-        <Field label="Client" htmlFor="nc-client" error={errors.clientId?.message}>
+        <Field label="Client" htmlFor="nc-client" required error={errors.clientId?.message}>
           <Select id="nc-client" aria-invalid={!!errors.clientId} {...form.register('clientId')}>
             <option value="">Choose a client...</option>
             {clients.data?.map((client) => (

@@ -157,7 +157,7 @@ describe('CasesPage', () => {
     expect(await within(dialog).findByText('Choose a client')).toBeInTheDocument()
     expect(fake.mock.calls.some(([url, init]) => url === '/api/cases' && init?.method === 'POST')).toBe(false)
 
-    await userEvent.selectOptions(within(dialog).getByLabelText('Client'), 'cl-1')
+    await userEvent.selectOptions(within(dialog).getByLabelText('Client (required)'), 'cl-1')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Create case' }))
 
     expect(await screen.findByText('workspace opened')).toBeInTheDocument()
@@ -166,6 +166,16 @@ describe('CasesPage', () => {
     expect(body.clientId).toBe('cl-1')
     expect(body.issueDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(body).not.toHaveProperty('dueDate')
+  })
+
+  it('says which field of the new-case form is required before anything is submitted', async () => {
+    mockFetch({ 'GET /api/cases': () => page([]), 'GET /api/clients': () => ({ body: CLIENTS }) })
+    show(['CASE_READ_ASSIGNED', 'CASE_CREATE'])
+    await userEvent.click(await screen.findByRole('button', { name: 'New case' }))
+    const dialog = screen.getByRole('dialog', { name: 'New case' })
+    expect(within(dialog).getByLabelText('Client (required)')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Due date (optional)')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('warns when there is no client to choose yet', async () => {
@@ -184,7 +194,7 @@ describe('CasesPage', () => {
     show(['CASE_READ_ASSIGNED', 'CASE_CREATE'])
     await userEvent.click(await screen.findByRole('button', { name: 'New case' }))
     const dialog = screen.getByRole('dialog')
-    await userEvent.selectOptions(await within(dialog).findByLabelText('Client'), 'cl-1')
+    await userEvent.selectOptions(await within(dialog).findByLabelText('Client (required)'), 'cl-1')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Create case' }))
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Choose an active client.')
   })

@@ -34,6 +34,22 @@ describe('Field', () => {
     expect(screen.queryByText('10 digits')).not.toBeInTheDocument()
   })
 
+  it('says "(required)" in the label of a required field, and only there', () => {
+    render(
+      <>
+        <Field label="Client name" htmlFor="name" required>
+          <Input id="name" />
+        </Field>
+        <Field label="Nickname" htmlFor="nick">
+          <Input id="nick" />
+        </Field>
+      </>,
+    )
+    expect(screen.getByLabelText('Client name (required)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nickname')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Nickname (required)')).not.toBeInTheDocument()
+  })
+
   it('keeps a description the control already had', () => {
     render(
       <Field label="Code" htmlFor="code" error="Wrong code">
