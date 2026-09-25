@@ -34,6 +34,16 @@ describe('Field', () => {
     expect(screen.queryByText('10 digits')).not.toBeInTheDocument()
   })
 
+  it('keeps the hint next to the error when asked to (a rule the person needs to fix the mistake), tying both to the control', () => {
+    render(
+      <Field label="Password" htmlFor="pw" hint="At least 12 characters" error="Use at least 12 characters" keepHint>
+        <Input id="pw" />
+      </Field>,
+    )
+    expect(screen.getByText('At least 12 characters')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('Use at least 12 characters At least 12 characters')
+  })
+
   it('says "(required)" in the label of a required field, and only there', () => {
     render(
       <>

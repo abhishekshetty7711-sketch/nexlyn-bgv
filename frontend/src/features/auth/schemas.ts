@@ -7,6 +7,9 @@ import { z } from 'zod'
  */
 export const MIN_PASSWORD_LENGTH = 12
 
+/** The rule in words, shown under every new-password field before anyone types (and kept on screen while an error shows). */
+export const PASSWORD_RULE = `At least ${MIN_PASSWORD_LENGTH} characters, mixing at least 3 of: lowercase, uppercase, digits, symbols. Not a common password.`
+
 export function countCharacterTypes(password: string): number {
   const tests = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/]
   return tests.filter((test) => test.test(password)).length

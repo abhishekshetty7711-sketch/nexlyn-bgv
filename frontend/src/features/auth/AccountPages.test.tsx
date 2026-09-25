@@ -21,6 +21,49 @@ describe('AcceptInvitationPage', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1)
   })
 
+  it('looks like the sign-in page: brand name, a step subtitle and the staff-only note', () => {
+    renderRoutes(routes, { route: '/accept-invite?token=t', auth: fakeAuth({ signedIn: false }) })
+    expect(screen.getByRole('heading', { level: 1, name: 'Nexlyn BGV' })).toBeInTheDocument()
+    expect(screen.getByText('Accept your invitation')).toBeInTheDocument()
+    expect(screen.getByText(/For authorised Nexlyn staff only/)).toBeInTheDocument()
+  })
+
+  it('shows the password rule before anything is typed, and keeps it on screen next to the error', async () => {
+    mockFetch({})
+    renderRoutes(routes, { route: '/accept-invite?token=t', auth: fakeAuth({ signedIn: false }) })
+    const rule = /At least 12 characters, mixing at least 3 of: lowercase, uppercase, digits, symbols/
+    const password = await screen.findByLabelText('Password')
+
+    expect(screen.getByText(rule)).toBeInTheDocument()
+    expect(password).toHaveAccessibleDescription(rule)
+
+    await userEvent.type(screen.getByLabelText('Full name'), 'Ada')
+    await userEvent.type(password, 'short')
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'short')
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(await screen.findByText('Use at least 12 characters')).toBeInTheDocument()
+    expect(screen.getByText(rule)).toBeInTheDocument() // the rule does not vanish when it is needed
+    expect(password).toHaveAccessibleDescription(/Use at least 12 characters.*At least 12 characters/)
+  })
+
+  it('names the tab after the step once the password is accepted', async () => {
+    mockFetch({
+      'POST /api/auth/invitations/accept': () => ({ body: { status: '2FA_SETUP_REQUIRED', challengeToken: 'c-1', expiresInSeconds: 300 } }),
+      'POST /api/auth/2fa/setup': () => ({ body: { otpauthUri: 'otpauth://totp/x?secret=ABCD', secret: 'ABCDEFGH' } }),
+    })
+    renderRoutes(routes, { route: '/accept-invite?token=t', auth: fakeAuth({ signedIn: false }) })
+    await userEvent.type(await screen.findByLabelText('Full name'), 'Ada')
+    await userEvent.type(screen.getByLabelText('Password'), GOOD)
+    await userEvent.type(screen.getByLabelText('Confirm password'), GOOD)
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(await screen.findByRole('img', { name: 'QR code for your authenticator app' })).toBeInTheDocument()
+    expect(screen.getByText('Set up two-step verification')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Nexlyn BGV' })).toBeInTheDocument() // the brand header stays on the QR step
+    expect(document.title).toBe('Set up two-step verification - Nexlyn BGV')
+  })
+
   it('removes the token from the address bar as soon as it has been read', async () => {
     mockFetch({})
     const { router } = renderRoutes(routes, { route: '/accept-invite?token=secret-token', auth: fakeAuth({ signedIn: false }) })
@@ -88,6 +131,14 @@ describe('ChangePasswordPage', () => {
     await userEvent.type(screen.getByLabelText('Confirm new password'), confirm)
     await userEvent.click(screen.getByRole('button', { name: 'Change password' }))
   }
+
+  it('keeps the password rule on screen next to a password error', async () => {
+    mockFetch({})
+    renderRoutes(routes)
+    await fill(GOOD, 'short')
+    expect(await screen.findByText('Use at least 12 characters')).toBeInTheDocument()
+    expect(screen.getByText(/At least 12 characters, mixing at least 3 of/)).toBeInTheDocument()
+  })
 
   it('warns that every session ends', () => {
     mockFetch({})

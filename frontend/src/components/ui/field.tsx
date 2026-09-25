@@ -8,6 +8,8 @@ interface FieldProps {
   hint?: string
   /** Says "(required)" after the label, so nobody has to fail a save to find out. Leave off for optional fields. */
   required?: boolean
+  /** Keep the hint on screen when there is an error too. For a rule the person needs in order to fix the mistake (a password policy). */
+  keepHint?: boolean
   children: ReactNode
 }
 
@@ -18,13 +20,14 @@ type ControlProps = { 'aria-describedby'?: string; 'aria-invalid'?: boolean | 't
  * control (`aria-describedby`) and the control is marked invalid, so a screen reader announces them with the field
  * (WCAG: errors are identified in text, next to the field, and associated with it).
  */
-export function Field({ label, htmlFor, error, hint, required, children }: FieldProps) {
+export function Field({ label, htmlFor, error, hint, required, keepHint, children }: FieldProps) {
+  const showHint = !!hint && (!error || !!keepHint)
   const errorId = `${htmlFor}-error`
   const hintId = `${htmlFor}-hint`
   const control = isValidElement<ControlProps>(children)
     ? cloneElement(children as ReactElement<ControlProps>, {
         'aria-describedby':
-          [children.props['aria-describedby'], error ? errorId : hint ? hintId : undefined].filter(Boolean).join(' ') || undefined,
+          [children.props['aria-describedby'], error ? errorId : undefined, showHint ? hintId : undefined].filter(Boolean).join(' ') || undefined,
         'aria-invalid': error ? true : children.props['aria-invalid'],
       })
     : children
@@ -36,7 +39,7 @@ export function Field({ label, htmlFor, error, hint, required, children }: Field
         {required && <span className="font-normal text-slate-600"> (required)</span>}
       </label>
       {control}
-      {hint && !error && (
+      {showHint && (
         <p id={hintId} className="text-xs text-slate-600">
           {hint}
         </p>

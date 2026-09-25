@@ -2,16 +2,15 @@ import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useLocation } from 'react-router-dom'
-import logoUrl from '@/assets/nexlyn-logo.jpg'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { FullPageSpinner, Spinner } from '@/components/ui/spinner'
 import { usePageTitle } from '@/lib/usePageTitle'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
+import { AuthShell } from './AuthShell'
 import { describeAuthError, isChallengeExpired } from './errors'
 import { type CodeValues, type LoginValues, codeSchema, loginSchema } from './schemas'
 import { TwoFactorSetup } from './TwoFactorSetup'
@@ -63,35 +62,21 @@ export function LoginPage() {
         : 'Sign in to the admin console'
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-50 p-4">
-      <Card className="flex w-full max-w-md flex-col gap-5 p-6 shadow-md sm:p-8">
-        <div className="flex items-center gap-3">
-          <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-line bg-white p-0.5" />
-          <div className="leading-tight">
-            <h1 className="text-xl font-semibold text-brand-800">Nexlyn BGV</h1>
-            <p className="text-sm text-slate-600">{subtitle}</p>
-          </div>
-        </div>
-        {(notice ?? endedMessage) && <Alert variant="info">{notice ?? endedMessage}</Alert>}
-        {!challenge && (
-          <CredentialsForm
-            onChallenge={(next) => {
-              setNotice(null)
-              setChallenge(next)
-            }}
-          />
-        )}
-        {challenge?.status === '2FA_REQUIRED' && (
-          <CodeForm challenge={challenge} onTokens={finish} onExpired={restart} />
-        )}
-        {challenge?.status === '2FA_SETUP_REQUIRED' && (
-          <TwoFactorSetup challengeToken={challenge.challengeToken} onFinished={finish} onExpired={restart} />
-        )}
-      </Card>
-      <p className="max-w-md text-center text-xs text-slate-600">
-        For authorised Nexlyn staff only. Your session ends after 30 minutes without activity.
-      </p>
-    </main>
+    <AuthShell subtitle={subtitle}>
+      {(notice ?? endedMessage) && <Alert variant="info">{notice ?? endedMessage}</Alert>}
+      {!challenge && (
+        <CredentialsForm
+          onChallenge={(next) => {
+            setNotice(null)
+            setChallenge(next)
+          }}
+        />
+      )}
+      {challenge?.status === '2FA_REQUIRED' && <CodeForm challenge={challenge} onTokens={finish} onExpired={restart} />}
+      {challenge?.status === '2FA_SETUP_REQUIRED' && (
+        <TwoFactorSetup challengeToken={challenge.challengeToken} onFinished={finish} onExpired={restart} />
+      )}
+    </AuthShell>
   )
 }
 

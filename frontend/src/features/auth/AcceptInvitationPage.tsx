@@ -4,14 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { usePageTitle } from '@/lib/usePageTitle'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
+import { AuthShell } from './AuthShell'
 import { describeAuthError } from './errors'
-import { type AcceptInvitationValues, acceptInvitationSchema } from './schemas'
+import { type AcceptInvitationValues, PASSWORD_RULE, acceptInvitationSchema } from './schemas'
 import { TwoFactorSetup } from './TwoFactorSetup'
 import type { Challenge, TokenResponse } from './types'
 
@@ -62,54 +62,46 @@ export function AcceptInvitationPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <Card className="flex w-full max-w-sm flex-col gap-4 p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Welcome to Nexlyn BGV</h1>
-        {!inviteToken && (
-          <>
-            <Alert variant="error">This page needs the link from your invitation. Open the link again.</Alert>
-            <Link className="text-sm text-slate-600 underline" to="/login">
-              Go to sign in
-            </Link>
-          </>
-        )}
-        {inviteToken && !challenge && (
-          <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)} noValidate>
-            <p className="text-sm text-slate-600">Choose your name and a password. You will set up two-factor sign-in next.</p>
-            {error && <Alert variant="error">{error}</Alert>}
-            <Field label="Full name" htmlFor="invite-name" error={form.formState.errors.fullName?.message}>
-              <Input id="invite-name" autoComplete="name" aria-invalid={!!form.formState.errors.fullName} {...form.register('fullName')} />
-            </Field>
-            <Field
-              label="Password"
-              htmlFor="invite-password"
-              hint="At least 12 characters, mixing at least 3 of: lowercase, uppercase, digits, symbols."
-              error={form.formState.errors.password?.message}
-            >
-              <Input
-                id="invite-password"
-                type="password"
-                autoComplete="new-password"
-                aria-invalid={!!form.formState.errors.password}
-                {...form.register('password')}
-              />
-            </Field>
-            <Field label="Confirm password" htmlFor="invite-confirm" error={form.formState.errors.confirmPassword?.message}>
-              <Input
-                id="invite-confirm"
-                type="password"
-                autoComplete="new-password"
-                aria-invalid={!!form.formState.errors.confirmPassword}
-                {...form.register('confirmPassword')}
-              />
-            </Field>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              Continue
-            </Button>
-          </form>
-        )}
-        {challenge && <TwoFactorSetup challengeToken={challenge.challengeToken} onFinished={finish} onExpired={restart} />}
-      </Card>
-    </main>
+    <AuthShell subtitle={challenge ? 'Set up two-step verification' : 'Accept your invitation'}>
+      {!inviteToken && (
+        <>
+          <Alert variant="error">This page needs the link from your invitation. Open the link again.</Alert>
+          <Link className="text-sm text-slate-600 underline" to="/login">
+            Go to sign in
+          </Link>
+        </>
+      )}
+      {inviteToken && !challenge && (
+        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(submit)} noValidate>
+          <p className="text-sm text-slate-600">Welcome! Choose your name and a password. You will set up two-step sign-in next.</p>
+          {error && <Alert variant="error">{error}</Alert>}
+          <Field label="Full name" htmlFor="invite-name" error={form.formState.errors.fullName?.message}>
+            <Input id="invite-name" autoComplete="name" aria-invalid={!!form.formState.errors.fullName} {...form.register('fullName')} />
+          </Field>
+          <Field label="Password" htmlFor="invite-password" hint={PASSWORD_RULE} keepHint error={form.formState.errors.password?.message}>
+            <Input
+              id="invite-password"
+              type="password"
+              autoComplete="new-password"
+              aria-invalid={!!form.formState.errors.password}
+              {...form.register('password')}
+            />
+          </Field>
+          <Field label="Confirm password" htmlFor="invite-confirm" error={form.formState.errors.confirmPassword?.message}>
+            <Input
+              id="invite-confirm"
+              type="password"
+              autoComplete="new-password"
+              aria-invalid={!!form.formState.errors.confirmPassword}
+              {...form.register('confirmPassword')}
+            />
+          </Field>
+          <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+            Continue
+          </Button>
+        </form>
+      )}
+      {challenge && <TwoFactorSetup challengeToken={challenge.challengeToken} onFinished={finish} onExpired={restart} />}
+    </AuthShell>
   )
 }

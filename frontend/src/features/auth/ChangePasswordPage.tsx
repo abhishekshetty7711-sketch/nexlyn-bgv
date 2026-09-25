@@ -10,7 +10,7 @@ import { usePageTitle } from '@/lib/usePageTitle'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
 import { describeAuthError } from './errors'
-import { type ChangePasswordValues, changePasswordSchema } from './schemas'
+import { type ChangePasswordValues, PASSWORD_RULE, changePasswordSchema } from './schemas'
 
 /** Changing your own password ends every session, this one included: you sign in again afterwards. */
 export function ChangePasswordPage() {
@@ -52,7 +52,8 @@ export function ChangePasswordPage() {
           <Field
             label="New password"
             htmlFor="pw-new"
-            hint="At least 12 characters, mixing at least 3 of: lowercase, uppercase, digits, symbols."
+            hint={PASSWORD_RULE}
+            keepHint
             error={form.formState.errors.newPassword?.message}
           >
             <Input
