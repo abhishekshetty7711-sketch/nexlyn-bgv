@@ -77,6 +77,15 @@ describe('CaseWorkspacePage', () => {
     expect(screen.getByRole('form', { name: '1. Report info' })).toBeInTheDocument()
   })
 
+  it('has a breadcrumb back to the list that names the current case', async () => {
+    const setup = serve(caseFixture())
+    open(setup)
+
+    const crumbs = await screen.findByRole('navigation', { name: 'Breadcrumb' })
+    expect(within(crumbs).getByRole('link', { name: 'Cases' })).toHaveAttribute('href', '/cases')
+    expect(within(crumbs).getByText('NX-2026-0001')).toHaveAttribute('aria-current', 'page')
+  })
+
   it('starts on the section named in the address', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=settings' })

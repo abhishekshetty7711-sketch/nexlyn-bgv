@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useBlocker, useParams, useSearchParams } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { ApiError } from '@/api/httpClient'
 import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
@@ -13,6 +13,7 @@ import { useAuth } from '@/features/auth/AuthContext'
 import { useCase, useProgress } from '../api'
 import { useChecks } from '../checks/api'
 import { formatDate } from '../format'
+import { LifecycleBadge } from '../LifecycleBadge'
 import { isSectionKey, LIFECYCLE_LABELS, type SectionKey } from '../types'
 import { AssignmentsPanel } from './AssignmentsPanel'
 import { CandidateSection } from './CandidateSection'
@@ -92,7 +93,7 @@ export function CaseWorkspacePage() {
         <Alert variant="error">
           {status === 403 || status === 404 ? 'This case does not exist, or you are not allowed to open it.' : describeError(caseQuery.error)}
         </Alert>
-        <Link to="/cases" className="text-sm text-slate-700 underline">
+        <Link to="/cases" className="text-sm text-brand-700 underline">
           Back to cases
         </Link>
       </div>
@@ -105,21 +106,24 @@ export function CaseWorkspacePage() {
 
   return (
     <DirtyGuardContext.Provider value={guard}>
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/cases" className="text-sm text-slate-500 underline">
-            Cases
-          </Link>
-          <span className="text-slate-300">/</span>
-          <h1 className="text-xl font-semibold text-slate-900">{caseView.reportId}</h1>
-          <Badge tone={caseView.lifecycle === 'FINALIZED' || caseView.lifecycle === 'APPROVED' ? 'green' : caseView.lifecycle === 'CHANGES_REQUESTED' ? 'amber' : 'neutral'}>
-            {LIFECYCLE_LABELS[caseView.lifecycle]}
-          </Badge>
-          <span className="text-sm text-slate-500">
-            {caseView.client.name}
-            {caseView.candidate.fullName ? ` · ${caseView.candidate.fullName}` : ''}
-            {` · issued ${formatDate(caseView.issueDate, caseView.settings.dateFormat)}`}
-          </span>
+      <div className="mx-auto flex max-w-7xl flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-slate-600">
+            <Link to="/cases" className="text-brand-700 underline-offset-2 hover:underline">
+              Cases
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+            <span aria-current="page">{caseView.reportId}</span>
+          </nav>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="text-2xl font-semibold text-slate-900">{caseView.reportId}</h1>
+            <LifecycleBadge lifecycle={caseView.lifecycle} />
+            <span className="text-sm text-slate-700">
+              {caseView.client.name}
+              {caseView.candidate.fullName ? ` · ${caseView.candidate.fullName}` : ''}
+              {` · issued ${formatDate(caseView.issueDate, caseView.settings.dateFormat)}`}
+            </span>
+          </div>
         </div>
 
         {!caseView.editable && (
@@ -134,8 +138,9 @@ export function CaseWorkspacePage() {
           <Alert variant="warning">Reviewer&apos;s comment: {caseView.reviewComment}</Alert>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-          <aside className="flex flex-col gap-4">
+        <div className="grid items-start gap-4 lg:grid-cols-[17rem_1fr]">
+          {/* the section list stays in view while a long section scrolls; on a small screen it is simply above it */}
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
             <Card>
               <SectionNavigator
                 progress={progress.data}

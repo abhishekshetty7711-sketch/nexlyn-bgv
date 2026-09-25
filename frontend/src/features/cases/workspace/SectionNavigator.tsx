@@ -5,8 +5,8 @@ import { SECTION_KEYS } from '../types'
 
 const MARKS: Record<SectionState, { symbol: string; label: string; className: string }> = {
   NOT_STARTED: { symbol: '○', label: 'not started', className: 'text-slate-500' },
-  SAVED: { symbol: '●', label: 'saved', className: 'text-emerald-600' },
-  WARNING: { symbol: '⚠', label: 'needs attention', className: 'text-amber-600' },
+  SAVED: { symbol: '●', label: 'saved', className: 'text-emerald-700' },
+  WARNING: { symbol: '⚠', label: 'needs attention', className: 'text-amber-700' },
 }
 
 const NUMBERS: Record<SectionKey, string> = {
@@ -38,7 +38,7 @@ export function SectionNavigator({ progress, current, onSelect, checks = [], cur
   return (
     <nav aria-label="Case sections" className="flex flex-col gap-3">
       <div>
-        <div className="mb-1 flex justify-between text-xs text-slate-500">
+        <div className="mb-1 flex justify-between text-xs font-medium text-slate-700">
           <span>Progress</span>
           <span>{percent}%</span>
         </div>
@@ -50,7 +50,7 @@ export function SectionNavigator({ progress, current, onSelect, checks = [], cur
           aria-valuenow={percent}
           className="h-2 overflow-hidden rounded-full bg-slate-200"
         >
-          <div className="h-full bg-emerald-500 transition-all" style={{ width: `${percent}%` }} />
+          <div className="h-full bg-brand-700 transition-all" style={{ width: `${percent}%` }} />
         </div>
       </div>
       <ul className="flex flex-col gap-1">
@@ -64,8 +64,8 @@ export function SectionNavigator({ progress, current, onSelect, checks = [], cur
                 aria-current={key === current ? 'page' : undefined}
                 onClick={() => onSelect(key)}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-slate-100',
-                  key === current && 'bg-slate-900 text-white hover:bg-slate-900',
+                  'flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm text-slate-800 hover:bg-slate-100',
+                  key === current && 'bg-brand-800 font-medium text-white hover:bg-brand-800',
                 )}
               >
                 <span className={cn('w-4 text-center', key === current ? 'text-white' : mark.className)} role="img" aria-label={mark.label}>
@@ -75,7 +75,7 @@ export function SectionNavigator({ progress, current, onSelect, checks = [], cur
                   {NUMBERS[key]} {section?.label ?? key}
                 </span>
                 {section && section.issues > 0 && key !== 'generate' && (
-                  <span className="rounded-full bg-amber-100 px-1.5 text-xs text-amber-800" aria-label={`${section.issues} things to check`}>
+                  <span className={cn('rounded-full px-1.5 text-xs font-medium', key === current ? 'bg-white text-amber-900' : 'bg-amber-100 text-amber-900')} aria-label={`${section.issues} things to check`}>
                     {section.issues}
                   </span>
                 )}
@@ -89,8 +89,8 @@ export function SectionNavigator({ progress, current, onSelect, checks = [], cur
                         aria-current={current === 'checks' && check.id === currentCheckId ? 'true' : undefined}
                         onClick={() => onSelectCheck?.(check.id)}
                         className={cn(
-                          'flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-slate-100',
-                          current === 'checks' && check.id === currentCheckId && 'bg-slate-200 font-medium',
+                          'flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-slate-800 hover:bg-slate-100',
+                          current === 'checks' && check.id === currentCheckId && 'bg-brand-100 font-semibold text-brand-800 hover:bg-brand-100',
                         )}
                       >
                         <span role="img" aria-label={STATUS_LABELS[check.status]}>

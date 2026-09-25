@@ -95,9 +95,9 @@ export function ChecksSection({ caseView, checkId, onSelectCheck }: ChecksSectio
       {list.length > 0 && (
         <ol className="flex flex-col gap-2" aria-label="Checks on this case">
           {list.map((check, index) => (
-            <li key={check.id} className={`flex flex-wrap items-center gap-2 rounded-md border p-2 ${check.id === checkId ? 'border-slate-900 bg-slate-50' : 'border-slate-200'}`}>
-              <span className="w-6 text-center text-sm text-slate-500">{index + 1}</span>
-              <button type="button" className="flex-1 text-left text-sm font-medium text-slate-900 hover:underline" onClick={() => onSelectCheck(check.id)}>
+            <li key={check.id} className={`flex flex-wrap items-center gap-2 rounded-lg border p-2 transition-colors ${check.id === checkId ? 'border-brand-800 bg-brand-50' : 'border-line hover:bg-slate-50'}`}>
+              <span className="w-6 text-center text-sm text-slate-600">{index + 1}</span>
+              <button type="button" className="flex-1 cursor-pointer text-left text-sm font-medium text-slate-900 hover:text-brand-800 hover:underline" onClick={() => onSelectCheck(check.id)}>
                 {check.title}
               </button>
               <Badge tone={STATUS_TONES[check.status]}>
@@ -111,7 +111,7 @@ export function ChecksSection({ caseView, checkId, onSelectCheck }: ChecksSectio
                   <Button size="sm" variant="ghost" disabled={index === list.length - 1 || reorder.isPending} onClick={() => move(index, 1)} aria-label={`Move ${check.title} down`}>
                     ↓
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setDeleting(check)} aria-label={`Remove ${check.title}`}>
+                  <Button size="sm" variant="ghost" className="text-red-700 hover:bg-red-50" onClick={() => setDeleting(check)} aria-label={`Remove ${check.title}`}>
                     Remove
                   </Button>
                 </>
@@ -121,7 +121,7 @@ export function ChecksSection({ caseView, checkId, onSelectCheck }: ChecksSectio
         </ol>
       )}
 
-      {list.length > 0 && !selected && <p className="text-sm text-slate-500">Choose a check above to edit it.</p>}
+      {list.length > 0 && !selected && <p className="text-sm text-slate-600">Choose a check above to edit it.</p>}
       {checkId && checks.isSuccess && !selected && <Alert variant="warning">That check no longer exists.</Alert>}
 
       {selected && def && (
@@ -158,7 +158,7 @@ export function ChecksSection({ caseView, checkId, onSelectCheck }: ChecksSectio
             <Button variant="outline" onClick={() => setDeleting(null)}>
               Keep it
             </Button>
-            <Button onClick={confirmDelete} disabled={remove.isPending}>
+            <Button variant="danger" onClick={confirmDelete} disabled={remove.isPending}>
               Remove check
             </Button>
           </div>
