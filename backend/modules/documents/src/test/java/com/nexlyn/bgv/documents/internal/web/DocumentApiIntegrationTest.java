@@ -279,6 +279,39 @@ class DocumentApiIntegrationTest extends DocumentsIntegrationTestBase {
     }
 
     @Test
+    void movesADocumentToTheNextPageAndBackWithoutTouchingItsOtherSettings() throws Exception {
+        String moved = uploadOk("a.jpg", TestImages.jpeg(100, 100)).get("id").asText();
+        String stays = uploadOk("b.jpg", TestImages.jpeg(100, 100)).get("id").asText();
+        JsonNode start = body(send(get(docs()), analyst, null));
+        assertThat(start.get(0).get("moveToNextPage").asBoolean()).as("off by default").isFalse();
+
+        MvcResult on = send(put("/api/documents/" + moved), analyst, obj("label", "Degree", "moveToNextPage", true, "useLargerBox", false,
+                "crop", obj("x", 0.1, "y", 0.1, "width", 0.5, "height", 0.5), "version", start.get(0).get("version").asLong()));
+        assertThat(status(on)).as(on.getResponse().getContentAsString()).isEqualTo(200);
+
+        JsonNode list = body(send(get(docs()), analyst, null));
+        assertThat(list.get(0).get("id").asText()).isEqualTo(moved);
+        assertThat(list.get(0).get("moveToNextPage").asBoolean()).as("saved and returned by the list").isTrue();
+        assertThat(list.get(0).get("label").asText()).isEqualTo("Degree");
+        assertThat(list.get(0).get("crop").get("width").asDouble()).isEqualTo(0.5);
+        assertThat(list.get(1).get("id").asText()).isEqualTo(stays);
+        assertThat(list.get(1).get("moveToNextPage").asBoolean()).as("the other document is not affected").isFalse();
+
+        MvcResult off = send(put("/api/documents/" + moved), analyst, obj("label", "Degree", "moveToNextPage", false, "useLargerBox", false,
+                "crop", obj("x", 0.1, "y", 0.1, "width", 0.5, "height", 0.5), "version", list.get(0).get("version").asLong()));
+        assertThat(body(off).get("moveToNextPage").asBoolean()).isFalse();
+    }
+
+    @Test
+    void movingADocumentNeedsTheUploadPermissionAndAnEditableCase() throws Exception {
+        String id = uploadOk("a.jpg", TestImages.jpeg(50, 50)).get("id").asText();
+        assertThat(status(send(put("/api/documents/" + id), null, obj("moveToNextPage", true, "useLargerBox", false)))).isEqualTo(401);
+        String reader = tokenFor(analystId, "analyst@example.com", "CASE_READ_ASSIGNED");
+        assertThat(status(send(put("/api/documents/" + id), reader, obj("moveToNextPage", true, "useLargerBox", false)))).isEqualTo(403);
+        assertThat(body(send(get(docs()), analyst, null)).get(0).get("moveToNextPage").asBoolean()).as("nothing was saved").isFalse();
+    }
+
+    @Test
     void rejectsBadCropsAndOptionsThatDoNotFit() throws Exception {
         JsonNode picture = uploadOk("a.jpg", TestImages.jpeg(100, 100));
         JsonNode pdf = uploadOk("b.pdf", TestImages.pdf());

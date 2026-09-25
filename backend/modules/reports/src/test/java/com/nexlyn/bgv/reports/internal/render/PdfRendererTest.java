@@ -184,6 +184,70 @@ class PdfRendererTest {
         assertThat(all.toString()).contains("bar council number:", "kar/670/06", "continued", "document 1");
     }
 
+    // ---- Move to Next Page: the printed page breaks and box sizes (CLAUDE.md 6.2, reference tool) -------------------------
+
+    /** One check with the given documents (moveToNextPage, larger) in upload order, each a 900 x 600 picture. */
+    private CaseReport oneCheckWith(boolean[]... options) {
+        Check id = ReportFixtures.check("AADHAAR", "identity", "Identity Verification (Aadhaar)", CheckStatus.VERIFIED);
+        for (boolean[] option : options) {
+            documents.attach(id.id(), "image/png", ReportFixtures.png(900, 600, new Color(230, 240, 250)), option[0], option[1], null);
+        }
+        return ReportFixtures.report(List.of(id), null);
+    }
+
+    private static List<PdfRenderer.FrameBox> onPage(PdfRenderer.Rendered rendered, int page) {
+        return rendered.frames().stream().filter(f -> f.page() == page).toList();
+    }
+
+    @Test
+    void aMovedDocumentStartsANewPageInTheStandardBox() throws Exception {
+        PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{false, false}, new boolean[]{true, false}));
+
+        // cover, detail page, the moved document's page, services
+        assertThat(rendered.pageCount()).isEqualTo(4);
+        assertThat(rendered.overflows()).isEmpty();
+        assertThat(onPage(rendered, 2)).as("the document that stays is on the detail page").hasSize(1);
+        assertThat(onPage(rendered, 3)).as("the moved document has a page of its own").hasSize(1);
+        assertThat(onPage(rendered, 3).get(0).large()).isFalse();
+        // the standard box of a page of its own is 400 px tall, like the reference tool
+        assertThat(onPage(rendered, 3).get(0).heightPx()).isBetween(398, 402);
+        assertThat(onPage(rendered, 3).get(0).heightPx()).isLessThan(500);
+
+        String detail = text(rendered.pdf(), 2);
+        String moved = text(rendered.pdf(), 3);
+        assertThat(detail).contains("document 1").doesNotContain("document 2");
+        assertThat(moved).contains("continued", "supporting documents", "document 2", "additional document 1");
+        assertThat(moved).as("no details table on the document's page").doesNotContain("data provided");
+    }
+
+    @Test
+    void theFirstDocumentMovedMeansTheOtherOneIsNumberedFirstAndTheMovedOneContinuesTheCount() throws Exception {
+        PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{true, false}, new boolean[]{false, false}));
+        assertThat(rendered.pageCount()).isEqualTo(4);
+        // numbered in page order: the one that stays is "Document 1" (labelled by its place among the uploads), the moved one "Document 2"
+        assertThat(text(rendered.pdf(), 2)).contains("document 1").contains("additional document 1").doesNotContain("document 2");
+        assertThat(text(rendered.pdf(), 3)).contains("document 2").contains("original document");
+    }
+
+    @Test
+    void everyMovedDocumentGetsItsOwnPageAfterTheDetailPage() {
+        PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{true, false}, new boolean[]{true, false}, new boolean[]{true, false}));
+        assertThat(rendered.pageCount()).isEqualTo(1 + 1 + 3 + 1);
+        assertThat(onPage(rendered, 2)).as("nothing stays on the detail page").isEmpty();
+        for (int page = 3; page <= 5; page++) {
+            assertThat(onPage(rendered, page)).hasSize(1);
+        }
+        assertThat(rendered.overflows()).isEmpty();
+    }
+
+    @Test
+    void aDocumentThatIsNotMovedStaysOnTheDetailPageInTheSmallBox() {
+        PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{false, false}));
+        assertThat(rendered.pageCount()).isEqualTo(3);
+        assertThat(onPage(rendered, 2)).hasSize(1);
+        assertThat(onPage(rendered, 2).get(0).heightPx()).as("the box on the detail page has the reference's 200-380 px range").isBetween(200, 380);
+    }
+
     @Test
     void tooMuchOnOnePageIsReportedWithItsPageNumber() {
         Check id = ReportFixtures.check("AADHAAR", "identity", "Identity", CheckStatus.VERIFIED);

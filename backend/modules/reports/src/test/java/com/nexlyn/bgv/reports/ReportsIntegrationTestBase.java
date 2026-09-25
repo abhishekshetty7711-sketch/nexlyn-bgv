@@ -122,7 +122,7 @@ public abstract class ReportsIntegrationTestBase {
             }
             return switch (mode) {
                 case REAL -> super.render(html);
-                case FAKE -> new Rendered(ReportFixtures.blankPdf(2), 2, List.of());
+                case FAKE -> new Rendered(ReportFixtures.blankPdf(2), 2, List.of(), List.of());
                 case FAIL -> throw new IllegalStateException("the browser crashed: /secret/path/chrome.exe");
             };
         }

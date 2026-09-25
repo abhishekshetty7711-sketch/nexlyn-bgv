@@ -41,8 +41,16 @@ public class PdfRenderer {
     public record PageOverflow(int page, int overflowPixels) {
     }
 
-    /** The printed PDF, its number of pages, and the pages whose content did not fit. */
-    public record Rendered(byte[] pdf, int pageCount, List<PageOverflow> overflows) {
+    /**
+     * A supporting-document box as printed: the page it is on (1-based), whether it is the larger box, and its height
+     * and the height of its picture in CSS pixels (an A4 page is 1123 px tall). Lets tests and the job runner check
+     * the real box sizes, not only the markup.
+     */
+    public record FrameBox(int page, boolean large, int heightPx, int pictureHeightPx) {
+    }
+
+    /** The printed PDF, its number of pages, the pages whose content did not fit, and the document boxes. */
+    public record Rendered(byte[] pdf, int pageCount, List<PageOverflow> overflows, List<FrameBox> frames) {
     }
 
     /**
@@ -66,6 +74,20 @@ public class PdfRenderer {
               }
               return { page: index + 1, over: Math.round(lowest - limit) };
             })
+            """;
+
+    /** Every supporting-document box, with the page it is on, in the print layout. */
+    private static final String FRAMES_SCRIPT = """
+            () => Array.from(document.querySelectorAll('#pagesArea > .page')).flatMap((page, index) =>
+              Array.from(page.querySelectorAll('.doc-frame')).map(frame => {
+                const picture = frame.querySelector('img');
+                return {
+                  page: index + 1,
+                  large: frame.classList.contains('doc-frame-large'),
+                  height: Math.round(frame.getBoundingClientRect().height),
+                  picture: picture ? Math.round(picture.getBoundingClientRect().height) : 0
+                };
+              }))
             """;
 
     /**
@@ -184,13 +206,23 @@ public class PdfRenderer {
                     }
                 }
 
+                List<FrameBox> frames = new ArrayList<>();
+                if (page.evaluate(FRAMES_SCRIPT) instanceof List<?> boxes) {
+                    for (Object item : boxes) {
+                        if (item instanceof Map<?, ?> row) {
+                            frames.add(new FrameBox(((Number) row.get("page")).intValue(), Boolean.TRUE.equals(row.get("large")),
+                                    ((Number) row.get("height")).intValue(), ((Number) row.get("picture")).intValue()));
+                        }
+                    }
+                }
+
                 byte[] pdf = page.pdf(new Page.PdfOptions()
                         .setFormat("A4")
                         .setPrintBackground(true)
                         .setPreferCSSPageSize(true)
                         .setMargin(new Margin().setTop("0").setRight("0").setBottom("0").setLeft("0")));
                 int count = page.evaluate("() => document.querySelectorAll('#pagesArea > .page').length") instanceof Number n ? n.intValue() : 0;
-                return new Rendered(pdf, count, List.copyOf(overflows));
+                return new Rendered(pdf, count, List.copyOf(overflows), List.copyOf(frames));
             }
         } catch (ApiException e) {
             throw e;

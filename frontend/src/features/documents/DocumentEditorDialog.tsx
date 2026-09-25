@@ -22,7 +22,6 @@ export function DocumentEditorDialog({ caseId, checkId, document, onClose }: Doc
   const update = useUpdateDocument(caseId, checkId)
   const isImage = document.mimeType.startsWith('image/')
   const [label, setLabel] = useState(document.label ?? '')
-  const [moveToNextPage, setMoveToNextPage] = useState(document.moveToNextPage)
   const [useLargerBox, setUseLargerBox] = useState(document.useLargerBox)
   const [crop, setCrop] = useState<Crop | null>(document.crop)
   const [error, setError] = useState<string | null>(null)
@@ -34,7 +33,7 @@ export function DocumentEditorDialog({ caseId, checkId, document, onClose }: Doc
         id: document.id,
         changes: {
           label: label.trim() || null,
-          moveToNextPage,
+          moveToNextPage: document.moveToNextPage,
           useLargerBox: isImage && useLargerBox,
           crop: isImage && crop && !isWholePicture(crop) ? crop : null,
           version: document.version,
@@ -53,10 +52,6 @@ export function DocumentEditorDialog({ caseId, checkId, document, onClose }: Doc
         <Field label="Label" htmlFor="doc-label" hint={`Leave blank to use the numbered name. Currently: ${document.displayLabel}.`}>
           <Input id="doc-label" maxLength={100} value={label} onChange={(event) => setLabel(event.target.value)} />
         </Field>
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input type="checkbox" checked={moveToNextPage} onChange={(event) => setMoveToNextPage(event.target.checked)} />
-          Show this document on a new page
-        </label>
         {isImage && (
           <>
             <label className="flex items-center gap-2 text-sm text-slate-700">

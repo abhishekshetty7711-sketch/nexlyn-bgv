@@ -5,9 +5,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
-import { fetchDocumentBlob, useDeleteDocument, useDocuments, useReorderDocuments, useUploadToCheck } from './api'
+import { fetchDocumentBlob, useDeleteDocument, useDocuments, useReorderDocuments, useUpdateDocument, useUploadToCheck } from './api'
 import { DocumentEditorDialog } from './DocumentEditorDialog'
 import { DocumentImage } from './DocumentImage'
+import { DocumentPlacement, type PlacementChange } from './DocumentPlacement'
 import { ACCEPT_DOCUMENTS, formatBytes, problemWithFile } from './files'
 import { type DocumentView, QUALITY_LABELS } from './types'
 
@@ -26,6 +27,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
   const upload = useUploadToCheck(caseId, checkId)
   const reorder = useReorderDocuments(caseId, checkId)
   const remove = useDeleteDocument(caseId, checkId)
+  const update = useUpdateDocument(caseId, checkId)
   const picker = useRef<HTMLInputElement>(null)
   const [problems, setProblems] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
@@ -69,6 +71,19 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
     ;[ids[index], ids[target]] = [ids[target]!, ids[index]!]
     try {
       await reorder.mutateAsync(ids)
+    } catch (error) {
+      setProblems([describeError(error)])
+    }
+  }
+
+  /** A page switch saves the moment it is clicked; the other settings of the document are sent back unchanged. */
+  async function place(document: DocumentView, change: PlacementChange) {
+    setProblems([])
+    try {
+      await update.mutateAsync({
+        id: document.id,
+        changes: { label: document.label, moveToNextPage: change.moveToNextPage, useLargerBox: document.useLargerBox, crop: document.crop, version: document.version },
+      })
     } catch (error) {
       setProblems([describeError(error)])
     }
@@ -171,6 +186,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
                   </Button>
                 )}
               </div>
+              {canUpload && <DocumentPlacement document={document} busy={update.isPending} onChange={(change) => void place(document, change)} />}
             </li>
           ))}
         </ol>

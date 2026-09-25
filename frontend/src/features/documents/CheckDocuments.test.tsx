@@ -166,7 +166,7 @@ describe('CheckDocuments', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Edit Original Document' })
 
     await userEvent.type(within(dialog).getByLabelText('Label'), '  Degree certificate ')
-    await userEvent.click(within(dialog).getByLabelText(/Show this document on a new page/))
+    expect(within(dialog).queryByLabelText(/new page/)).not.toBeInTheDocument() // the page switch is on the row, not here
     await userEvent.click(within(dialog).getByLabelText(/Use a larger box/))
     fireEvent.change(within(dialog).getByLabelText('Width'), { target: { value: '60' } })
     fireEvent.change(within(dialog).getByLabelText('Height'), { target: { value: '50' } })
@@ -175,7 +175,7 @@ describe('CheckDocuments', () => {
     await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
     expect(setup.calls('PUT', '/documents/doc-1')[0]!.body).toEqual({
       label: 'Degree certificate',
-      moveToNextPage: true,
+      moveToNextPage: false,
       useLargerBox: true,
       crop: { x: 0, y: 0, width: 0.6, height: 0.5 },
       version: 3,
@@ -224,9 +224,80 @@ describe('CheckDocuments', () => {
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'Edit Additional Document 1' }))
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByLabelText(/Show this document on a new page/)).toBeInTheDocument()
     expect(within(dialog).queryByLabelText(/larger box/)).not.toBeInTheDocument()
     expect(within(dialog).queryByTestId('crop-frame')).not.toBeInTheDocument()
+  })
+
+  // ---- Move to Next Page (feature 25): a switch on every row, saved at once -------------------------------
+
+  it('shows a Move to Next Page switch with help text on every document, off by default', async () => {
+    serve([documentFixture(), pdfFixture()])
+    show()
+    const list = await screen.findByRole('list', { name: 'Documents of this check' })
+    for (const name of ['Original Document', 'Additional Document 1']) {
+      const group = within(list).getByRole('group', { name: `Page options for ${name}` })
+      const toggle = within(group).getByRole('button', { name: `Move ${name} to the next page` })
+      expect(toggle).toHaveAttribute('aria-pressed', 'false')
+      expect(toggle).toHaveTextContent('→ Move to Next Page')
+      expect(group).toHaveTextContent(/page of its own/)
+    }
+  })
+
+  it('saves the switch the moment it is clicked and keeps the rest of the document as it was', async () => {
+    const crop = { x: 0.1, y: 0.1, width: 0.5, height: 0.5 }
+    const setup = serve([documentFixture({ version: 2, label: 'Degree', crop })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture({ version: 3, moveToNextPage: true }) }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Move Original Document to the next page' }))
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
+    expect(setup.calls('PUT', '/documents/doc-1')[0]!.body).toEqual({ label: 'Degree', moveToNextPage: true, useLargerBox: false, crop, version: 2 })
+  })
+
+  it('shows "On Next Page" when a document is moved, and switches it back off with one click', async () => {
+    const setup = serve([documentFixture({ moveToNextPage: true })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture() }) })
+    show()
+    const toggle = await screen.findByRole('button', { name: 'Move Original Document to the next page' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(toggle).toHaveTextContent('✓ On Next Page')
+    await userEvent.click(toggle)
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
+    expect((setup.calls('PUT', '/documents/doc-1')[0]!.body as { moveToNextPage: boolean }).moveToNextPage).toBe(false)
+  })
+
+  it('works for a PDF too', async () => {
+    const setup = serve([pdfFixture()], { 'PUT /api/documents/doc-2': () => ({ body: pdfFixture({ moveToNextPage: true }) }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Move Additional Document 1 to the next page' }))
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-2')).toHaveLength(1))
+    expect((setup.calls('PUT', '/documents/doc-2')[0]!.body as { moveToNextPage: boolean }).moveToNextPage).toBe(true)
+  })
+
+  it('shows the change on screen after saving', async () => {
+    let moved = false
+    serve([documentFixture()], {
+      'GET /api/checks/ck-1/documents': () => ({ body: [documentFixture({ moveToNextPage: moved })] }),
+      'PUT /api/documents/doc-1': () => {
+        moved = true
+        return { body: documentFixture({ moveToNextPage: true }) }
+      },
+    })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Move Original Document to the next page' }))
+    expect(await screen.findByRole('button', { name: 'Move Original Document to the next page', pressed: true })).toHaveTextContent('✓ On Next Page')
+    expect(screen.getByText('New page')).toBeInTheDocument()
+  })
+
+  it("shows the server's reason when the switch cannot be saved", async () => {
+    serve([documentFixture()], { 'PUT /api/documents/doc-1': () => ({ status: 409, body: { code: 'CONFLICT', message: 'This document was changed by someone else. Reload it and try again.' } }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Move Original Document to the next page' }))
+    expect(await screen.findByText(/changed by someone else/)).toBeInTheDocument()
+  })
+
+  it('offers the switch only to people who may change documents', async () => {
+    serve([documentFixture()])
+    show({ canUpload: false })
+    await screen.findByRole('list', { name: 'Documents of this check' })
+    expect(screen.queryByRole('group', { name: /Page options/ })).not.toBeInTheDocument()
   })
 
   it("shows the server's message when the edit cannot be saved", async () => {
