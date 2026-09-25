@@ -34,9 +34,14 @@ function serve(versions: ReportVersion[], extra: Record<string, FakeHandler> = {
   return mockFetch({ 'GET /api/cases/c-1/reports': () => ({ body: versions }), ...extra })
 }
 
-function show(options: { hasErrors?: boolean; warningCount?: number; permissions?: string[] } = {}) {
+function show(options: { hasErrors?: boolean; warningCount?: number; permissions?: string[]; finalized?: boolean } = {}) {
   return renderRoutes(
-    [{ path: '/', element: <ReportPanel caseId="c-1" reportId="NX-2026-0142" hasErrors={options.hasErrors ?? false} warningCount={options.warningCount ?? 0} /> }],
+    [
+      {
+        path: '/',
+        element: <ReportPanel caseId="c-1" reportId="NX-2026-0142" hasErrors={options.hasErrors ?? false} warningCount={options.warningCount ?? 0} finalized={options.finalized ?? false} />,
+      },
+    ],
     { auth: fakeAuth({ permissions: options.permissions ?? ['REPORT_GENERATE'] }) },
   )
 }
@@ -51,6 +56,36 @@ describe('ReportPanel', () => {
     serve([])
     show()
     expect(await screen.findByText('No report has been generated yet.')).toBeInTheDocument()
+  })
+
+  it('does not invite a new draft on a finalized case: the button is off and the reason is written next to it', async () => {
+    const fake = serve([FINAL])
+    show({ finalized: true, permissions: ['REPORT_GENERATE', 'REPORT_DOWNLOAD_FINAL'] })
+    await screen.findByRole('table', { name: 'Report versions' })
+
+    const button = screen.getByRole('button', { name: 'Generate draft PDF' })
+    expect(button).toBeDisabled()
+    expect(button).toHaveAccessibleDescription(/Reopen the case to make a new draft/)
+    expect(screen.getByText(/This case is finalized/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled() // looking is still allowed
+    expect(screen.getByRole('button', { name: 'Download version 3' })).toBeInTheDocument()
+    expect(posts(fake)).toEqual([])
+  })
+
+  it('does not explain a finalized case to someone who cannot generate anyway', async () => {
+    serve([FINAL])
+    show({ finalized: true, permissions: [] })
+    await screen.findByRole('table', { name: 'Report versions' })
+    expect(screen.queryByRole('button', { name: 'Generate draft PDF' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/This case is finalized/)).not.toBeInTheDocument()
+  })
+
+  it('gives the versions table a header for its action column', async () => {
+    serve([VERSION])
+    show()
+    const table = await screen.findByRole('table', { name: 'Report versions' })
+    expect(within(table).getAllByRole('columnheader').every((header) => header.textContent?.trim())).toBe(true)
+    expect(within(table).getByRole('columnheader', { name: 'Actions' })).toBeInTheDocument()
   })
 
   it('lists the versions, newest first, with who made them', async () => {

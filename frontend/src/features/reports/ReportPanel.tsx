@@ -15,6 +15,8 @@ interface ReportPanelProps {
   /** The case has errors: the report cannot be generated yet (a preview still works). */
   hasErrors: boolean
   warningCount: number
+  /** The case is finalized: the server refuses a new draft until the case is reopened, so none is offered. */
+  finalized: boolean
 }
 
 function whenText(iso: string): string {
@@ -22,7 +24,7 @@ function whenText(iso: string): string {
 }
 
 /** Section 8: look at the report, make a draft PDF, and download the versions made so far. */
-export function ReportPanel({ caseId, reportId, hasErrors, warningCount }: ReportPanelProps) {
+export function ReportPanel({ caseId, reportId, hasErrors, warningCount, finalized }: ReportPanelProps) {
   const { hasPermission } = useAuth()
   const versions = useReportVersions(caseId)
   const generate = useGenerateReport(caseId)
@@ -77,12 +79,23 @@ export function ReportPanel({ caseId, reportId, hasErrors, warningCount }: Repor
           {previewing ? 'Loading preview...' : 'Preview'}
         </Button>
         {canGenerate && (
-          <Button type="button" variant="outline" disabled={hasErrors || making} onClick={() => (warningCount > 0 ? setConfirming(true) : void start(false))}>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={finalized || hasErrors || making}
+            aria-describedby={finalized ? 'report-finalized-note' : undefined}
+            onClick={() => (warningCount > 0 ? setConfirming(true) : void start(false))}
+          >
             {making ? 'Making the report...' : 'Generate draft PDF'}
           </Button>
         )}
       </div>
-      {hasErrors && canGenerate && <p className="text-xs text-slate-500">Fix the errors above to generate the PDF. The preview works meanwhile.</p>}
+      {finalized && canGenerate && (
+        <p id="report-finalized-note" className="text-xs text-slate-600">
+          This case is finalized. Reopen the case to make a new draft. The preview and the versions below still work.
+        </p>
+      )}
+      {!finalized && hasErrors && canGenerate && <p className="text-xs text-slate-500">Fix the errors above to generate the PDF. The preview works meanwhile.</p>}
 
       {problem && <Alert variant="error">{problem}</Alert>}
       {making && (
@@ -122,7 +135,9 @@ export function ReportPanel({ caseId, reportId, hasErrors, warningCount }: Repor
                 <th className="py-2 pr-3">Size</th>
                 <th className="py-2 pr-3">Made by</th>
                 <th className="py-2 pr-3">When</th>
-                <th className="py-2" />
+                <th className="py-2">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>

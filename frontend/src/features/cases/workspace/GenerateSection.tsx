@@ -67,7 +67,13 @@ export function GenerateSection({ caseView, onGoToSection }: GenerateSectionProp
         </>
       )}
       <WorkflowPanel caseView={caseView} hasErrors={!result || result.errors.length > 0} warningCount={result?.warnings.length ?? 0} />
-      <ReportPanel caseId={caseId} reportId={caseView.reportId} hasErrors={!result || result.errors.length > 0} warningCount={result?.warnings.length ?? 0} />
+      <ReportPanel
+        caseId={caseId}
+        reportId={caseView.reportId}
+        hasErrors={!result || result.errors.length > 0}
+        warningCount={result?.warnings.length ?? 0}
+        finalized={caseView.lifecycle === 'FINALIZED'}
+      />
     </div>
   )
 }
