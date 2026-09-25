@@ -66,6 +66,27 @@ describe('DashboardPage', () => {
     expect(due).toHaveTextContent('due 26/09/2026')
   })
 
+  it('marks a due date that has passed as overdue, and one still ahead not', async () => {
+    show(
+      dashboard({
+        dueSoon: [row({ id: 'c-old', reportId: 'NX-2020-0001', dueDate: '2020-01-02' }), row({ id: 'c-far', reportId: 'NX-2099-0001', dueDate: '2099-01-02' })],
+      }),
+    )
+    const due = await screen.findByRole('region', { name: 'Due soon and overdue' })
+    const items = within(due).getAllByRole('listitem')
+    expect(items[0]).toHaveTextContent('due 02/01/2020 (overdue)')
+    expect(items[1]).toHaveTextContent('due 02/01/2099')
+    expect(items[1]).not.toHaveTextContent('overdue')
+  })
+
+  it('shows how many cases each list holds, and a placeholder while loading', async () => {
+    show(dashboard({ mine: [row(), row({ id: 'c-2', reportId: 'NX-2026-0002' })] }))
+    expect(screen.getAllByRole('status', { name: 'Loading' }).length).toBeGreaterThan(0)
+    const mine = await screen.findByRole('region', { name: 'My cases' })
+    expect(within(mine).getByText('2', { selector: 'span' })).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument()
+  })
+
   it('says so when there is nothing to do', async () => {
     show(dashboard())
     expect(await screen.findByText('Nothing is waiting for your review.')).toBeInTheDocument()

@@ -8,6 +8,7 @@ const TONES = {
   red: 'bg-red-100 text-red-800',
   amber: 'bg-amber-100 text-amber-900',
   blue: 'bg-sky-100 text-sky-800',
+  navy: 'bg-brand-100 text-brand-800',
 } as const
 
 interface BadgeProps {
