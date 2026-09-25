@@ -72,7 +72,7 @@ Done under the six rules of CLAUDE.md 16.1: brand navy tokens with a contrast te
 
 ## UI/UX audit fixes (2026-09-25, D-038)
 
-The owner approved fixing every Critical and Important item of `docs/ui-audit.md` (Nice-to-have skipped), batch by batch, one commit per screen. **Batch 1 done** (C1 page titles, C2, I1, I2, I5, I8, I10, I11, I12): 343 frontend tests green, lint, type check and build clean. Remaining Important items: I6 (dates), I9, I13, I3, I4, I7. The Docker stack has NOT been rebuilt with these changes yet.
+The owner approved fixing every Critical and Important item of `docs/ui-audit.md` (Nice-to-have skipped), batch by batch, one commit per screen. **Batch 1 done** (C1 page titles, C2, I1, I2, I5, I8, I10, I11, I12) and **batch 2 done** (I6 dates, I9 sign-in family, I13 click targets, D-039): 363 frontend tests green, lint, type check and build clean. Remaining Important items: I3, I4 (phone), I7 (plain-language wording). The Docker stack has NOT been rebuilt with these changes yet.
 
 ## Phase 2 steps
 
