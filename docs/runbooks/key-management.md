@@ -39,11 +39,9 @@ no extra software), writes one file, opens it again to prove it works, and print
 Plug in a USB stick, then:
 
 ```
-node scripts/backup-keys/backup-keys.mjs backup --out E:            # local stack; on the server add: --env infra/prod/.env
-node scripts/backup-keys/backup-keys.mjs verify --file E:
-exlyn-keys-YYYY-MM-DD.enc     # every quarter: does it still open, and is it the same key?
-node scripts/backup-keys/backup-keys.mjs restore --file E:
-exlyn-keys-YYYY-MM-DD.enc --to C:safeecovered.env
+node scripts/backup-keys/backup-keys.mjs backup --out E:\     # local stack; on the server add: --env infra/prod/.env
+node scripts/backup-keys/backup-keys.mjs verify --file E:\nexlyn-keys-YYYY-MM-DD.enc     # every quarter: does it still open, and is it the same key?
+node scripts/backup-keys/backup-keys.mjs restore --file E:\nexlyn-keys-YYYY-MM-DD.enc --to C:\safe\recovered.env
 ```
 
 The passphrase is **not stored anywhere**: without it the file cannot be opened. Keep it apart from the file. Make a second copy of the file
