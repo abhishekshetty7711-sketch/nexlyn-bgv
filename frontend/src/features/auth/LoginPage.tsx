@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { FullPageSpinner, Spinner } from '@/components/ui/spinner'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
 import { describeAuthError, isChallengeExpired } from './errors'
@@ -41,6 +42,10 @@ export function LoginPage() {
 
   const finish = useCallback((tokens: TokenResponse) => completeSignIn(tokens), [completeSignIn])
 
+  usePageTitle(
+    challenge?.status === '2FA_SETUP_REQUIRED' ? 'Set up two-step verification' : challenge?.status === '2FA_REQUIRED' ? 'Two-step verification' : 'Sign in',
+  )
+
   if (state.status === 'loading') {
     return <FullPageSpinner />
   }
@@ -58,7 +63,7 @@ export function LoginPage() {
         : 'Sign in to the admin console'
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-50 p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-50 p-4">
       <Card className="flex w-full max-w-md flex-col gap-5 p-6 shadow-md sm:p-8">
         <div className="flex items-center gap-3">
           <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-line bg-white p-0.5" />
@@ -86,7 +91,7 @@ export function LoginPage() {
       <p className="max-w-md text-center text-xs text-slate-600">
         For authorised Nexlyn staff only. Your session ends after 30 minutes without activity.
       </p>
-    </div>
+    </main>
   )
 }
 

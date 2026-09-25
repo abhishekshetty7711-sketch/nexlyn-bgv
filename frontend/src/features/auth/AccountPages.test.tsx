@@ -15,6 +15,12 @@ describe('AcceptInvitationPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('needs the link from your invitation')
   })
 
+  it('names the tab and has one main landmark', () => {
+    renderRoutes(routes, { route: '/accept-invite', auth: fakeAuth({ signedIn: false }) })
+    expect(document.title).toBe('Accept your invitation - Nexlyn BGV')
+    expect(screen.getAllByRole('main')).toHaveLength(1)
+  })
+
   it('removes the token from the address bar as soon as it has been read', async () => {
     mockFetch({})
     const { router } = renderRoutes(routes, { route: '/accept-invite?token=secret-token', auth: fakeAuth({ signedIn: false }) })

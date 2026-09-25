@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
 import { describeAuthError } from './errors'
@@ -45,6 +46,8 @@ export function AcceptInvitationPage() {
   }, [])
   const finish = useCallback((tokens: TokenResponse) => completeSignIn(tokens), [completeSignIn])
 
+  usePageTitle(challenge ? 'Set up two-step verification' : 'Accept your invitation')
+
   if (state.status === 'authenticated') {
     return <Navigate to="/" replace />
   }
@@ -59,7 +62,7 @@ export function AcceptInvitationPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <Card className="flex w-full max-w-sm flex-col gap-4 p-6">
         <h1 className="text-xl font-semibold text-slate-900">Welcome to Nexlyn BGV</h1>
         {!inviteToken && (
@@ -107,6 +110,6 @@ export function AcceptInvitationPage() {
         )}
         {challenge && <TwoFactorSetup challengeToken={challenge.challengeToken} onFinished={finish} onExpired={restart} />}
       </Card>
-    </div>
+    </main>
   )
 }

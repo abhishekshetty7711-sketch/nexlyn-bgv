@@ -33,6 +33,18 @@ describe('LoginPage', () => {
     expect(screen.getByLabelText('6-digit code')).toHaveFocus()
   })
 
+  it('names the tab after the step and has one main landmark', async () => {
+    mockFetch({ 'POST /api/auth/login': () => ({ body: { status: '2FA_REQUIRED', challengeToken: 'challenge-1', expiresInSeconds: 300 } }) })
+    renderRoutes(routes, { route: '/login', auth: signedOut() })
+
+    expect(document.title).toBe('Sign in - Nexlyn BGV')
+    expect(screen.getAllByRole('main')).toHaveLength(1)
+
+    await typeCredentials()
+    await screen.findByText('Two-step verification')
+    expect(document.title).toBe('Two-step verification - Nexlyn BGV')
+  })
+
   it('checks the form before calling the server', async () => {
     const fake = mockFetch({})
     renderRoutes(routes, { route: '/login', auth: signedOut() })
