@@ -77,6 +77,32 @@ describe('CaseWorkspacePage', () => {
     expect(screen.getByRole('form', { name: '1. Report info' })).toBeInTheDocument()
   })
 
+  it('folds the section list into one "Section n of 8" button for narrow screens, with the progress bar outside it', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+    await screen.findByRole('heading', { name: 'NX-2026-0001' })
+
+    // jsdom has no layout: below lg the panel carries max-lg:hidden until opened; from lg up it is always shown
+    const toggle = await screen.findByRole('button', { name: 'Section 2 of 8: Candidate Details' })
+    const panel = document.getElementById('case-sections-panel')!
+    expect(toggle).toHaveAttribute('aria-controls', 'case-sections-panel')
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveClass('lg:hidden')
+    expect(panel).toHaveClass('max-lg:hidden')
+    expect(panel).toContainElement(screen.getByRole('navigation', { name: 'Case sections' }))
+    expect(panel).toContainElement(screen.getByRole('region', { name: 'Assignments' })) // who is assigned folds away with the list
+    expect(panel).not.toContainElement(screen.getByRole('progressbar', { name: 'Case progress' })) // the progress bar stays in view
+
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(panel).not.toHaveClass('max-lg:hidden')
+
+    await userEvent.click(within(panel).getByRole('button', { name: /3 Verification Period/ }))
+    expect(await screen.findByRole('form', { name: '3. Verification period' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Section 3 of 8: Verification Period' })).toHaveAttribute('aria-expanded', 'false') // closed again after choosing
+    expect(document.getElementById('case-sections-panel')).toHaveClass('max-lg:hidden')
+  })
+
   it('has a breadcrumb back to the list that names the current case', async () => {
     const setup = serve(caseFixture())
     open(setup)

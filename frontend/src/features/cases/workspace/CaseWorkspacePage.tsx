@@ -142,7 +142,7 @@ export function CaseWorkspacePage() {
         )}
 
         <div className="grid items-start gap-4 lg:grid-cols-[17rem_1fr]">
-          {/* the section list stays in view while a long section scrolls; on a small screen it is simply above it */}
+          {/* the section list stays in view while a long section scrolls; on a small screen it folds into one "Section n of 8" button */}
           <div className="flex flex-col gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
             <Card>
               <SectionNavigator
@@ -152,8 +152,9 @@ export function CaseWorkspacePage() {
                 checks={checks.data ?? []}
                 currentCheckId={checkParam}
                 onSelectCheck={(checkId) => goTo('checks', checkId)}
-              />
-              <AssignmentsPanel caseView={caseView} />
+              >
+                <AssignmentsPanel caseView={caseView} />
+              </SectionNavigator>
             </Card>
           </div>
           <Card className="min-w-0">
