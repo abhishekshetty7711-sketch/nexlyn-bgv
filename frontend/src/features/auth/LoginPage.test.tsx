@@ -20,6 +20,19 @@ async function typeCredentials(email = 'owner@example.com', password = 'Tr1cky-O
 }
 
 describe('LoginPage', () => {
+  it('shows the brand, says which step this is, and moves the focus to the first field', async () => {
+    mockFetch({ 'POST /api/auth/login': () => ({ body: { status: '2FA_REQUIRED', challengeToken: 'challenge-1', expiresInSeconds: 300 } }) })
+    renderRoutes(routes, { route: '/login', auth: signedOut() })
+
+    expect(screen.getByRole('heading', { name: 'Nexlyn BGV' })).toBeInTheDocument()
+    expect(screen.getByText('Sign in to the admin console')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email')).toHaveFocus()
+
+    await typeCredentials()
+    expect(await screen.findByText('Two-step verification')).toBeInTheDocument()
+    expect(screen.getByLabelText('6-digit code')).toHaveFocus()
+  })
+
   it('checks the form before calling the server', async () => {
     const fake = mockFetch({})
     renderRoutes(routes, { route: '/login', auth: signedOut() })

@@ -2,12 +2,13 @@ import { useCallback, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Navigate, useLocation } from 'react-router-dom'
+import logoUrl from '@/assets/nexlyn-logo.jpg'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { FullPageSpinner } from '@/components/ui/spinner'
+import { FullPageSpinner, Spinner } from '@/components/ui/spinner'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
 import { describeAuthError, isChallengeExpired } from './errors'
@@ -49,11 +50,23 @@ export function LoginPage() {
   }
 
   const endedMessage = state.endedBy ? ENDED_MESSAGES[state.endedBy] : null
+  const subtitle =
+    challenge?.status === '2FA_SETUP_REQUIRED'
+      ? 'Set up two-step verification'
+      : challenge?.status === '2FA_REQUIRED'
+        ? 'Two-step verification'
+        : 'Sign in to the admin console'
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <Card className="flex w-full max-w-sm flex-col gap-4 p-6">
-        <h1 className="text-xl font-semibold text-slate-900">Nexlyn BGV</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-50 p-4">
+      <Card className="flex w-full max-w-md flex-col gap-5 p-6 shadow-md sm:p-8">
+        <div className="flex items-center gap-3">
+          <img src={logoUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-line bg-white p-0.5" />
+          <div className="leading-tight">
+            <h1 className="text-xl font-semibold text-brand-800">Nexlyn BGV</h1>
+            <p className="text-sm text-slate-600">{subtitle}</p>
+          </div>
+        </div>
         {(notice ?? endedMessage) && <Alert variant="info">{notice ?? endedMessage}</Alert>}
         {!challenge && (
           <CredentialsForm
@@ -70,6 +83,9 @@ export function LoginPage() {
           <TwoFactorSetup challengeToken={challenge.challengeToken} onFinished={finish} onExpired={restart} />
         )}
       </Card>
+      <p className="max-w-md text-center text-xs text-slate-600">
+        For authorised Nexlyn staff only. Your session ends after 30 minutes without activity.
+      </p>
     </div>
   )
 }
@@ -89,13 +105,14 @@ function CredentialsForm({ onChallenge }: { onChallenge: (challenge: Challenge) 
   }
 
   return (
-    <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)} noValidate>
+    <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(submit)} noValidate>
       {error && <Alert variant="error">{error}</Alert>}
       <Field label="Email" htmlFor="login-email" error={form.formState.errors.email?.message}>
         <Input
           id="login-email"
           type="email"
           autoComplete="username"
+          autoFocus
           aria-invalid={!!form.formState.errors.email}
           {...form.register('email')}
         />
@@ -109,7 +126,8 @@ function CredentialsForm({ onChallenge }: { onChallenge: (challenge: Challenge) 
           {...form.register('password')}
         />
       </Field>
-      <Button type="submit" disabled={form.formState.isSubmitting}>
+      <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+        {form.formState.isSubmitting && <Spinner className="h-4 w-4 text-white" />}
         Sign in
       </Button>
     </form>
@@ -142,7 +160,7 @@ function CodeForm({ challenge, onTokens, onExpired }: CodeFormProps) {
   }
 
   return (
-    <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)} noValidate>
+    <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(submit)} noValidate>
       <p className="text-sm text-slate-600">
         {useBackup
           ? 'Enter one of your backup codes. Each works only once.'
@@ -159,12 +177,13 @@ function CodeForm({ challenge, onTokens, onExpired }: CodeFormProps) {
           {...form.register('code')}
         />
       </Field>
-      <Button type="submit" disabled={form.formState.isSubmitting}>
+      <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+        {form.formState.isSubmitting && <Spinner className="h-4 w-4 text-white" />}
         Verify
       </Button>
       <button
         type="button"
-        className="text-left text-xs text-slate-500 underline"
+        className="w-fit cursor-pointer text-left text-sm text-brand-700 underline underline-offset-2 hover:text-brand-800"
         onClick={() => {
           setUseBackup((value) => !value)
           form.reset()
