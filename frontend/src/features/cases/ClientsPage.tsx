@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { Can } from '@/features/auth/Can'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { useClients, useSaveClient } from './api'
 import { useCheckTypes } from './checks/api'
 import { type ClientValues, clientSchema } from './schemas'
@@ -19,6 +20,7 @@ import type { ClientView } from './types'
 
 /** The companies that order verifications. Anyone who can read cases can look; CLIENT_MANAGE can change. */
 export function ClientsPage() {
+  usePageTitle('Clients')
   const clients = useClients()
   const [editing, setEditing] = useState<ClientView | 'new' | null>(null)
 
@@ -110,12 +112,13 @@ function ClientDialog({ client, onClose }: { client: ClientView | null; onClose:
     <Dialog title={client ? `Edit ${client.name}` : 'New client'} onClose={onClose}>
       <form className="flex flex-col gap-3" onSubmit={submit} noValidate>
         {save.isError && <Alert variant="error">{describeError(save.error)}</Alert>}
-        <Field label="Client name" htmlFor="cl-name" error={errors.name?.message}>
+        <Field label="Client name" htmlFor="cl-name" required error={errors.name?.message}>
           <Input id="cl-name" aria-invalid={!!errors.name} {...form.register('name')} />
         </Field>
         <Field
           label="Name on reports"
           htmlFor="cl-display"
+          required
           hint="Exactly as it should print. Use new lines for line breaks."
           error={errors.displayName?.message}
         >

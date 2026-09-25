@@ -25,6 +25,18 @@ describe('ClientsPage', () => {
     expect(within(screen.getAllByText('Beta Ltd', { selector: 'td' })[0]!.closest('tr')!).getByText('Inactive')).toBeInTheDocument()
   })
 
+  it('names the tab, and marks the two required fields of the client form before anything is submitted', async () => {
+    mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'GET /api/check-types': () => ({ body: allDefs }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'New client' }))
+    const dialog = screen.getByRole('dialog', { name: 'New client' })
+
+    expect(document.title).toBe('Clients - Nexlyn BGV')
+    expect(within(dialog).getByLabelText('Client name (required)')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Name on reports (required)')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('is read-only for someone who can only read cases', async () => {
     mockFetch({ 'GET /api/clients': () => ({ body: CLIENTS }), 'GET /api/check-types': () => ({ body: allDefs }) })
     show(['CASE_READ_ASSIGNED'])
@@ -39,8 +51,8 @@ describe('ClientsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'New client' }))
     const dialog = screen.getByRole('dialog', { name: 'New client' })
 
-    await userEvent.type(within(dialog).getByLabelText('Client name'), ' Gamma Inc ')
-    await userEvent.type(within(dialog).getByLabelText('Name on reports'), 'Gamma{Enter}Incorporated')
+    await userEvent.type(within(dialog).getByLabelText('Client name (required)'), ' Gamma Inc ')
+    await userEvent.type(within(dialog).getByLabelText('Name on reports (required)'), 'Gamma{Enter}Incorporated')
     await userEvent.click(await within(dialog).findByRole('checkbox', { name: 'Identity Verification (Aadhaar)' }))
     await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Gap Review' }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
@@ -92,8 +104,8 @@ describe('ClientsPage', () => {
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'New client' }))
     const dialog = screen.getByRole('dialog')
-    await userEvent.type(within(dialog).getByLabelText('Client name'), 'Acme Corp')
-    await userEvent.type(within(dialog).getByLabelText('Name on reports'), 'Acme')
+    await userEvent.type(within(dialog).getByLabelText('Client name (required)'), 'Acme Corp')
+    await userEvent.type(within(dialog).getByLabelText('Name on reports (required)'), 'Acme')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('already exists')
   })
