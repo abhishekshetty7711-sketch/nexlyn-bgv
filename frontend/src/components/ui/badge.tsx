@@ -20,7 +20,7 @@ interface BadgeProps {
 
 export function Badge({ tone = 'neutral', icon, children }: BadgeProps) {
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', TONES[tone])}>
+    <span className={cn('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', TONES[tone])}>
       {icon && (
         <span aria-hidden className="inline-flex shrink-0">
           {icon}

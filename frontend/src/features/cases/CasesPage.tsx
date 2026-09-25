@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { SkeletonRows } from '@/components/ui/skeleton'
 import { Can } from '@/features/auth/Can'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { CASES_PAGE_SIZE, type CaseFilters, EMPTY_CASE_FILTERS, useCases, useClients } from './api'
 import { formatDate } from './format'
 import { LifecycleBadge } from './LifecycleBadge'
@@ -17,6 +18,7 @@ import { LIFECYCLE_LABELS, type Lifecycle } from './types'
 
 /** The case list: search, filter by status or client, and open a case. Analysts only ever see their own cases. */
 export function CasesPage() {
+  usePageTitle('Cases')
   // A link such as /cases?status=IN_REVIEW (from the dashboard) opens the list already filtered.
   const [search] = useSearchParams()
   const linked = search.get('status')
@@ -140,7 +142,8 @@ export function CasesPage() {
               )}
               {cases.data.items.map((row) => (
                 <tr key={row.id} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-brand-50">
-                  <td className="px-4 py-3 font-semibold">
+                  {/* The Report ID is how people recognise a case: it never wraps; the Candidate and Client columns give way instead. */}
+                  <td className="whitespace-nowrap px-4 py-3 font-semibold">
                     <Link className="text-brand-800 underline-offset-2 hover:underline" to={`/cases/${row.id}`}>
                       {row.reportId}
                     </Link>
@@ -150,7 +153,7 @@ export function CasesPage() {
                     {row.employeeId && <div className="text-xs text-slate-600">{row.employeeId}</div>}
                   </td>
                   <td className="px-4 py-3 text-slate-800">{row.clientName}</td>
-                  <td className="px-4 py-3">
+                  <td className="whitespace-nowrap px-4 py-3">
                     <LifecycleBadge lifecycle={row.lifecycle} />
                   </td>
                   <td className="hidden px-4 py-3 text-xs text-slate-700 md:table-cell">{row.assignments.map((person) => person.fullName).join(', ') || '-'}</td>

@@ -72,6 +72,19 @@ describe('CasesPage', () => {
     expect(screen.getByText('2 cases')).toBeInTheDocument()
   })
 
+  it('names the tab, and keeps the Report ID and the status badge on one line', async () => {
+    mockFetch({ 'GET /api/cases': () => page([row({ lifecycle: 'CHANGES_REQUESTED' })]), 'GET /api/clients': () => ({ body: CLIENTS }) })
+    show()
+
+    const link = await screen.findByRole('link', { name: 'NX-2026-0001' })
+    expect(document.title).toBe('Cases - Nexlyn BGV')
+    // jsdom has no layout, so the no-wrap rule itself is what can be checked: the ID and the badge never break onto a second line.
+    expect(link.closest('td')).toHaveClass('whitespace-nowrap')
+    const badge = within(link.closest('tr')!).getByText('Changes requested')
+    expect(badge.closest('td')).toHaveClass('whitespace-nowrap')
+    expect(badge).toHaveClass('whitespace-nowrap')
+  })
+
   it('opens a case when its Report ID is clicked', async () => {
     mockFetch({ 'GET /api/cases': () => page([row()]), 'GET /api/clients': () => ({ body: CLIENTS }) })
     show()
