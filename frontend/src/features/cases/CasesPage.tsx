@@ -11,7 +11,7 @@ import { SkeletonRows } from '@/components/ui/skeleton'
 import { Can } from '@/features/auth/Can'
 import { usePageTitle } from '@/lib/usePageTitle'
 import { CASES_PAGE_SIZE, type CaseFilters, EMPTY_CASE_FILTERS, useCases, useClients } from './api'
-import { formatDate } from './format'
+import { formatDate, formatDateTime } from './format'
 import { LifecycleBadge } from './LifecycleBadge'
 import { NewCaseDialog } from './NewCaseDialog'
 import { LIFECYCLE_LABELS, type Lifecycle } from './types'
@@ -158,7 +158,7 @@ export function CasesPage() {
                   </td>
                   <td className="hidden px-4 py-3 text-xs text-slate-700 md:table-cell">{row.assignments.map((person) => person.fullName).join(', ') || '-'}</td>
                   <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 md:table-cell">{formatDate(row.issueDate)}</td>
-                  <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 lg:table-cell">{new Date(row.updatedAt).toLocaleString()}</td>
+                  <td className="hidden whitespace-nowrap px-4 py-3 text-slate-700 lg:table-cell">{formatDateTime(row.updatedAt)}</td>
                 </tr>
               ))}
             </tbody>

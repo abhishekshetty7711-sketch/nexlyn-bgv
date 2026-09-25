@@ -66,6 +66,8 @@ describe('CasesPage', () => {
     expect(within(first).getByText('Draft')).toBeInTheDocument()
     expect(within(first).getByText('Ann Analyst')).toBeInTheDocument()
     expect(within(first).getByText('24/09/2026')).toBeInTheDocument()
+    // the "Updated" column is day first with a 24-hour clock, like every other date of the dashboard
+    expect(within(first).getByText(/^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}$/)).toBeInTheDocument()
     const second = screen.getByRole('link', { name: 'NX-2026-0002' }).closest('tr')!
     expect(within(second).getByText('Not entered yet')).toBeInTheDocument()
     expect(within(second).getByText('In review')).toBeInTheDocument()
