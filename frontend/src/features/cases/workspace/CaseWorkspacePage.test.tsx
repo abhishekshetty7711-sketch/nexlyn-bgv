@@ -101,6 +101,14 @@ describe('CaseWorkspacePage', () => {
     expect(screen.queryByText(/24-Sep-2026/)).not.toBeInTheDocument()
   })
 
+  it('makes the small links and buttons of the side panel at least 24 px tall', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { permissions: [...EDITOR, 'CASE_ASSIGN'] })
+    const panel = await screen.findByRole('region', { name: 'Assignments' })
+    // jsdom has no layout: min-h-6 (1.5rem = 24 px) is the rule that makes the target big enough
+    expect(within(panel).getByRole('button', { name: 'Remove Ann Analyst as preparer' })).toHaveClass('min-h-6')
+  })
+
   it('has no unnamed "complementary" regions, and the "Assigned to" heading follows the page title (h1, then h2)', async () => {
     const setup = serve(caseFixture())
     open(setup)

@@ -181,7 +181,7 @@ function HistoryList({ entries }: { entries: HistoryEntry[] }) {
   }
   return (
     <details className="text-sm text-slate-600">
-      <summary className="cursor-pointer text-sm font-medium text-slate-700">History ({entries.length})</summary>
+      <summary className="cursor-pointer py-1 text-sm font-medium text-slate-700">History ({entries.length})</summary>
       <ol className="mt-2 flex flex-col gap-1" aria-label="Case history">
         {entries.map((entry, index) => (
           <li key={`${entry.at}-${index}`}>

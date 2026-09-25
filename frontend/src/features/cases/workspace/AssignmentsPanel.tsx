@@ -33,7 +33,7 @@ export function AssignmentsPanel({ caseView }: { caseView: CaseView }) {
                 {!locked && (
                   <button
                     type="button"
-                    className="text-xs text-slate-500 underline"
+                    className="inline-flex min-h-6 min-w-6 items-center justify-center px-1 text-xs text-slate-500 underline"
                     aria-label={`Remove ${person.fullName} as ${person.role.toLowerCase()}`}
                     disabled={unassign.isPending}
                     onClick={() => unassign.mutate({ adminId: person.adminId, role: person.role })}

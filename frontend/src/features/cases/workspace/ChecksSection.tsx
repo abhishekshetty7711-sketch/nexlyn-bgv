@@ -97,7 +97,7 @@ export function ChecksSection({ caseView, checkId, onSelectCheck }: ChecksSectio
           {list.map((check, index) => (
             <li key={check.id} className={`flex flex-wrap items-center gap-2 rounded-lg border p-2 transition-colors ${check.id === checkId ? 'border-brand-800 bg-brand-50' : 'border-line hover:bg-slate-50'}`}>
               <span className="w-6 text-center text-sm text-slate-600">{index + 1}</span>
-              <button type="button" className="flex-1 cursor-pointer text-left text-sm font-medium text-slate-900 hover:text-brand-800 hover:underline" onClick={() => onSelectCheck(check.id)}>
+              <button type="button" className="min-h-6 flex-1 cursor-pointer text-left text-sm font-medium text-slate-900 hover:text-brand-800 hover:underline" onClick={() => onSelectCheck(check.id)}>
                 {check.title}
               </button>
               <Badge tone={STATUS_TONES[check.status]}>

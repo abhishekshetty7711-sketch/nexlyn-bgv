@@ -234,4 +234,15 @@ describe('WorkflowPanel', () => {
     expect(items[1]).toHaveTextContent('Rex Reviewer sent the case back for changes: "Fix the ID"')
     expect(items[2]).toHaveTextContent('Rex Reviewer finalized the report (report v3)')
   })
+
+  it('gives the History toggle room to click, and writes history times day first', async () => {
+    const at = new Date(2026, 8, 24, 8, 0).toISOString() // local parts: the same answer in every time zone
+    show(withActions({}, { lifecycle: 'APPROVED' }), {
+      history: [{ action: 'SUBMIT', from: 'DRAFT', to: 'IN_REVIEW', actorId: 'a', actorName: 'Pia Preparer', comment: null, reportVersion: null, at }],
+    })
+    const list = await screen.findByRole('list', { name: 'Case history' })
+    expect(within(list).getByText('24/09/2026, 08:00')).toBeInTheDocument()
+    // jsdom has no layout: py-1 makes the toggle at least 24 px tall
+    expect(screen.getByText(/^History \(1\)$/)).toHaveClass('py-1')
+  })
 })

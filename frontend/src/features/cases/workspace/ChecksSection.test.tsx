@@ -75,6 +75,16 @@ describe('Checks section', () => {
     expect(within(form).getByText('★ Master')).toBeInTheDocument()
   })
 
+  it('makes the check names in both lists at least 24 px tall to click', async () => {
+    serve([checkFixture()])
+    open()
+    const list = await screen.findByRole('list', { name: 'Checks on this case' })
+    // jsdom has no layout: min-h-6 / min-h-7 (24 / 28 px) are the rules that make the targets big enough
+    expect(within(list).getByRole('button', { name: 'Identity Verification (Aadhaar)' })).toHaveClass('min-h-6')
+    const nav = screen.getByRole('navigation', { name: 'Case sections' })
+    expect(within(within(nav).getByRole('list', { name: 'Checks' })).getByRole('button', { name: /Identity Verification/ })).toHaveClass('min-h-7')
+  })
+
   it('keeps the check\'s Save button in a sticky bar with its title, so it stays in view on the long form', async () => {
     serve([checkFixture()])
     open('/cases/c-1?section=checks&check=ck-1')
