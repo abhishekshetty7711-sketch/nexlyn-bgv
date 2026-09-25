@@ -43,7 +43,7 @@ function CaseList({
 }) {
   const now = today()
   return (
-    <Card className="self-start">
+    <Card className="min-w-0">
       <section aria-label={title} className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-brand-700" aria-hidden />
@@ -57,20 +57,24 @@ function CaseList({
             {rows.map((row) => {
               const overdue = dueDates && row.dueDate !== null && row.dueDate < now
               return (
-                <li key={row.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
-                  <Link to={`/cases/${row.id}`} className="font-semibold text-brand-800 underline-offset-2 hover:underline">
-                    {row.reportId}
-                  </Link>
-                  <span className="min-w-0 flex-1 basis-40 truncate text-slate-700">
-                    {row.candidateName ?? 'No candidate name yet'} · {row.clientName}
-                  </span>
-                  {dueDates && row.dueDate && (
-                    <span className={overdue ? 'text-xs font-semibold text-red-700' : 'text-xs text-slate-600'}>
-                      due {formatDate(row.dueDate, 'NUMERIC')}
-                      {overdue ? ' (overdue)' : ''}
+                <li key={row.id} className="flex flex-col gap-0.5 py-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Link to={`/cases/${row.id}`} className="min-w-0 flex-1 truncate font-semibold text-brand-800 underline-offset-2 hover:underline">
+                      {row.reportId}
+                    </Link>
+                    <LifecycleBadge lifecycle={row.lifecycle} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-slate-700">
+                      {row.candidateName ?? 'No candidate name yet'} · {row.clientName}
                     </span>
-                  )}
-                  <LifecycleBadge lifecycle={row.lifecycle} />
+                    {dueDates && row.dueDate && (
+                      <span className={`shrink-0 text-xs ${overdue ? 'font-semibold text-red-700' : 'text-slate-600'}`}>
+                        due {formatDate(row.dueDate, 'NUMERIC')}
+                        {overdue ? ' (overdue)' : ''}
+                      </span>
+                    )}
+                  </div>
                 </li>
               )
             })}
@@ -100,7 +104,7 @@ export function DashboardPage() {
       {!canSeeCases && <Alert variant="info">Your account does not include access to cases. Use the menu for the areas you can open.</Alert>}
       {canSeeCases && dashboard.isLoading && (
         <>
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-hidden>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-hidden>
             {STAGES.map((stage) => (
               <Skeleton key={stage} className="h-24 rounded-xl" />
             ))}
@@ -112,7 +116,7 @@ export function DashboardPage() {
 
       {data && (
         <>
-          <section aria-label="Cases by stage" className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <section aria-label="Cases by stage" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {STAGES.map((stage) => {
               const count = data.counts[stage] ?? 0
               const Icon = LIFECYCLE_LOOK[stage].icon
@@ -143,11 +147,15 @@ export function DashboardPage() {
           )}
 
           <div className="grid items-start gap-4 lg:grid-cols-2">
-            {hasPermission('REPORT_APPROVE') && (
-              <CaseList title="Waiting for my review" icon={ClipboardCheck} rows={data.awaitingMyReview} empty="Nothing is waiting for your review." />
-            )}
-            <CaseList title="My cases" icon={UserRound} rows={data.mine} empty="No open cases are assigned to you." />
-            <CaseList title="Due soon and overdue" icon={CalendarClock} rows={data.dueSoon} empty="No case is due in the next 3 days." dueDates />
+            <div className="flex min-w-0 flex-col gap-4">
+              {hasPermission('REPORT_APPROVE') && (
+                <CaseList title="Waiting for my review" icon={ClipboardCheck} rows={data.awaitingMyReview} empty="Nothing is waiting for your review." />
+              )}
+              <CaseList title="Due soon and overdue" icon={CalendarClock} rows={data.dueSoon} empty="No case is due in the next 3 days." dueDates />
+            </div>
+            <div className="flex min-w-0 flex-col gap-4">
+              <CaseList title="My cases" icon={UserRound} rows={data.mine} empty="No open cases are assigned to you." />
+            </div>
           </div>
         </>
       )}
