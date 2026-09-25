@@ -77,6 +77,11 @@ describe('AcceptInvitationPage', () => {
 describe('ChangePasswordPage', () => {
   const routes = [{ path: '/', element: <ChangePasswordPage /> }]
 
+  it('names the tab', () => {
+    renderRoutes(routes)
+    expect(document.title).toBe('Change password - Nexlyn BGV')
+  })
+
   async function fill(current: string, next: string, confirm = next) {
     await userEvent.type(screen.getByLabelText('Current password'), current)
     await userEvent.type(screen.getByLabelText('New password'), next)

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { useAuth } from './AuthContext'
 import { authApi } from './authApi'
 import { describeAuthError } from './errors'
@@ -13,6 +14,7 @@ import { type ChangePasswordValues, changePasswordSchema } from './schemas'
 
 /** Changing your own password ends every session, this one included: you sign in again afterwards. */
 export function ChangePasswordPage() {
+  usePageTitle('Change password')
   const { signOut } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const form = useForm<ChangePasswordValues>({
