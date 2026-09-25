@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { fakeAuth, mockFetch, renderRoutes } from '@/test/testUtils'
@@ -47,7 +47,7 @@ describe('AuditPage', () => {
   it('names the tab', async () => {
     mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [ENTRY], page: 0, size: 50, total: 1 } }) })
     renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
-    await screen.findByText('ADMIN_DISABLED')
+    await screen.findByText('Disabled an admin account')
     expect(document.title).toBe('Audit log - Nexlyn BGV')
   })
 
@@ -62,13 +62,59 @@ describe('AuditPage', () => {
     mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [ENTRY], page: 0, size: 50, total: 1 } }) })
     renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
 
-    expect(await screen.findByText('ADMIN_DISABLED')).toBeInTheDocument()
+    expect(await screen.findByText('Disabled an admin account')).toBeInTheDocument()
     expect(screen.getByText('owner@example.com')).toBeInTheDocument()
     expect(screen.getByText('10.0.0.1')).toBeInTheDocument()
     expect(screen.getByText('1 entries, newest first')).toBeInTheDocument()
-    expect(screen.getByText('Before / after')).toHaveClass('py-1') // jsdom has no layout: py-1 makes the toggle at least 24 px tall
-    await userEvent.click(screen.getByText('Before / after'))
+    expect(screen.getByText('Details', { selector: 'summary' })).toHaveClass('py-1') // jsdom has no layout: py-1 makes the toggle at least 24 px tall
+    await userEvent.click(screen.getByText('Details', { selector: 'summary' }))
     expect(screen.getByText(/"status": "DISABLED"/)).toBeInTheDocument()
+  })
+
+  it('says what happened in a sentence, and keeps the code, the item and the request id in the entry\'s details', async () => {
+    mockFetch({
+      'GET /api/audit-log': () => ({
+        body: { items: [{ ...ENTRY, entityId: 'a-2', correlationId: 'req-77', caseId: null }], page: 0, size: 50, total: 1 },
+      }),
+    })
+    renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
+
+    const cell = (await screen.findByText('Disabled an admin account')).closest('td')!
+    expect(cell).not.toHaveTextContent('ADMIN_DISABLED') // no code in the sentence column
+    expect(screen.getByRole('columnheader', { name: 'What happened' })).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Entity' })).not.toBeInTheDocument()
+
+    const details = screen.getByText('Details', { selector: 'summary' }).closest('details')!
+    expect(within(details).getByText('ADMIN_DISABLED')).toBeInTheDocument()
+    expect(within(details).getByText('ADMIN a-2')).toBeInTheDocument()
+    expect(within(details).getByText('req-77')).toBeInTheDocument()
+  })
+
+  it('links an entry to its case for someone who can open cases', async () => {
+    const entry = { ...ENTRY, action: 'DOCUMENT_VIEWED', entityType: 'DOCUMENT', caseId: 'c-42' }
+    mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [entry], page: 0, size: 50, total: 1 } }) })
+    renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ', 'CASE_READ_ALL'] }) })
+
+    const link = await screen.findByRole('link', { name: /Open the case/ })
+    expect(link).toHaveAttribute('href', '/cases/c-42')
+    expect(link).toHaveAccessibleName('Open the case for: Viewed a document') // says which entry, when read out of context
+    expect(link).toHaveClass('py-1') // 16 px of text plus 8 px of padding: at least 24 px tall
+  })
+
+  it('offers no case link to someone who cannot open cases, or for a deleted case', async () => {
+    const entries = [
+      { ...ENTRY, id: 'e-1', action: 'DOCUMENT_VIEWED', caseId: 'c-42' },
+      { ...ENTRY, id: 'e-2', action: 'CASE_DELETED', caseId: 'c-43' },
+    ]
+    mockFetch({ 'GET /api/audit-log': () => ({ body: { items: entries, page: 0, size: 50, total: 2 } }) })
+    const view = renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
+    await screen.findByText('Viewed a document')
+    expect(screen.queryByRole('link')).not.toBeInTheDocument() // no case permission: nothing to open
+    view.unmount()
+
+    renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ', 'CASE_READ_ALL'] }) })
+    await screen.findByText('Deleted a case')
+    expect(screen.getAllByRole('link')).toHaveLength(1) // the viewed document, not the deleted case
   })
 
   it('says so when nothing matches, and reads only (there is no way to change an entry)', async () => {
@@ -82,12 +128,12 @@ describe('AuditPage', () => {
   it('applies the filters the admin typed and returns to the first page', async () => {
     const fake = mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [ENTRY], page: 0, size: 50, total: 1 } }) })
     renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
-    await screen.findByText('ADMIN_DISABLED')
+    await screen.findByText('Disabled an admin account')
 
     await userEvent.type(screen.getByLabelText('Action'), 'LOGIN_FAILED')
     await userEvent.click(screen.getByRole('button', { name: 'Apply filters' }))
 
-    await screen.findByText('ADMIN_DISABLED')
+    await screen.findByText('Disabled an admin account')
     const urls = fake.mock.calls.map(([url]) => String(url))
     expect(urls.some((url) => url.includes('action=LOGIN_FAILED'))).toBe(true)
   })

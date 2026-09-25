@@ -1,12 +1,15 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useAuth } from '@/features/auth/AuthContext'
 import { formatDateTime } from '@/features/cases/format'
 import { usePageTitle } from '@/lib/usePageTitle'
+import { describeAction } from './describeAction'
 import { AUDIT_PAGE_SIZE, type AuditFilters, EMPTY_FILTERS, useAuditLog } from './api'
 
 const FILTER_FIELDS: { name: keyof AuditFilters; label: string; type: string; placeholder?: string }[] = [
@@ -20,6 +23,8 @@ const FILTER_FIELDS: { name: keyof AuditFilters; label: string; type: string; pl
 /** Read-only view of the append-only audit log. Nothing here can change or delete an entry. */
 export function AuditPage() {
   usePageTitle('Audit log')
+  const { hasAnyPermission } = useAuth()
+  const canOpenCases = hasAnyPermission(['CASE_READ_ALL', 'CASE_READ_ASSIGNED'])
   const [draft, setDraft] = useState<AuditFilters>(EMPTY_FILTERS)
   const [applied, setApplied] = useState<AuditFilters>(EMPTY_FILTERS)
   const [page, setPage] = useState(0)
@@ -78,45 +83,69 @@ export function AuditPage() {
               <tr>
                 <th className="px-3 py-2">When</th>
                 <th className="px-3 py-2">Who</th>
-                <th className="px-3 py-2">Action</th>
-                <th className="px-3 py-2">Entity</th>
+                <th className="px-3 py-2">What happened</th>
                 <th className="px-3 py-2">Details</th>
               </tr>
             </thead>
             <tbody>
               {log.data.items.length === 0 && (
                 <tr>
-                  <td className="px-3 py-4 text-slate-500" colSpan={5}>
+                  <td className="px-3 py-4 text-slate-500" colSpan={4}>
                     No entries match.
                   </td>
                 </tr>
               )}
-              {log.data.items.map((entry) => (
-                <tr key={entry.id} className="border-b border-slate-100 align-top last:border-0">
-                  <td className="whitespace-nowrap px-3 py-2 text-slate-600">{formatDateTime(entry.at)}</td>
-                  <td className="px-3 py-2">
-                    <div>{entry.actorEmail ?? 'System'}</div>
-                    {entry.ip && <div className="text-xs text-slate-500">{entry.ip}</div>}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs">{entry.action}</td>
-                  <td className="px-3 py-2 text-xs text-slate-600">
-                    {entry.entityType ?? '-'}
-                    {entry.entityId && <div className="break-all text-slate-500">{entry.entityId}</div>}
-                  </td>
-                  <td className="px-3 py-2">
-                    {entry.before || entry.after ? (
+              {log.data.items.map((entry) => {
+                const sentence = describeAction(entry.action)
+                return (
+                  <tr key={entry.id} className="border-b border-slate-100 align-top last:border-0">
+                    <td className="whitespace-nowrap px-3 py-2 text-slate-600">{formatDateTime(entry.at)}</td>
+                    <td className="px-3 py-2">
+                      <div>{entry.actorEmail ?? 'System'}</div>
+                      {entry.ip && <div className="text-xs text-slate-500">{entry.ip}</div>}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="font-medium text-slate-900">{sentence}</div>
+                      {/* the server records which case an entry belongs to; a deleted case has nothing left to open */}
+                      {entry.caseId && canOpenCases && entry.action !== 'CASE_DELETED' && (
+                        <Link className="inline-block py-1 text-xs text-brand-700 underline underline-offset-2 hover:text-brand-800" to={`/cases/${entry.caseId}`}>
+                          Open the case{' '}
+                          <span className="sr-only">for: {sentence}</span>
+                        </Link>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
                       <details>
-                        <summary className="cursor-pointer py-1 text-xs text-slate-600">Before / after</summary>
-                        <pre className="mt-1 max-w-md overflow-x-auto rounded bg-slate-50 p-2 text-xs">
-                          {JSON.stringify({ before: entry.before, after: entry.after }, null, 2)}
-                        </pre>
+                        <summary className="cursor-pointer py-1 text-xs text-slate-600">Details</summary>
+                        <dl className="mt-1 grid max-w-md grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                          <dt className="text-slate-500">Action code</dt>
+                          <dd className="break-all font-mono text-slate-800">{entry.action}</dd>
+                          {entry.entityType && (
+                            <>
+                              <dt className="text-slate-500">Item</dt>
+                              <dd className="break-all text-slate-800">
+                                {entry.entityType}
+                                {entry.entityId ? ` ${entry.entityId}` : ''}
+                              </dd>
+                            </>
+                          )}
+                          {entry.correlationId && (
+                            <>
+                              <dt className="text-slate-500">Request id</dt>
+                              <dd className="break-all font-mono text-slate-800">{entry.correlationId}</dd>
+                            </>
+                          )}
+                        </dl>
+                        {(entry.before || entry.after) && (
+                          <pre className="mt-2 max-w-md overflow-x-auto rounded bg-slate-50 p-2 text-xs">
+                            {JSON.stringify({ before: entry.before, after: entry.after }, null, 2)}
+                          </pre>
+                        )}
                       </details>
-                    ) : (
-                      <span className="text-xs text-slate-500">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           <div className="flex items-center justify-between border-t border-slate-200 px-3 py-2 text-xs text-slate-500">
