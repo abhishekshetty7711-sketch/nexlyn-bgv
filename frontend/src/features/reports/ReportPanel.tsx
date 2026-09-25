@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/AuthContext'
+import { formatDateTime } from '../cases/format'
 import { formatBytes } from '../documents/files'
 import { downloadReport, fetchPreviewHtml, type ReportVersion, useGenerateReport, useReportJob, useReportVersions } from './api'
 
@@ -17,10 +18,6 @@ interface ReportPanelProps {
   warningCount: number
   /** The case is finalized: the server refuses a new draft until the case is reopened, so none is offered. */
   finalized: boolean
-}
-
-function whenText(iso: string): string {
-  return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
 /** Section 8: look at the report, make a draft PDF, and download the versions made so far. */
@@ -151,7 +148,7 @@ export function ReportPanel({ caseId, reportId, hasErrors, warningCount, finaliz
                   <td className="py-2 pr-3">{version.pageCount}</td>
                   <td className="py-2 pr-3">{formatBytes(version.sizeBytes)}</td>
                   <td className="py-2 pr-3">{version.generatedByName}</td>
-                  <td className="py-2 pr-3">{whenText(version.generatedAt)}</td>
+                  <td className="py-2 pr-3">{formatDateTime(version.generatedAt)}</td>
                   <td className="py-2 text-right">
                     {(version.kind === 'DRAFT' || canDownloadFinal) && (
                       <Button type="button" size="sm" variant="outline" onClick={() => void save(version)} aria-label={`Download version ${version.version}`}>

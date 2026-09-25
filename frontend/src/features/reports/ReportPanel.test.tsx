@@ -80,6 +80,13 @@ describe('ReportPanel', () => {
     expect(screen.queryByText(/This case is finalized/)).not.toBeInTheDocument()
   })
 
+  it('writes when a version was made day first with a 24-hour clock', async () => {
+    serve([{ ...VERSION, generatedAt: new Date(2026, 8, 24, 16, 5).toISOString() }]) // local parts: the same answer in every time zone
+    show()
+    const table = await screen.findByRole('table', { name: 'Report versions' })
+    expect(within(table).getByText('24/09/2026, 16:05')).toBeInTheDocument()
+  })
+
   it('gives the versions table a header for its action column', async () => {
     serve([VERSION])
     show()
