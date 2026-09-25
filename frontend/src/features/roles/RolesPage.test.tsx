@@ -48,7 +48,42 @@ describe('RolesPage', () => {
     expect(within(card('Analyst')).getByText('Built-in')).toBeInTheDocument()
     expect(within(card('Analyst')).getByText('2 admins')).toBeInTheDocument()
     expect(within(card('Case viewer')).getByText('Custom')).toBeInTheDocument()
-    expect(within(card('Case viewer')).getByText('CASE_READ_ALL')).toBeInTheDocument()
+    expect(within(card('Case viewer')).getByText('See every case')).toBeInTheDocument()
+  })
+
+  it('says what each role may do in plain words, grouped by area, without permission codes', async () => {
+    mockFetch({
+      ...handlers(),
+      'GET /api/roles': () => ({ body: [{ ...ROLES[0]!, permissions: ['CASE_CREATE', 'USER_MANAGE', 'CASE_READ_ALL', 'BRAND_NEW'] }] }),
+    })
+    show()
+    const analyst = await screen.findByRole('heading', { name: 'Analyst' })
+    const box = within(analyst.closest('[data-slot="card"]') as HTMLElement)
+
+    expect(box.getByRole('heading', { level: 3, name: 'Cases' })).toBeInTheDocument()
+    expect(box.getByRole('heading', { level: 3, name: 'Administration' })).toBeInTheDocument()
+    expect(box.getByRole('heading', { level: 3, name: 'Other' })).toBeInTheDocument()
+    const cases = box.getByRole('list', { name: 'Cases allowed for Analyst' })
+    expect(within(cases).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Create cases', 'See every case'])
+    expect(box.getByText('Manage admins')).toBeInTheDocument()
+    expect(box.getByText('BRAND_NEW')).toBeInTheDocument() // a permission the table does not know is still shown
+    for (const code of ['CASE_CREATE', 'USER_MANAGE', 'CASE_READ_ALL']) {
+      expect(box.queryByText(code)).not.toBeInTheDocument()
+    }
+  })
+
+  it('lists the permissions in the edit dialog by area, each with its name and a one-line description', async () => {
+    mockFetch(handlers())
+    show()
+    await screen.findByRole('heading', { name: 'Case viewer' })
+
+    await userEvent.click(within(card('Case viewer')).getByRole('button', { name: 'Edit' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit CASE_VIEWER' })
+    const cases = within(dialog).getByRole('group', { name: 'Cases' })
+    expect(within(cases).getByRole('checkbox', { name: /Create cases/ })).not.toBeChecked()
+    expect(within(cases).getByRole('checkbox', { name: /See every case/ })).toBeChecked() // this custom role holds CASE_READ_ALL
+    expect(within(cases).getByText('Start a new case for a client.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('group', { name: 'Administration' })).toContainElement(within(dialog).getByRole('checkbox', { name: /Manage admins/ }))
   })
 
   it('offers deletion only for custom roles that nobody holds', async () => {
@@ -101,7 +136,7 @@ describe('RolesPage', () => {
     await userEvent.click(within(card('Case viewer')).getByRole('button', { name: 'Edit' }))
     const dialog = screen.getByRole('dialog', { name: 'Edit CASE_VIEWER' })
     expect(dialog).toHaveTextContent('signs out everyone who holds this role')
-    await userEvent.click(within(dialog).getByRole('checkbox', { name: /CASE_CREATE/ }))
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: /Create cases/ }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
 
     await screen.findByRole('heading', { name: 'Analyst' })
@@ -133,7 +168,7 @@ describe('RolesPage', () => {
     const dialog = screen.getByRole('dialog', { name: 'New custom role' })
     await userEvent.type(within(dialog).getByLabelText('Code'), 'CASE_CLERK')
     await userEvent.type(within(dialog).getByLabelText('Name'), 'Case clerk')
-    await userEvent.click(within(dialog).getByRole('checkbox', { name: /CASE_CREATE/ }))
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: /Create cases/ }))
     await userEvent.click(within(dialog).getByRole('button', { name: 'Create role' }))
 
     await screen.findByRole('heading', { name: 'Case viewer' })

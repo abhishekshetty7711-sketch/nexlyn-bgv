@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { Can } from '@/features/auth/Can'
 import { usePageTitle } from '@/lib/usePageTitle'
+import { groupPermissions, permissionInfo } from './permissionCatalog'
 import {
   type PermissionView,
   type RoleView,
@@ -59,9 +60,19 @@ export function RolesPage() {
               <code>{role.code}</code>
               {role.description ? ` - ${role.description}` : ''}
             </p>
-            <div className="flex flex-wrap gap-1">
-              {role.permissions.map((permission) => (
-                <Badge key={permission}>{permission}</Badge>
+            <div className="flex flex-col gap-2">
+              {role.permissions.length === 0 && <p className="text-xs text-slate-600">Not allowed to do anything yet.</p>}
+              {groupPermissions(role.permissions, (code) => code).map((group) => (
+                <div key={group.title}>
+                  <h3 className="text-xs font-semibold text-slate-600">{group.title}</h3>
+                  <ul className="mt-1 flex flex-wrap gap-1" aria-label={`${group.title} allowed for ${role.name}`}>
+                    {group.items.map((code) => (
+                      <li key={code}>
+                        <Badge>{permissionInfo(code).label}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
             </div>
             <Can permission="ROLE_MANAGE">
@@ -99,22 +110,31 @@ function PermissionPicker({
   onChange: (codes: string[]) => void
 }) {
   return (
-    <fieldset className="flex flex-col gap-1" disabled={disabled}>
-      <legend className="mb-1 text-sm font-medium text-slate-700">Permissions</legend>
-      {permissions.map((permission) => (
-        <label key={permission.code} className="flex items-start gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            className="mt-1"
-            checked={selected.includes(permission.code)}
-            onChange={(event) =>
-              onChange(event.target.checked ? [...selected, permission.code] : selected.filter((code) => code !== permission.code))
-            }
-          />
-          <span>
-            <code className="text-xs">{permission.code}</code> <span className="text-xs text-slate-500">{permission.description}</span>
-          </span>
-        </label>
+    <fieldset className="flex flex-col gap-3" disabled={disabled}>
+      <legend className="mb-1 text-sm font-medium text-slate-700">What this role may do</legend>
+      {groupPermissions(permissions, (permission) => permission.code).map((group) => (
+        <fieldset key={group.title} className="flex flex-col gap-1">
+          <legend className="text-xs font-semibold uppercase text-slate-600">{group.title}</legend>
+          {group.items.map((permission) => {
+            const info = permissionInfo(permission.code, permission.description)
+            return (
+              <label key={permission.code} className="flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={selected.includes(permission.code)}
+                  onChange={(event) =>
+                    onChange(event.target.checked ? [...selected, permission.code] : selected.filter((code) => code !== permission.code))
+                  }
+                />
+                <span>
+                  <span className="font-medium text-slate-900">{info.label}</span>
+                  {info.description && <span className="block text-xs text-slate-600">{info.description}</span>}
+                </span>
+              </label>
+            )
+          })}
+        </fieldset>
       ))}
     </fieldset>
   )
