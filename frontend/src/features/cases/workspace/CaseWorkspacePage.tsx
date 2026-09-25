@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card'
 import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/AuthContext'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { useCase, useProgress } from '../api'
 import { useChecks } from '../checks/api'
 import { formatDate } from '../format'
@@ -39,6 +40,7 @@ export function CaseWorkspacePage() {
   const caseQuery = useCase(id)
   const progress = useProgress(id)
   const checks = useChecks(id)
+  usePageTitle(caseQuery.data?.reportId ?? (caseQuery.isError ? 'Case not available' : 'Case'))
 
   const requested = search.get('section')
   const section: SectionKey = isSectionKey(requested) ? requested : 'report-info'
@@ -90,6 +92,7 @@ export function CaseWorkspacePage() {
     const status = caseQuery.error instanceof ApiError ? caseQuery.error.status : 0
     return (
       <div className="flex flex-col gap-3">
+        <h1 className="text-2xl font-semibold text-slate-900">Case not available</h1>
         <Alert variant="error">
           {status === 403 || status === 404 ? 'This case does not exist, or you are not allowed to open it.' : describeError(caseQuery.error)}
         </Alert>
@@ -140,7 +143,7 @@ export function CaseWorkspacePage() {
 
         <div className="grid items-start gap-4 lg:grid-cols-[17rem_1fr]">
           {/* the section list stays in view while a long section scrolls; on a small screen it is simply above it */}
-          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
             <Card>
               <SectionNavigator
                 progress={progress.data}
@@ -152,7 +155,7 @@ export function CaseWorkspacePage() {
               />
               <AssignmentsPanel caseView={caseView} />
             </Card>
-          </aside>
+          </div>
           <Card className="min-w-0">
             {section === 'report-info' && <ReportInfoSection {...props} />}
             {section === 'candidate' && <CandidateSection {...props} />}

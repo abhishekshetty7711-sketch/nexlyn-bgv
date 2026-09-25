@@ -86,6 +86,32 @@ describe('CaseWorkspacePage', () => {
     expect(within(crumbs).getByText('NX-2026-0001')).toHaveAttribute('aria-current', 'page')
   })
 
+  it('names the tab after the case once it has loaded', async () => {
+    const setup = serve(caseFixture())
+    open(setup)
+    await screen.findByRole('heading', { name: 'NX-2026-0001' })
+    expect(document.title).toBe('NX-2026-0001 - Nexlyn BGV')
+  })
+
+  it('has no unnamed "complementary" regions, and the "Assigned to" heading follows the page title (h1, then h2)', async () => {
+    const setup = serve(caseFixture())
+    open(setup)
+    await screen.findByRole('heading', { level: 1, name: 'NX-2026-0001' })
+
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 2, name: 'Assigned to' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument()
+  })
+
+  it('offers no new draft on a finalized case and says how to get one', async () => {
+    const setup = serve(caseFixture({ lifecycle: 'FINALIZED', editable: false }))
+    open(setup, { route: '/cases/c-1?section=generate', permissions: [...EDITOR, 'REPORT_GENERATE'] })
+
+    const button = await screen.findByRole('button', { name: 'Generate draft PDF' })
+    expect(button).toBeDisabled()
+    expect(screen.getByText(/Reopen the case to make a new draft/)).toBeInTheDocument()
+  })
+
   it('starts on the section named in the address', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=settings' })
@@ -97,6 +123,8 @@ describe('CaseWorkspacePage', () => {
     open(setup)
     expect(await screen.findByRole('alert')).toHaveTextContent('does not exist, or you are not allowed to open it')
     expect(screen.getByRole('link', { name: 'Back to cases' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Case not available' })).toBeInTheDocument()
+    expect(document.title).toBe('Case not available - Nexlyn BGV')
   })
 
   // ---- saving ----------------------------------------------------------------------------------------
@@ -327,11 +355,11 @@ describe('CaseWorkspacePage', () => {
     })
     open(setup)
 
-    const client = await screen.findByLabelText('Client')
+    const client = await screen.findByLabelText('Client (required)')
     await waitFor(() => expect(within(client).getByRole('option', { name: 'Acme Corp' })).toBeInTheDocument())
     await userEvent.selectOptions(client, 'cl-2')
-    await userEvent.clear(screen.getByLabelText('Report ID'))
-    await userEvent.type(screen.getByLabelText('Report ID'), 'NX-2026-0100')
+    await userEvent.clear(screen.getByLabelText('Report ID (required)'))
+    await userEvent.type(screen.getByLabelText('Report ID (required)'), 'NX-2026-0100')
     await userEvent.type(screen.getByLabelText('Company name on the report'), 'Beta{Enter}Holdings')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
@@ -342,7 +370,7 @@ describe('CaseWorkspacePage', () => {
   it('refuses a malformed Report ID before sending', async () => {
     const setup = serve(caseFixture())
     open(setup)
-    const id = await screen.findByLabelText('Report ID')
+    const id = await screen.findByLabelText('Report ID (required)')
     await userEvent.clear(id)
     await userEvent.type(id, 'no good!')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))

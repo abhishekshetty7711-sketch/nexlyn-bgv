@@ -57,13 +57,13 @@ export function ReportInfoSection({ caseView, canEdit, onReload }: SectionProps)
       onEdit={saving.clearFeedback}
     >
       <fieldset disabled={!canEdit} className="grid gap-4 md:grid-cols-2">
-        <Field label="Report ID" htmlFor="ri-report-id" error={errors.reportId?.message}>
+        <Field label="Report ID" htmlFor="ri-report-id" required error={errors.reportId?.message}>
           <Input id="ri-report-id" aria-invalid={!!errors.reportId} {...form.register('reportId')} />
         </Field>
-        <Field label="Issue date" htmlFor="ri-issue-date" error={errors.issueDate?.message}>
+        <Field label="Issue date" htmlFor="ri-issue-date" required error={errors.issueDate?.message}>
           <Input id="ri-issue-date" type="date" aria-invalid={!!errors.issueDate} {...form.register('issueDate')} />
         </Field>
-        <Field label="Client" htmlFor="ri-client" error={errors.clientId?.message}>
+        <Field label="Client" htmlFor="ri-client" required error={errors.clientId?.message}>
           <Select id="ri-client" aria-invalid={!!errors.clientId} {...form.register('clientId')}>
             {options.length === 0 && <option value={caseView.client.id}>{caseView.client.name}</option>}
             {options.map((client) => (

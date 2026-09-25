@@ -20,7 +20,7 @@ export function AssignmentsPanel({ caseView }: { caseView: CaseView }) {
 
   return (
     <section aria-label="Assignments" className="flex flex-col gap-2 border-t border-slate-200 pt-3">
-      <h3 className="text-xs font-semibold uppercase text-slate-500">Assigned to</h3>
+      <h2 className="text-xs font-semibold uppercase text-slate-500">Assigned to</h2>
       <ul className="flex flex-col gap-1">
         {caseView.assignments.map((person) => (
           <li key={`${person.adminId}-${person.role}`} className="flex items-center justify-between gap-2 text-sm">
