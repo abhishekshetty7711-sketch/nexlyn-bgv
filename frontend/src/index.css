@@ -62,6 +62,19 @@ body {
   outline-offset: 2px;
 }
 
+/* Click targets (WCAG 2.2, 2.5.8: at least 24 px). The browser's own tick boxes and round buttons are about 13 px, so they
+   are drawn larger, and the label that wraps one is at least 24 px tall: the whole row can be clicked. */
+input[type='checkbox'],
+input[type='radio'] {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+label:has(> input[type='checkbox']),
+label:has(> input[type='radio']) {
+  min-height: 1.5rem;
+}
+
 /* People who ask their system for less motion get none. */
 @media (prefers-reduced-motion: reduce) {
   *,
