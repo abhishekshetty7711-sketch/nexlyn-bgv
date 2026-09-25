@@ -62,7 +62,9 @@ Guards added: `ReportFontAudit` (reads the fonts of a finished PDF) with tests t
 
 ## Key backup tool (2026-09-25)
 
-`scripts/backup-keys/backup-keys.mjs` makes an encrypted, offline backup file of `PII_ENCRYPTION_KEY`, `TOTP_ENCRYPTION_KEY` and `JWT_PRIVATE_KEY` (see `docs/runbooks/key-management.md`; 8 Node tests, run with fake keys only). **Done 2026-09-25:** the owner made the encrypted backup of the local keys on a USB stick (`nexlyn-keys-2026-09-25.enc`) and `verify` passed (all three keys matched `infra/local/.env`). Still to do by the owner: a **second copy** of the file (another stick or person), the passphrase stored apart from the stick, and a `verify` every quarter. Before going live, repeat this for the production keys (`--env infra/prod/.env`); the local keys are for testing only.
+`scripts/backup-keys/backup-keys.mjs` makes an encrypted, offline backup file of `PII_ENCRYPTION_KEY`, `TOTP_ENCRYPTION_KEY` and `JWT_PRIVATE_KEY` (see `docs/runbooks/key-management.md`; 8 Node tests, run with fake keys only). **Done 2026-09-25:** the owner made the encrypted backup of the local keys on a USB stick (`nexlyn-keys-2026-09-25.enc`) and `verify` passed (all three keys matched `infra/local/.env`). The owner decided one copy is enough for the LOCAL keys (they only protect demo data; the file is at `D:
+exlyn-backup
+exlyn-keys-2026-09-25.enc`). Still to do by the owner: keep the passphrase apart from the stick and run `verify` now and then. For the PRODUCTION keys a second copy is recommended (they will protect real Aadhaar / PAN numbers). Before going live, repeat this for the production keys (`--env infra/prod/.env`); the local keys are for testing only.
 
 ## Phase 2 steps
 
