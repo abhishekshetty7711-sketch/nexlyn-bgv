@@ -70,6 +70,10 @@ exlyn-keys-2026-09-25.enc`). Still to do by the owner: keep the passphrase apart
 
 Done under the six rules of CLAUDE.md 16.1: brand navy tokens with a contrast test, self-hosted Inter, the Nexlyn logo, shared components (buttons, fields with linked errors, alerts, badges, skeletons, a dialog that manages keyboard focus), a new app shell (icons, phone menu, skip link) and four redesigned screens: **sign in, dashboard, case list, case workspace** (one commit each). Nothing outside `frontend/src` changed; no security behaviour, API client or PDF report was touched (checked from the file list). Before/after screenshots are in `docs/ui/2026-09-25-before-after/`. **Not done:** the other admin screens (clients, admins, roles, audit log, account) only inherit the new components and colours; no dark theme. The owner's local stack was rebuilt with the new UI.
 
+## UI/UX audit fixes (2026-09-25, D-038)
+
+The owner approved fixing every Critical and Important item of `docs/ui-audit.md` (Nice-to-have skipped), batch by batch, one commit per screen. **Batch 1 done** (C1 page titles, C2, I1, I2, I5, I8, I10, I11, I12): 343 frontend tests green, lint, type check and build clean. Remaining Important items: I6 (dates), I9, I13, I3, I4, I7. The Docker stack has NOT been rebuilt with these changes yet.
+
 ## Phase 2 steps
 
 | Step | Status |
