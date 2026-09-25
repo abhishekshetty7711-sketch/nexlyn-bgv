@@ -3,13 +3,15 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-slate-900 text-white hover:bg-slate-700 focus-visible:ring-slate-900',
-        outline: 'border border-slate-300 bg-white hover:bg-slate-100 focus-visible:ring-slate-400',
-        ghost: 'hover:bg-slate-100 focus-visible:ring-slate-400',
+        default: 'bg-brand-800 text-white shadow-sm hover:bg-brand-700 focus-visible:ring-brand-600',
+        outline: 'border border-slate-300 bg-white text-slate-800 hover:border-slate-400 hover:bg-slate-50 focus-visible:ring-brand-600',
+        ghost: 'text-slate-700 hover:bg-slate-100 focus-visible:ring-brand-600',
+        // For actions that remove or discard something: white on red-700 is 6.5:1.
+        danger: 'bg-red-700 text-white shadow-sm hover:bg-red-800 focus-visible:ring-red-600',
       },
       size: {
         default: 'h-9 px-4 py-2',
