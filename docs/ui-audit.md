@@ -6,6 +6,10 @@ Governed by CLAUDE.md 16.1: the design skill is advice only, the report (PDF) is
 **Owner's notes (Step 1): not supplied.** The request contained the placeholder "[paste your notes from Step 1 here]". When the notes arrive they get
 their own section here and are ranked with the rest.
 
+## Fix status (updated 2026-09-25, after the audit)
+
+The owner approved all Critical and Important items; **all are implemented** (decisions in `docs/DECISIONS.md` D-038, D-039, D-040; pictures of the result in `docs/ui/2026-09-25-audit-fixes/`). C1, C2, I1 to I13: done. Nice-to-have N1 to N10: not done, by the owner's choice. The axe scan behind this audit has not been re-run against a rebuilt stack.
+
 ## How it was done
 
 - The real app was started on a throw-away stack (its own database, removed afterwards) with the five demo cases in different workflow states
