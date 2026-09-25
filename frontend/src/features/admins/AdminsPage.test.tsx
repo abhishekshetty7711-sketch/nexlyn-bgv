@@ -62,6 +62,19 @@ describe('AdminsPage', () => {
     expect(screen.getByText('pending@example.com')).toBeInTheDocument()
   })
 
+  it('writes last sign-in and invitation expiry day first with a 24-hour clock', async () => {
+    const signedIn = new Date(2026, 8, 25, 16, 53).toISOString() // local parts: the same answer in every time zone
+    const expires = new Date(2026, 8, 26, 9, 5).toISOString()
+    mockFetch({
+      ...baseHandlers(),
+      'GET /api/admins': () => ({ body: { items: [{ ...ADMINS[1]!, lastLoginAt: signedIn }], page: 0, size: 25, total: 1 } }),
+      'GET /api/admins/invitations': () => ({ body: [{ id: 'inv-1', email: 'pending@example.com', roles: ['ANALYST'], expiresAt: expires, createdAt: signedIn }] }),
+    })
+    show()
+    expect(await screen.findByText('25/09/2026, 16:53')).toBeInTheDocument()
+    expect(await screen.findByText(/expires 26\/09\/2026, 09:05/)).toBeInTheDocument()
+  })
+
   it('offers only the actions that make sense for each admin', async () => {
     mockFetch(baseHandlers())
     show()

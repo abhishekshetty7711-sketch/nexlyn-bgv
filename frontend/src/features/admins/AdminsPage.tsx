@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/AuthContext'
 import { Can } from '@/features/auth/Can'
 import { type RoleView, useRoles } from '@/features/roles/api'
+import { formatDateTime } from '@/features/cases/format'
 import { usePageTitle } from '@/lib/usePageTitle'
 import {
   type AdminAction,
@@ -52,7 +53,7 @@ function isLocked(admin: AdminView): boolean {
 }
 
 function formatWhen(value: string | null): string {
-  return value ? new Date(value).toLocaleString() : 'Never'
+  return value ? formatDateTime(value) : 'Never'
 }
 
 export function AdminsPage() {
@@ -178,7 +179,7 @@ export function AdminsPage() {
             <li key={invitation.id} className="flex items-center justify-between gap-2 text-sm">
               <span>
                 {invitation.email} <span className="text-slate-500">({invitation.roles.join(', ')})</span>
-                <span className="ml-2 text-xs text-slate-500">expires {new Date(invitation.expiresAt).toLocaleString()}</span>
+                <span className="ml-2 text-xs text-slate-500">expires {formatDateTime(invitation.expiresAt)}</span>
               </span>
               <Button size="sm" variant="outline" disabled={revokeInvitation.isPending} onClick={() => revokeInvitation.mutate(invitation.id)}>
                 Revoke
@@ -235,7 +236,7 @@ function InviteDialog({ roles, onClose }: { roles: RoleView[]; onClose: () => vo
         <div className="flex flex-col gap-3">
           <Alert variant="warning">
             Send this link to {issued.email}. It is shown only now, works once, and expires on{' '}
-            {new Date(issued.expiresAt).toLocaleString()}.
+            {formatDateTime(issued.expiresAt)}.
           </Alert>
           <Input readOnly value={link} aria-label="Invitation link" onFocus={(event) => event.target.select()} />
           <div className="flex justify-end gap-2">
