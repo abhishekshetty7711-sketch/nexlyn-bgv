@@ -75,6 +75,26 @@ describe('AdminsPage', () => {
     expect(await screen.findByText(/expires 26\/09\/2026, 09:05/)).toBeInTheDocument()
   })
 
+  it('is still a table for assistive technology when each row becomes a card on a phone', async () => {
+    mockFetch(baseHandlers())
+    show()
+    await screen.findByText('Bob Builder')
+
+    // Below the md breakpoint the rows are laid out as cards (jsdom has no layout, so the rule is what can be checked); the
+    // explicit roles keep the table, its header cells and its rows for browsers that drop them when display changes.
+    const table = screen.getByRole('table')
+    expect(table).toHaveClass('max-md:block')
+    expect(within(table).getAllByRole('columnheader').map((header) => header.textContent)).toEqual(['Admin', 'Roles', 'Status', '2FA', 'Last sign-in', 'Actions'])
+    expect(within(table).getAllByRole('row')).toHaveLength(4) // the header row and three admins
+    // the two columns that have no header of their own on a phone carry their name in front of the value
+    const cells = within(row('Bob Builder')).getAllByRole('cell')
+    expect(cells[3]).toHaveAttribute('data-label', '2FA:')
+    expect(cells[4]).toHaveAttribute('data-label', 'Last sign-in:')
+    // every action is in the row, so nothing is off screen on a phone
+    expect(within(row('Cara Locked')).getByRole('button', { name: 'Edit' })).toBeInTheDocument()
+    expect(within(row('Cara Locked')).getByRole('button', { name: 'End sessions' })).toBeInTheDocument()
+  })
+
   it('offers only the actions that make sense for each admin', async () => {
     mockFetch(baseHandlers())
     show()

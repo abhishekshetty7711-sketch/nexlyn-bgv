@@ -48,6 +48,9 @@ const ACTION_TEXT: Record<AdminAction, { title: string; body: string; button: st
   },
 }
 
+/** On a phone a cell without a header of its own shows its column name in front of the value ("2FA: On"). */
+const PHONE_LABELLED_CELL = 'max-md:col-span-2 max-md:p-0 max-md:before:mr-1 max-md:before:font-medium max-md:before:text-slate-600 max-md:before:content-[attr(data-label)]'
+
 function isLocked(admin: AdminView): boolean {
   return admin.lockedUntil !== null && new Date(admin.lockedUntil).getTime() > Date.now()
 }
@@ -84,34 +87,43 @@ export function AdminsPage() {
       {admins.isError && <Alert variant="error">{describeError(admins.error)}</Alert>}
       {admins.data && (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-3 py-2">Admin</th>
-                <th className="px-3 py-2">Roles</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">2FA</th>
-                <th className="px-3 py-2">Last sign-in</th>
-                <th className="px-3 py-2">
+          {/*
+            One table on every screen. Below the md breakpoint each row turns into a card (grid) instead of a wide row that
+            scrolls sideways: name and status on top, roles, 2FA and last sign-in below, the actions last. Display changes can
+            make some browsers drop table semantics, so the roles are written out; the header row stays for screen readers.
+          */}
+          <table role="table" className="w-full text-left text-sm max-md:block">
+            <thead role="rowgroup" className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500 max-md:sr-only">
+              <tr role="row">
+                <th role="columnheader" className="px-3 py-2">Admin</th>
+                <th role="columnheader" className="px-3 py-2">Roles</th>
+                <th role="columnheader" className="px-3 py-2">Status</th>
+                <th role="columnheader" className="px-3 py-2">2FA</th>
+                <th role="columnheader" className="px-3 py-2">Last sign-in</th>
+                <th role="columnheader" className="px-3 py-2">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup" className="max-md:block">
               {admins.data.items.map((admin) => (
-                <tr key={admin.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-3 py-2">
+                <tr
+                  key={admin.id}
+                  role="row"
+                  className="border-b border-slate-100 last:border-0 max-md:grid max-md:grid-cols-[1fr_auto] max-md:items-start max-md:gap-x-3 max-md:gap-y-2 max-md:p-4"
+                >
+                  <td role="cell" className="px-3 py-2 max-md:col-start-1 max-md:row-start-1 max-md:min-w-0 max-md:p-0">
                     <div className="font-medium text-slate-900">{admin.fullName}</div>
-                    <div className="text-xs text-slate-500">{admin.email}</div>
+                    <div className="text-xs text-slate-500 max-md:break-all">{admin.email}</div>
                   </td>
-                  <td className="px-3 py-2">
+                  <td role="cell" className="px-3 py-2 max-md:col-span-2 max-md:row-start-2 max-md:p-0">
                     <div className="flex flex-wrap gap-1">
                       {admin.roles.map((role) => (
                         <Badge key={role}>{role}</Badge>
                       ))}
                     </div>
                   </td>
-                  <td className="px-3 py-2">
+                  <td role="cell" className="px-3 py-2 max-md:col-start-2 max-md:row-start-1 max-md:p-0">
                     {admin.status === 'DISABLED' ? (
                       <Badge tone="red">Disabled</Badge>
                     ) : isLocked(admin) ? (
@@ -120,11 +132,15 @@ export function AdminsPage() {
                       <Badge tone="green">Active</Badge>
                     )}
                   </td>
-                  <td className="px-3 py-2">{admin.mfaEnabled ? 'On' : 'Not set up'}</td>
-                  <td className="px-3 py-2 text-slate-600">{formatWhen(admin.lastLoginAt)}</td>
-                  <td className="px-3 py-2">
+                  <td role="cell" data-label="2FA:" className={`whitespace-nowrap px-3 py-2 ${PHONE_LABELLED_CELL} max-md:row-start-3`}>
+                    {admin.mfaEnabled ? 'On' : 'Not set up'}
+                  </td>
+                  <td role="cell" data-label="Last sign-in:" className={`whitespace-nowrap px-3 py-2 text-slate-600 ${PHONE_LABELLED_CELL} max-md:row-start-4`}>
+                    {formatWhen(admin.lastLoginAt)}
+                  </td>
+                  <td role="cell" className="px-3 py-2 max-md:col-span-2 max-md:row-start-5 max-md:p-0">
                     <Can permission="USER_MANAGE">
-                      <div className="flex flex-wrap justify-end gap-1">
+                      <div className="flex flex-wrap justify-end gap-1 max-md:justify-start">
                         <Button size="sm" variant="outline" onClick={() => setEditing(admin)}>
                           Edit
                         </Button>
