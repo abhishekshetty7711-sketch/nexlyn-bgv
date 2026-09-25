@@ -29,7 +29,7 @@ function show(permissions = ['ROLE_MANAGE']) {
 }
 
 function card(name: string) {
-  return screen.getByRole('heading', { name }).closest('div[class*="rounded-lg"]') as HTMLElement
+  return screen.getByRole('heading', { name }).closest('[data-slot="card"]') as HTMLElement
 }
 
 describe('RolesPage', () => {
