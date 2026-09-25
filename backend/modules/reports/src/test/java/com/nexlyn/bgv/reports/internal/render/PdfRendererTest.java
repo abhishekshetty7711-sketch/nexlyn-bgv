@@ -240,6 +240,73 @@ class PdfRendererTest {
         assertThat(rendered.overflows()).isEmpty();
     }
 
+    // ---- Use Larger Box: the printed box is near full page (reference: 600-800 px box, picture up to 700 px) ---------------
+
+    @Test
+    void aLargerBoxIsPrintedNearFullPageOnAPageOfItsOwn() throws Exception {
+        PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{false, false}, new boolean[]{true, true}));
+
+        assertThat(rendered.pageCount()).as("cover, detail, the larger box's page, services").isEqualTo(4);
+        assertThat(rendered.overflows()).as("the big box still fits above the footer").isEmpty();
+        assertThat(onPage(rendered, 2)).as("the other document stays").hasSize(1);
+        assertThat(onPage(rendered, 2).get(0).large()).isFalse();
+
+        PdfRenderer.FrameBox large = onPage(rendered, 3).get(0);
+        assertThat(onPage(rendered, 3)).hasSize(1);
+        assertThat(large.large()).isTrue();
+        assertThat(large.heightPx()).as("the reference's larger box is 800 px tall").isBetween(798, 802);
+        assertThat(large.heightPx()).as("near full page: an A4 page is 1123 px").isGreaterThan(1123 * 2 / 3);
+        assertThat(large.pictureHeightPx()).as("a 900 x 600 picture is shown as large as the box allows, at most 700 px").isBetween(200, 700);
+
+        String text = text(rendered.pdf(), 3);
+        assertThat(text).contains("continued", "supporting documents", "document 2", "additional document 1");
+    }
+
+    @Test
+    void aLargerBoxShowsATallPictureMuchLargerThanTheStandardBoxDoes() {
+        PdfRenderer.Rendered standard = print(reportWithTallPicture(new boolean[]{true, false}));
+        PdfRenderer.Rendered large = print(reportWithTallPicture(new boolean[]{true, true}));
+
+        PdfRenderer.FrameBox standardBox = onPage(standard, 3).get(0);
+        PdfRenderer.FrameBox largeBox = onPage(large, 3).get(0);
+        assertThat(standardBox.heightPx()).isBetween(398, 402);
+        assertThat(standardBox.pictureHeightPx()).as("the reference caps a standard picture at 280 px").isLessThanOrEqualTo(280);
+        assertThat(largeBox.heightPx()).isBetween(798, 802);
+        assertThat(largeBox.pictureHeightPx()).as("the reference lets a larger box's picture be 700 px tall").isBetween(600, 700);
+        assertThat(largeBox.pictureHeightPx()).isGreaterThan(standardBox.pictureHeightPx() * 2);
+        assertThat(large.overflows()).isEmpty();
+    }
+
+    @Test
+    void bothOptionsOnAtOnceLookLikeTheLargerBoxAlone() {
+        // "larger" needs its own page, so "move" adds nothing: the same page count, the same box
+        PdfRenderer.Rendered both = print(oneCheckWith(new boolean[]{true, true}));
+        PdfRenderer.Rendered largerOnly = print(oneCheckWith(new boolean[]{false, true}));
+        assertThat(both.pageCount()).isEqualTo(largerOnly.pageCount()).isEqualTo(4);
+        assertThat(onPage(both, 3).get(0)).isEqualTo(onPage(largerOnly, 3).get(0));
+        assertThat(onPage(both, 3).get(0).large()).isTrue();
+    }
+
+    @Test
+    void severalLargerBoxesEachGetTheirOwnPageAndAreNumberedInOrder() throws Exception {
+        PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{true, true}, new boolean[]{false, false}, new boolean[]{true, true}));
+        // cover, detail (the one that stays), two larger pages, services
+        assertThat(rendered.pageCount()).isEqualTo(5);
+        assertThat(onPage(rendered, 2)).hasSize(1);
+        assertThat(onPage(rendered, 3).get(0).large()).isTrue();
+        assertThat(onPage(rendered, 4).get(0).large()).isTrue();
+        assertThat(text(rendered.pdf(), 2)).contains("document 1");
+        assertThat(text(rendered.pdf(), 3)).contains("document 2");
+        assertThat(text(rendered.pdf(), 4)).contains("document 3");
+        assertThat(rendered.overflows()).isEmpty();
+    }
+
+    private CaseReport reportWithTallPicture(boolean[] option) {
+        Check id = ReportFixtures.check("COURT", "court", "Court Record (Permanent Address)", CheckStatus.VERIFIED);
+        documents.attach(id.id(), "image/png", ReportFixtures.png(700, 1400, new Color(250, 240, 230)), option[0], option[1], null);
+        return ReportFixtures.report(List.of(id), null);
+    }
+
     @Test
     void aDocumentThatIsNotMovedStaysOnTheDetailPageInTheSmallBox() {
         PdfRenderer.Rendered rendered = print(oneCheckWith(new boolean[]{false, false}));

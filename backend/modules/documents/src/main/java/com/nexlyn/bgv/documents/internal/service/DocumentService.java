@@ -205,7 +205,10 @@ public class DocumentService {
         if (!listed && (input.moveToNextPage() || input.useLargerBox() || label != null)) {
             throw invalid("label", "the candidate photo has no label or page options");
         }
-        document.applyPresentation(label, input.moveToNextPage(), input.useLargerBox(), input.crop(), Instant.now(clock));
+        // The larger box exists only on a page of its own (reference tool: switching it on also moves the document
+        // to the next page), so the two are never stored apart: what is saved and returned is what is printed.
+        boolean moveToNextPage = input.moveToNextPage() || input.useLargerBox();
+        document.applyPresentation(label, moveToNextPage, input.useLargerBox(), input.crop(), Instant.now(clock));
         document = documents.saveAndFlush(document);
         events.publishEvent(new AuditEvent("DOCUMENT_UPDATED", null, null, "DOCUMENT", documentId.toString(), document.getCaseId(),
                 null, null, null, null));

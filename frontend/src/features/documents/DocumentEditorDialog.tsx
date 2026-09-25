@@ -17,12 +17,11 @@ interface DocumentEditorDialogProps {
   onClose: () => void
 }
 
-/** How one supporting document appears on the report: its label, its page placement, and the part shown. */
+/** How one supporting document appears on the report: its label and the part of the picture shown (page placement is on the row). */
 export function DocumentEditorDialog({ caseId, checkId, document, onClose }: DocumentEditorDialogProps) {
   const update = useUpdateDocument(caseId, checkId)
   const isImage = document.mimeType.startsWith('image/')
   const [label, setLabel] = useState(document.label ?? '')
-  const [useLargerBox, setUseLargerBox] = useState(document.useLargerBox)
   const [crop, setCrop] = useState<Crop | null>(document.crop)
   const [error, setError] = useState<string | null>(null)
 
@@ -34,7 +33,7 @@ export function DocumentEditorDialog({ caseId, checkId, document, onClose }: Doc
         changes: {
           label: label.trim() || null,
           moveToNextPage: document.moveToNextPage,
-          useLargerBox: isImage && useLargerBox,
+          useLargerBox: document.useLargerBox,
           crop: isImage && crop && !isWholePicture(crop) ? crop : null,
           version: document.version,
         },
@@ -52,15 +51,7 @@ export function DocumentEditorDialog({ caseId, checkId, document, onClose }: Doc
         <Field label="Label" htmlFor="doc-label" hint={`Leave blank to use the numbered name. Currently: ${document.displayLabel}.`}>
           <Input id="doc-label" maxLength={100} value={label} onChange={(event) => setLabel(event.target.value)} />
         </Field>
-        {isImage && (
-          <>
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input type="checkbox" checked={useLargerBox} onChange={(event) => setUseLargerBox(event.target.checked)} />
-              Use a larger box (nearly a full page)
-            </label>
-            <CropEditor documentId={document.id} crop={crop} onChange={setCrop} />
-          </>
-        )}
+        {isImage && <CropEditor documentId={document.id} crop={crop} onChange={setCrop} />}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel

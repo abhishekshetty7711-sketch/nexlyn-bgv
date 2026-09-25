@@ -120,7 +120,8 @@ public class ReportModelAssembler {
     }
 
     private static boolean movesToNextPage(DocumentInfo doc, Set<UUID> forced) {
-        return doc.moveToNextPage() || forced.contains(doc.id());
+        // a larger box only exists on a page of its own (the API stores the two together; this also covers older rows)
+        return doc.moveToNextPage() || doc.useLargerBox() || forced.contains(doc.id());
     }
 
     // ---- page 1 -------------------------------------------------------------------------------------------

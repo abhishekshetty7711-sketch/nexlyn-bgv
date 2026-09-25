@@ -303,6 +303,49 @@ class DocumentApiIntegrationTest extends DocumentsIntegrationTestBase {
     }
 
     @Test
+    void aLargerBoxIsSavedReturnedAndAlwaysComesWithItsOwnPage() throws Exception {
+        JsonNode doc = uploadOk("a.jpg", TestImages.jpeg(100, 100));
+        String id = doc.get("id").asText();
+        assertThat(doc.get("useLargerBox").asBoolean()).as("off by default").isFalse();
+
+        // switching the larger box on also moves the document to the next page, as in the reference tool
+        MvcResult on = send(put("/api/documents/" + id), analyst, obj("moveToNextPage", false, "useLargerBox", true, "version", doc.get("version").asLong()));
+        assertThat(status(on)).as(on.getResponse().getContentAsString()).isEqualTo(200);
+        assertThat(body(on).get("useLargerBox").asBoolean()).isTrue();
+        assertThat(body(on).get("moveToNextPage").asBoolean()).as("what is returned is what is printed").isTrue();
+        JsonNode listed = body(send(get(docs()), analyst, null)).get(0);
+        assertThat(listed.get("useLargerBox").asBoolean()).isTrue();
+        assertThat(listed.get("moveToNextPage").asBoolean()).isTrue();
+
+        // both on at once is a normal state
+        MvcResult both = send(put("/api/documents/" + id), analyst, obj("moveToNextPage", true, "useLargerBox", true));
+        assertThat(body(both).get("moveToNextPage").asBoolean()).isTrue();
+        assertThat(body(both).get("useLargerBox").asBoolean()).isTrue();
+
+        // switching only the larger box off leaves the document on its own page, in the standard box
+        MvcResult off = send(put("/api/documents/" + id), analyst, obj("moveToNextPage", true, "useLargerBox", false));
+        assertThat(body(off).get("moveToNextPage").asBoolean()).isTrue();
+        assertThat(body(off).get("useLargerBox").asBoolean()).isFalse();
+
+        // and moving it back to the detail page (both off) works
+        MvcResult back = send(put("/api/documents/" + id), analyst, obj("moveToNextPage", false, "useLargerBox", false));
+        assertThat(body(back).get("moveToNextPage").asBoolean()).isFalse();
+        assertThat(body(back).get("useLargerBox").asBoolean()).isFalse();
+    }
+
+    @Test
+    void aLargerBoxOnlyForPicturesAndOnlyForPeopleWhoMayEditDocuments() throws Exception {
+        String pdf = uploadOk("b.pdf", TestImages.pdf()).get("id").asText();
+        String picture = uploadOk("a.jpg", TestImages.jpeg(50, 50)).get("id").asText();
+        assertThat(status(send(put("/api/documents/" + pdf), analyst, obj("moveToNextPage", true, "useLargerBox", true)))).isEqualTo(400);
+        String reader = tokenFor(analystId, "analyst@example.com", "CASE_READ_ASSIGNED");
+        assertThat(status(send(put("/api/documents/" + picture), null, obj("moveToNextPage", true, "useLargerBox", true)))).isEqualTo(401);
+        assertThat(status(send(put("/api/documents/" + picture), reader, obj("moveToNextPage", true, "useLargerBox", true)))).isEqualTo(403);
+        JsonNode list = body(send(get(docs()), analyst, null));
+        list.forEach(d -> assertThat(d.get("useLargerBox").asBoolean()).as("nothing was saved").isFalse());
+    }
+
+    @Test
     void movingADocumentNeedsTheUploadPermissionAndAnEditableCase() throws Exception {
         String id = uploadOk("a.jpg", TestImages.jpeg(50, 50)).get("id").asText();
         assertThat(status(send(put("/api/documents/" + id), null, obj("moveToNextPage", true, "useLargerBox", false)))).isEqualTo(401);

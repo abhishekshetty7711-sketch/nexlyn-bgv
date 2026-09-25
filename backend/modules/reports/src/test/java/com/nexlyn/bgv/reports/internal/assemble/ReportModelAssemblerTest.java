@@ -236,6 +236,29 @@ class ReportModelAssemblerTest {
     }
 
     @Test
+    void aLargerBoxAlwaysHasAPageOfItsOwnEvenWhenTheMoveFlagIsOff() {
+        Check check = ReportFixtures.check("AADHAAR", "identity", "Identity", CheckStatus.VERIFIED);
+        documents.attach(check.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), false, true, null);   // larger only
+        documents.attach(check.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), true, true, null);    // both on
+        ReportDocument doc = assembler.assemble(ReportFixtures.report(List.of(check), null));
+
+        assertThat(kinds(doc)).containsExactly("cover", "detail", "document", "document", "services");
+        assertThat(((DetailPage) doc.pages().get(1)).frames()).isEmpty();
+        assertThat(((DocumentPage) doc.pages().get(2)).large()).isTrue();
+        assertThat(((DocumentPage) doc.pages().get(3)).large()).isTrue();
+        assertThat(((DocumentPage) doc.pages().get(3)).frame().header()).startsWith("Document 2 —");
+        assertThat(doc.total()).as("one more page for each").isEqualTo(5);
+    }
+
+    @Test
+    void aMovedDocumentInTheStandardBoxIsNotLarge() {
+        Check check = ReportFixtures.check("AADHAAR", "identity", "Identity", CheckStatus.VERIFIED);
+        documents.attach(check.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), true, false, null);
+        ReportDocument doc = assembler.assemble(ReportFixtures.report(List.of(check), null));
+        assertThat(((DocumentPage) doc.pages().get(2)).large()).isFalse();
+    }
+
+    @Test
     void aCropIsAppliedToThePictureThatIsEmbedded() throws Exception {
         Check check = ReportFixtures.check("AADHAAR", "identity", "Identity", CheckStatus.VERIFIED);
         documents.attach(check.id(), "image/png", ReportFixtures.png(200, 100, Color.BLUE), false, false, new Crop(0.5, 0, 0.5, 1));

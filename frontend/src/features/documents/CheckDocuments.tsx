@@ -82,7 +82,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
     try {
       await update.mutateAsync({
         id: document.id,
-        changes: { label: document.label, moveToNextPage: change.moveToNextPage, useLargerBox: document.useLargerBox, crop: document.crop, version: document.version },
+        changes: { label: document.label, moveToNextPage: change.moveToNextPage, useLargerBox: change.useLargerBox, crop: document.crop, version: document.version },
       })
     } catch (error) {
       setProblems([describeError(error)])

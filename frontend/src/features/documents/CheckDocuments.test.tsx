@@ -159,15 +159,14 @@ describe('CheckDocuments', () => {
 
   // ---- the editor --------------------------------------------------------------------------------------
 
-  it('edits the label, page options and crop of a picture', async () => {
-    const setup = serve([documentFixture({ version: 3 })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture({ version: 4 }) }) })
+  it('edits the label and crop of a picture and keeps its page options as they are', async () => {
+    const setup = serve([documentFixture({ version: 3, moveToNextPage: true, useLargerBox: true })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture({ version: 4 }) }) })
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'Edit Original Document' }))
     const dialog = await screen.findByRole('dialog', { name: 'Edit Original Document' })
 
     await userEvent.type(within(dialog).getByLabelText('Label'), '  Degree certificate ')
-    expect(within(dialog).queryByLabelText(/new page/)).not.toBeInTheDocument() // the page switch is on the row, not here
-    await userEvent.click(within(dialog).getByLabelText(/Use a larger box/))
+    expect(within(dialog).queryByLabelText(/new page|larger box/i)).not.toBeInTheDocument() // the page switches are on the row, not here
     fireEvent.change(within(dialog).getByLabelText('Width'), { target: { value: '60' } })
     fireEvent.change(within(dialog).getByLabelText('Height'), { target: { value: '50' } })
     await userEvent.click(within(dialog).getByRole('button', { name: 'Save' }))
@@ -175,7 +174,7 @@ describe('CheckDocuments', () => {
     await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
     expect(setup.calls('PUT', '/documents/doc-1')[0]!.body).toEqual({
       label: 'Degree certificate',
-      moveToNextPage: false,
+      moveToNextPage: true,
       useLargerBox: true,
       crop: { x: 0, y: 0, width: 0.6, height: 0.5 },
       version: 3,
@@ -219,12 +218,11 @@ describe('CheckDocuments', () => {
     expect(crop.height).toBeCloseTo(0.6)
   })
 
-  it('offers no crop or larger box for a PDF', async () => {
+  it('offers no crop for a PDF', async () => {
     serve([pdfFixture()])
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'Edit Additional Document 1' }))
     const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).queryByLabelText(/larger box/)).not.toBeInTheDocument()
     expect(within(dialog).queryByTestId('crop-frame')).not.toBeInTheDocument()
   })
 
@@ -298,6 +296,86 @@ describe('CheckDocuments', () => {
     show({ canUpload: false })
     await screen.findByRole('list', { name: 'Documents of this check' })
     expect(screen.queryByRole('group', { name: /Page options/ })).not.toBeInTheDocument()
+  })
+
+  // ---- Use Larger Box (feature 26): a second switch, tied to the first as in the reference tool ------------
+
+  const putBody = (setup: Setup, id = 'doc-1') => setup.calls('PUT', `/documents/${id}`)[0]!.body
+
+  it('shows a Use Larger Box switch with help text on every picture, off by default', async () => {
+    serve([documentFixture()])
+    show()
+    const toggle = await screen.findByRole('button', { name: 'Use a larger box for Original Document' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    expect(toggle).toHaveTextContent('☐ Use Larger Box')
+    expect(within(screen.getByRole('group', { name: 'Page options for Original Document' })).getByText(/nearly as tall as the page/)).toBeInTheDocument()
+  })
+
+  it('switching the larger box on also moves the document to the next page, and saves at once', async () => {
+    const crop = { x: 0.1, y: 0.1, width: 0.5, height: 0.5 }
+    const setup = serve([documentFixture({ version: 5, label: 'Court screenshot', crop })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture({ version: 6, moveToNextPage: true, useLargerBox: true }) }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Use a larger box for Original Document' }))
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
+    expect(putBody(setup)).toEqual({ label: 'Court screenshot', moveToNextPage: true, useLargerBox: true, crop, version: 5 })
+  })
+
+  it('shows "Larger Box (Next Page)" when on, and switching it off leaves the document on its own page', async () => {
+    const setup = serve([documentFixture({ moveToNextPage: true, useLargerBox: true })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture({ moveToNextPage: true }) }) })
+    show()
+    const toggle = await screen.findByRole('button', { name: 'Use a larger box for Original Document' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(toggle).toHaveTextContent('✓ Larger Box (Next Page)')
+    await userEvent.click(toggle)
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
+    expect(putBody(setup)).toMatchObject({ moveToNextPage: true, useLargerBox: false })
+  })
+
+  it('switching the move off while the larger box is on switches the larger box off too (it only exists on its own page)', async () => {
+    const setup = serve([documentFixture({ moveToNextPage: true, useLargerBox: true })], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture() }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Move Original Document to the next page' }))
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
+    expect(putBody(setup)).toMatchObject({ moveToNextPage: false, useLargerBox: false })
+  })
+
+  it('switching the move on keeps the standard box', async () => {
+    const setup = serve([documentFixture()], { 'PUT /api/documents/doc-1': () => ({ body: documentFixture({ moveToNextPage: true }) }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Move Original Document to the next page' }))
+    await waitFor(() => expect(setup.calls('PUT', '/documents/doc-1')).toHaveLength(1))
+    expect(putBody(setup)).toMatchObject({ moveToNextPage: true, useLargerBox: false })
+  })
+
+  it('offers no larger box for a PDF, but still the move', async () => {
+    serve([pdfFixture()])
+    show()
+    await screen.findByRole('button', { name: 'Move Additional Document 1 to the next page' })
+    expect(screen.queryByRole('button', { name: /larger box/i })).not.toBeInTheDocument()
+  })
+
+  it('shows both switches on after one click, on the screen and in the badges', async () => {
+    let state = documentFixture()
+    serve([state], {
+      'GET /api/checks/ck-1/documents': () => ({ body: [state] }),
+      'PUT /api/documents/doc-1': () => {
+        state = documentFixture({ moveToNextPage: true, useLargerBox: true })
+        return { body: state }
+      },
+    })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Use a larger box for Original Document' }))
+    expect(await screen.findByRole('button', { name: 'Use a larger box for Original Document', pressed: true })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Move Original Document to the next page', pressed: true })).toBeInTheDocument()
+    expect(screen.getByText('New page')).toBeInTheDocument()
+    expect(screen.getByText('Larger box')).toBeInTheDocument()
+  })
+
+  it("shows the server's reason when the larger box cannot be saved", async () => {
+    serve([documentFixture()], { 'PUT /api/documents/doc-1': () => ({ status: 409, body: { code: 'CONFLICT', message: 'The case is locked while it is in review.' } }) })
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Use a larger box for Original Document' }))
+    expect(await screen.findByText(/locked while it is in review/)).toBeInTheDocument()
   })
 
   it("shows the server's message when the edit cannot be saved", async () => {
