@@ -3,7 +3,7 @@
 Read this file and `docs/DECISIONS.md` at the start of every session, then continue from
 "Next step". Update it (and commit) after every step.
 
-_Last updated: 2026-09-25 (after the UI/UX improvement phase, scope A, D-037)_
+_Last updated: 2026-09-26 (after features 25 and 26, D-041)_
 
 ## Phase status (CLAUDE.md section 15)
 
@@ -73,6 +73,10 @@ Done under the six rules of CLAUDE.md 16.1: brand navy tokens with a contrast te
 ## UI/UX audit fixes (2026-09-25, D-038)
 
 The owner approved fixing every Critical and Important item of `docs/ui-audit.md` (Nice-to-have skipped), batch by batch, one commit per screen. **All Critical and Important items are done** (C1, C2, I1 to I13; D-038, D-039, D-040): 381 frontend tests, lint, type check and build clean; I2, I3, I4, I7 and I8 were also checked in real Chrome (pictures in `docs/ui/2026-09-25-audit-fixes/`). **Not done:** the Nice-to-have items N1 to N10 and the two unranked notes. **The Docker stack has NOT been rebuilt with these changes** (needs Avast HTTPS scanning off, the owner's call): run `./scripts/local-up.sh -d` to see them at http://localhost:5173. **Owner to decide:** the wording of `SETTINGS_MANAGE` on the Roles page, and whether the server should send the actor's name and the Report ID so the audit log can say "Anitha viewed a document of DEMO-2026-0004" (D-040).
+
+## Features 25 and 26: Move to Next Page and Use Larger Box (2026-09-26, D-041)
+
+Both were reported missing; only the control was. The database, API, assembler and PDF layout already had them (Phases 5 and 6). Now every supporting document row has a **Move to Next Page** switch and (pictures only) a **Use Larger Box** switch, saved at once, with help text; the larger box also moves the document to its own page, as in the reference tool. Two commits (one per feature). New tests check the printed page breaks and box sizes (400 px standard box, 800 px larger box, continued numbering) and compare them with the reference tool itself in the same browser. Sample PDFs of both tools are in `docs/ui/2026-09-26-document-placement/`. Backend 421 tests, frontend 396, all green. The Docker stack was rebuilt with this on 2026-09-26 (`./scripts/local-up.sh -d`, data kept). **Not done / open:** the 7 px difference of a box on the check's own page (D-041, not investigated); the switches were not clicked in a real browser against the running stack.
 
 ## Phase 2 steps
 
