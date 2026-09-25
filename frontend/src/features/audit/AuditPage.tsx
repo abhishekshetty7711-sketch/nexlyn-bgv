@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { formatDateTime } from '@/features/cases/format'
 import { usePageTitle } from '@/lib/usePageTitle'
 import { AUDIT_PAGE_SIZE, type AuditFilters, EMPTY_FILTERS, useAuditLog } from './api'
 
@@ -92,7 +93,7 @@ export function AuditPage() {
               )}
               {log.data.items.map((entry) => (
                 <tr key={entry.id} className="border-b border-slate-100 align-top last:border-0">
-                  <td className="whitespace-nowrap px-3 py-2 text-slate-600">{new Date(entry.at).toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-slate-600">{formatDateTime(entry.at)}</td>
                   <td className="px-3 py-2">
                     <div>{entry.actorEmail ?? 'System'}</div>
                     {entry.ip && <div className="text-xs text-slate-500">{entry.ip}</div>}

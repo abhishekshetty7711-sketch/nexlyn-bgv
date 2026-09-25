@@ -51,6 +51,13 @@ describe('AuditPage', () => {
     expect(document.title).toBe('Audit log - Nexlyn BGV')
   })
 
+  it('writes the time of an entry day first with a 24-hour clock', async () => {
+    const at = new Date(2026, 8, 25, 16, 53).toISOString() // local parts: the same answer in every time zone
+    mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [{ ...ENTRY, at }], page: 0, size: 50, total: 1 } }) })
+    renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
+    expect(await screen.findByText('25/09/2026, 16:53')).toBeInTheDocument()
+  })
+
   it('shows entries newest first with the before and after values', async () => {
     mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [ENTRY], page: 0, size: 50, total: 1 } }) })
     renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
