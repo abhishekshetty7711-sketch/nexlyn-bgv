@@ -75,7 +75,8 @@ export function CheckEditor({ caseView, check, def, canEdit, dateFormat }: Check
   return (
     <div className="flex flex-col gap-4">
       <form className="flex flex-col gap-4" onSubmit={submit} onChange={() => setMessage(null)} noValidate aria-label={`Edit ${check.title}`}>
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-3">
+        {/* The check form is long (about 3,000 px): the title and Save stay in view while it scrolls, like the other sections' Save bar. */}
+        <div className="sticky top-13 z-10 -mx-4 flex items-start justify-between gap-4 border-b border-line bg-white/95 px-4 py-3 backdrop-blur lg:top-0">
           <div>
             <h3 className="text-base font-semibold text-slate-900">{check.displayName}</h3>
             <p className="text-sm text-slate-500">Document: {check.documentName}</p>

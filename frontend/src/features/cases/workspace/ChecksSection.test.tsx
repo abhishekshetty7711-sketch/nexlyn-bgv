@@ -75,6 +75,26 @@ describe('Checks section', () => {
     expect(within(form).getByText('★ Master')).toBeInTheDocument()
   })
 
+  it('keeps the check\'s Save button in a sticky bar with its title, so it stays in view on the long form', async () => {
+    serve([checkFixture()])
+    open('/cases/c-1?section=checks&check=ck-1')
+    const form = await screen.findByRole('form', { name: /^Edit / })
+
+    // jsdom has no layout: what can be checked is that title and Save share the bar that carries the sticky rule.
+    const save = within(form).getByRole('button', { name: 'Save check' })
+    const bar = save.closest('.sticky')
+    expect(bar).not.toBeNull()
+    expect(bar).toHaveTextContent('Identity Verification (Aadhaar)')
+    expect(form.contains(bar)).toBe(true)
+  })
+
+  it('names the remarks preview with a real role instead of a label on a plain div', async () => {
+    serve([checkFixture()])
+    open('/cases/c-1?section=checks&check=ck-1')
+    await screen.findByRole('form', { name: /^Edit / })
+    expect(screen.getByRole('group', { name: 'Remarks for this check preview' })).toBeInTheDocument()
+  })
+
   it('opens a check by clicking it, and keeps the choice in the address', async () => {
     serve([checkFixture(), courtFixture()])
     const { router } = open()

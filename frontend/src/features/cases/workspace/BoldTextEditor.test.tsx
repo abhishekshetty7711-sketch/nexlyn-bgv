@@ -17,6 +17,11 @@ describe('BoldTextEditor', () => {
     expect(preview).toHaveTextContent('All clear here')
   })
 
+  it('gives the named preview a role, because a plain div cannot carry a label', () => {
+    render(<Harness initial="text" />)
+    expect(screen.getByRole('group', { name: 'Remarks preview' })).toHaveTextContent('text')
+  })
+
   it('never renders anything but bold, whatever is typed or pasted', () => {
     render(<Harness initial={'<img src=x onerror="alert(1)"><script>alert(1)</script><a href="javascript:alert(1)">x</a><strong onclick="x()">ok</strong>'} />)
     const preview = screen.getByLabelText('Remarks preview')

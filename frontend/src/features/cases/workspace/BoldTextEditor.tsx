@@ -59,7 +59,8 @@ export function BoldTextEditor({ id, label, value, onChange, disabled, error }: 
       )}
       <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-2 text-sm text-slate-700">
         <span className="mb-1 block text-xs uppercase text-slate-500">Preview</span>
-        <div aria-label={`${label} preview`} className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: preview }} />
+        {/* role="group": a plain div may not carry an aria-label (WCAG 4.1.2), and a group is named without becoming a page landmark. */}
+        <div role="group" aria-label={`${label} preview`} className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: preview }} />
       </div>
     </div>
   )
