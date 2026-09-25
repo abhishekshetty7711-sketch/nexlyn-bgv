@@ -39,6 +39,12 @@ function show(data: Dashboard | { status: number }, permissions = ['CASE_READ_AL
 }
 
 describe('DashboardPage', () => {
+  it('names the tab', async () => {
+    show(dashboard())
+    await screen.findByRole('region', { name: 'Cases by stage' })
+    expect(document.title).toBe('Dashboard - Nexlyn BGV')
+  })
+
   it('shows how many cases are in each stage, each linking to the filtered list', async () => {
     show(dashboard())
     const stages = await screen.findByRole('region', { name: 'Cases by stage' })

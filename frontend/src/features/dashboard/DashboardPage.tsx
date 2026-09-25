@@ -6,6 +6,7 @@ import { Alert } from '@/components/ui/alert'
 import { Card } from '@/components/ui/card'
 import { Skeleton, SkeletonRows } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/AuthContext'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { formatDate } from '../cases/format'
 import { LifecycleBadge } from '../cases/LifecycleBadge'
 import { LIFECYCLE_LOOK } from '../cases/lifecycleLook'
@@ -87,6 +88,7 @@ function CaseList({
 
 /** The landing page: where every case stands, what is mine, what waits for my review, what is due. */
 export function DashboardPage() {
+  usePageTitle('Dashboard')
   const { hasPermission, hasAnyPermission } = useAuth()
   const canSeeCases = hasAnyPermission(['CASE_READ_ALL', 'CASE_READ_ASSIGNED'])
   const dashboard = useDashboard(canSeeCases)
