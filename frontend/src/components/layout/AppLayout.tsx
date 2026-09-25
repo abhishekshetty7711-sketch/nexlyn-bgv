@@ -117,7 +117,7 @@ export function AppLayout() {
               {me.fullName}
             </div>
             <div className="truncate text-xs text-brand-200">{me.roles.join(', ')}</div>
-            <NavLink to="/account/password" className="mt-1 w-fit text-xs text-brand-100 underline underline-offset-2 hover:text-white">
+            <NavLink to="/account/password" className="mt-1 inline-flex min-h-6 w-fit items-center text-xs text-brand-100 underline underline-offset-2 hover:text-white">
               Change password
             </NavLink>
             <Button size="sm" variant="outline" className="mt-2 border-transparent" onClick={() => void signOut()}>

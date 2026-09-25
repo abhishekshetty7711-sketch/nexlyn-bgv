@@ -29,6 +29,13 @@ describe('AppLayout', () => {
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
   })
 
+  it('makes the sidebar\'s Change password link at least 24 px tall to click', () => {
+    mockFetch({})
+    renderRoutes(routes, { auth: fakeAuth() })
+    // jsdom has no layout: min-h-6 (1.5rem = 24 px) is the rule that makes the target big enough
+    expect(screen.getByRole('link', { name: 'Change password' })).toHaveClass('min-h-6')
+  })
+
   it('shows only the menu entries the admin can use', () => {
     mockFetch({})
     renderRoutes(routes, { auth: fakeAuth({ permissions: ['CASE_READ_ASSIGNED'] }) })
