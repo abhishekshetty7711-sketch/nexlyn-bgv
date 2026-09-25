@@ -44,6 +44,13 @@ describe('buildAuditQuery', () => {
 })
 
 describe('AuditPage', () => {
+  it('names the tab', async () => {
+    mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [ENTRY], page: 0, size: 50, total: 1 } }) })
+    renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })
+    await screen.findByText('ADMIN_DISABLED')
+    expect(document.title).toBe('Audit log - Nexlyn BGV')
+  })
+
   it('shows entries newest first with the before and after values', async () => {
     mockFetch({ 'GET /api/audit-log': () => ({ body: { items: [ENTRY], page: 0, size: 50, total: 1 } }) })
     renderRoutes([{ path: '/', element: <AuditPage /> }], { auth: fakeAuth({ permissions: ['AUDIT_READ'] }) })

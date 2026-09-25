@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { usePageTitle } from '@/lib/usePageTitle'
 import { AUDIT_PAGE_SIZE, type AuditFilters, EMPTY_FILTERS, useAuditLog } from './api'
 
 const FILTER_FIELDS: { name: keyof AuditFilters; label: string; type: string; placeholder?: string }[] = [
@@ -17,6 +18,7 @@ const FILTER_FIELDS: { name: keyof AuditFilters; label: string; type: string; pl
 
 /** Read-only view of the append-only audit log. Nothing here can change or delete an entry. */
 export function AuditPage() {
+  usePageTitle('Audit log')
   const [draft, setDraft] = useState<AuditFilters>(EMPTY_FILTERS)
   const [applied, setApplied] = useState<AuditFilters>(EMPTY_FILTERS)
   const [page, setPage] = useState(0)
