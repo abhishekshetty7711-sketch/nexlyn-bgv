@@ -12,7 +12,7 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/features/auth/AuthContext'
 import { formatDate } from '../format'
-import type { CaseView, DateFormat } from '../types'
+import type { CaseView } from '../types'
 import { BoldTextEditor } from '../workspace/BoldTextEditor'
 import { useReportDirty } from '../workspace/dirtyGuard'
 import { useSaveCheck } from './api'
@@ -34,14 +34,13 @@ interface CheckEditorProps {
   def: CheckTypeDef
   /** False when the case is locked or the admin may not change checks. */
   canEdit: boolean
-  dateFormat: DateFormat
 }
 
 /**
  * One check, edited as a whole (CLAUDE.md section 7, section 4 A-G). The form is built from the type's
  * definition. Keyed by check id; after a save the form is reset to what the server returned.
  */
-export function CheckEditor({ caseView, check, def, canEdit, dateFormat }: CheckEditorProps) {
+export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps) {
   const { hasPermission } = useAuth()
   const [schema] = useState(() => buildCheckSchema(def))
   const form = useForm<CheckFormValues>({ resolver: zodResolver(schema), defaultValues: toFormValues(check) })
@@ -129,10 +128,10 @@ export function CheckEditor({ caseView, check, def, canEdit, dateFormat }: Check
             <Field label="Verification type" htmlFor="ck-vtype" error={errors.verificationType?.message}>
               <Input id="ck-vtype" {...form.register('verificationType')} />
             </Field>
-            <Field label="Requested date" htmlFor="ck-requested" hint={check.requestedDate ? formatDate(check.requestedDate, dateFormat) : undefined}>
+            <Field label="Requested date" htmlFor="ck-requested" hint={check.requestedDate ? formatDate(check.requestedDate) : undefined}>
               <Input id="ck-requested" type="date" {...form.register('requestedDate')} />
             </Field>
-            <Field label="Completed date" htmlFor="ck-completed" hint={check.completedDate ? formatDate(check.completedDate, dateFormat) : undefined}>
+            <Field label="Completed date" htmlFor="ck-completed" hint={check.completedDate ? formatDate(check.completedDate) : undefined}>
               <Input id="ck-completed" type="date" {...form.register('completedDate')} />
             </Field>
             <p className="text-xs text-slate-500 md:col-span-2" title={badge.hint}>

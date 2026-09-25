@@ -93,6 +93,14 @@ describe('CaseWorkspacePage', () => {
     expect(document.title).toBe('NX-2026-0001 - Nexlyn BGV')
   })
 
+  it('writes the issue date day first even when this case\'s report prints text dates (that choice only affects the report)', async () => {
+    const setup = serve(caseFixture({ settings: { ...caseFixture().settings, dateFormat: 'TEXT' } }))
+    open(setup)
+    await screen.findByRole('heading', { name: 'NX-2026-0001' })
+    expect(screen.getByText(/issued 24\/09\/2026/)).toBeInTheDocument()
+    expect(screen.queryByText(/24-Sep-2026/)).not.toBeInTheDocument()
+  })
+
   it('has no unnamed "complementary" regions, and the "Assigned to" heading follows the page title (h1, then h2)', async () => {
     const setup = serve(caseFixture())
     open(setup)

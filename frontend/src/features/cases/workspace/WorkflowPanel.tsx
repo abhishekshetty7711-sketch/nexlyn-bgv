@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useFinalizeReport, useReportVersions } from '../../reports/api'
 import { useHistory, useWorkflowStep, type WorkflowStep } from '../api'
+import { formatDateTime } from '../format'
 import type { CaseView, HistoryEntry } from '../types'
 import { LIFECYCLE_LABELS } from '../types'
 
@@ -27,10 +28,6 @@ const ACTION_TEXT: Record<HistoryEntry['action'], string> = {
   REQUEST_CHANGES: 'sent the case back for changes',
   FINALIZE: 'finalized the report',
   REOPEN: 'reopened the case',
-}
-
-function when(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : ''
 }
 
 /**
@@ -72,17 +69,17 @@ export function WorkflowPanel({ caseView, hasErrors, warningCount }: WorkflowPan
       <ul className="text-sm text-slate-600">
         {workflow.submittedAt && (
           <li>
-            Sent for review by {workflow.submittedByName} on {when(workflow.submittedAt)}.
+            Sent for review by {workflow.submittedByName} on {formatDateTime(workflow.submittedAt)}.
           </li>
         )}
         {workflow.approvedAt && (
           <li>
-            Approved by {workflow.reviewedByName} on {when(workflow.approvedAt)}.
+            Approved by {workflow.reviewedByName} on {formatDateTime(workflow.approvedAt)}.
           </li>
         )}
         {workflow.finalizedAt && (
           <li>
-            Finalized by {workflow.finalizedByName} on {when(workflow.finalizedAt)}.
+            Finalized by {workflow.finalizedByName} on {formatDateTime(workflow.finalizedAt)}.
           </li>
         )}
       </ul>
@@ -188,7 +185,7 @@ function HistoryList({ entries }: { entries: HistoryEntry[] }) {
       <ol className="mt-2 flex flex-col gap-1" aria-label="Case history">
         {entries.map((entry, index) => (
           <li key={`${entry.at}-${index}`}>
-            <span className="text-slate-500">{when(entry.at)}</span> · {entry.actorName} {ACTION_TEXT[entry.action]}
+            <span className="text-slate-500">{formatDateTime(entry.at)}</span> · {entry.actorName} {ACTION_TEXT[entry.action]}
             {entry.reportVersion ? ` (report v${entry.reportVersion})` : ''}
             {entry.comment ? `: "${entry.comment}"` : ''}
           </li>
@@ -340,7 +337,7 @@ function FinalizeDialog({ caseView, onClose }: { caseView: CaseView; onClose: ()
           >
             {eligible.map((v) => (
               <option key={v.version} value={v.version}>
-                Version {v.version} ({v.pageCount} pages, made {when(v.generatedAt)})
+                Version {v.version} ({v.pageCount} pages, made {formatDateTime(v.generatedAt)})
               </option>
             ))}
           </select>

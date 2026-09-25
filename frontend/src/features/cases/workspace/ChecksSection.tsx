@@ -132,7 +132,6 @@ export function ChecksSection({ caseView, checkId, onSelectCheck }: ChecksSectio
             check={selected}
             def={def}
             canEdit={canEdit}
-            dateFormat={caseView.settings.dateFormat}
           />
         </div>
       )}

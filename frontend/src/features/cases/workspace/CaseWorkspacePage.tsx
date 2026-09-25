@@ -124,7 +124,7 @@ export function CaseWorkspacePage() {
             <span className="text-sm text-slate-700">
               {caseView.client.name}
               {caseView.candidate.fullName ? ` · ${caseView.candidate.fullName}` : ''}
-              {` · issued ${formatDate(caseView.issueDate, caseView.settings.dateFormat)}`}
+              {` · issued ${formatDate(caseView.issueDate)}`}
             </span>
           </div>
         </div>
