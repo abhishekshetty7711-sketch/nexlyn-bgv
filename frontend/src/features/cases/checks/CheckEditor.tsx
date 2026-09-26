@@ -6,12 +6,12 @@ import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DateField } from '@/components/ui/date-input'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/features/auth/AuthContext'
-import { formatDate } from '../format'
 import type { CaseView } from '../types'
 import { BoldTextEditor } from '../workspace/BoldTextEditor'
 import { useReportDirty } from '../workspace/dirtyGuard'
@@ -130,11 +130,11 @@ export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps)
             <Field label="Verification type" htmlFor="ck-vtype" error={errors.verificationType?.message}>
               <Input id="ck-vtype" {...form.register('verificationType')} />
             </Field>
-            <Field label="Requested date" htmlFor="ck-requested" hint={check.requestedDate ? formatDate(check.requestedDate) : undefined} issue={issueFor('requestedDate', !!dirtyFields.requestedDate)}>
-              <Input id="ck-requested" type="date" {...form.register('requestedDate')} />
+            <Field label="Requested date" htmlFor="ck-requested" error={errors.requestedDate?.message} issue={issueFor('requestedDate', !!dirtyFields.requestedDate)}>
+              <DateField control={form.control} name="requestedDate" id="ck-requested" />
             </Field>
-            <Field label="Completed date" htmlFor="ck-completed" hint={check.completedDate ? formatDate(check.completedDate) : undefined} issue={issueFor('completedDate', !!dirtyFields.completedDate)}>
-              <Input id="ck-completed" type="date" {...form.register('completedDate')} />
+            <Field label="Completed date" htmlFor="ck-completed" error={errors.completedDate?.message} issue={issueFor('completedDate', !!dirtyFields.completedDate)}>
+              <DateField control={form.control} name="completedDate" id="ck-completed" />
             </Field>
             <p className="text-xs text-slate-500 md:col-span-2" title={badge.hint}>
               Dates: <Badge>{badge.text}</Badge> {badge.hint}

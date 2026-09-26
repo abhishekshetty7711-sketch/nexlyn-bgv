@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { optionalDate } from '../schemas'
 import type { SaveCheckInput } from './api'
 import { type CheckStatus, type CheckTypeDef, type CheckView, STATUS_ORDER } from './types'
 import { validateField } from './validation'
@@ -80,8 +81,8 @@ export function buildCheckSchema(def: CheckTypeDef): z.ZodType<CheckFormValues, 
     thisCardVerifies: z.string().max(2000, 'That is too long'),
     status: z.enum(STATUS_ORDER as [CheckStatus, ...CheckStatus[]]),
     verificationType: z.string().max(50, 'That is too long'),
-    requestedDate: z.string(),
-    completedDate: z.string(),
+    requestedDate: optionalDate,
+    completedDate: optionalDate,
     remarks: z.string().max(20000, 'That is too long'),
     hasAttestation: z.boolean(),
     barCouncilNo: z.string().max(50, 'That is too long'),

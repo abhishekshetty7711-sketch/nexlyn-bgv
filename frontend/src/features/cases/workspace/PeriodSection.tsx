@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DateField } from '@/components/ui/date-input'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { type PeriodValues, periodSchema } from '../schemas'
 import type { CaseView } from '../types'
 import { useReportDirty } from './dirtyGuard'
@@ -44,10 +44,10 @@ export function PeriodSection({ caseView, canEdit, onReload }: SectionProps) {
           <input type="checkbox" {...form.register('show')} /> Show the verification period on the report
         </label>
         <Field label="Start date" htmlFor="vp-start" error={errors.start?.message} issue={issueFor('start', !!dirtyFields.start || !!dirtyFields.show)}>
-          <Input id="vp-start" type="date" {...form.register('start')} />
+          <DateField control={form.control} name="start" id="vp-start" />
         </Field>
         <Field label="End date" htmlFor="vp-end" error={errors.end?.message} issue={issueFor('end', !!dirtyFields.end || !!dirtyFields.show)}>
-          <Input id="vp-end" type="date" aria-invalid={!!errors.end} {...form.register('end')} />
+          <DateField control={form.control} name="end" id="vp-end" />
         </Field>
       </fieldset>
     </SectionShell>

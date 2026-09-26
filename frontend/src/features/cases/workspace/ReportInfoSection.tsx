@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DateField } from '@/components/ui/date-input'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -63,7 +64,7 @@ export function ReportInfoSection({ caseView, canEdit, onReload }: SectionProps)
           <Input id="ri-report-id" aria-invalid={!!errors.reportId} {...form.register('reportId')} />
         </Field>
         <Field label="Issue date" htmlFor="ri-issue-date" required error={errors.issueDate?.message} issue={issueFor('issueDate', !!dirtyFields.issueDate)}>
-          <Input id="ri-issue-date" type="date" aria-invalid={!!errors.issueDate} {...form.register('issueDate')} />
+          <DateField control={form.control} name="issueDate" id="ri-issue-date" />
         </Field>
         <Field label="Client" htmlFor="ri-client" required error={errors.clientId?.message}>
           <Select id="ri-client" aria-invalid={!!errors.clientId} {...form.register('clientId')}>
@@ -76,7 +77,7 @@ export function ReportInfoSection({ caseView, canEdit, onReload }: SectionProps)
           </Select>
         </Field>
         <Field label="Due date (optional)" htmlFor="ri-due-date" error={errors.dueDate?.message}>
-          <Input id="ri-due-date" type="date" {...form.register('dueDate')} />
+          <DateField control={form.control} name="dueDate" id="ri-due-date" />
         </Field>
         <div className="md:col-span-2">
           <Field

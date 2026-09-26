@@ -213,6 +213,50 @@ describe('CaseWorkspacePage', () => {
     expect(setup.puts()).toHaveLength(0)
   })
 
+  it('takes the date of birth typed as dd/mm/yyyy and sends it as an ISO date', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    const dob = await screen.findByLabelText('Date of birth')
+    await userEvent.type(dob, '17051994')
+    expect(dob).toHaveValue('17/05/1994')
+    await userEvent.type(screen.getByLabelText('Full name (required)'), 'Asha Rao')
+    await userEvent.type(screen.getByLabelText('Employee ID (required)'), 'EMP-1')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(setup.puts()).toHaveLength(1))
+    expect(setup.puts()[0]!.body.dob).toBe('1994-05-17')
+  })
+
+  it('refuses a half-typed date of birth instead of saving it as empty', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    await userEvent.type(await screen.findByLabelText('Date of birth'), '1705')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Enter the date as dd/mm/yyyy')).toBeInTheDocument()
+    expect(setup.puts()).toHaveLength(0)
+  })
+
+  it('refuses a date that does not exist', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    await userEvent.type(await screen.findByLabelText('Date of birth'), '31021994')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('Enter the date as dd/mm/yyyy')).toBeInTheDocument()
+    expect(setup.puts()).toHaveLength(0)
+  })
+
+  it('shows the issue date day first, whatever the browser locale', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1' })
+
+    expect(await screen.findByLabelText('Issue date (required)')).toHaveValue('24/09/2026')
+  })
+
   it('marks the required fields of the candidate and puts the checklist message next to the empty one', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=candidate' })

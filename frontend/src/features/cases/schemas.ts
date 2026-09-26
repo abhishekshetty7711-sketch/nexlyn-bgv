@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isValidIsoDate } from '@/lib/dateInput'
 
 /**
  * The rules of the backend, mirrored so people get feedback before they save. The server checks
@@ -24,15 +25,22 @@ export const REPORT_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9/_-]{2,29}$/
 
 const optionalText = (max: number, message = 'That is too long') => z.string().trim().max(max, message)
 
+/** Dates are typed as dd/mm/yyyy; the form holds them as yyyy-mm-dd, or the half-typed text, which this refuses. */
+export const DATE_PROBLEM = 'Enter the date as dd/mm/yyyy'
+export const optionalDate = z.string().refine((value) => value === '' || isValidIsoDate(value), { message: DATE_PROBLEM })
+
 export const reportInfoSchema = z.object({
   reportId: z
     .string()
     .trim()
     .regex(REPORT_ID_PATTERN, 'Use 3-30 letters, digits, dashes, slashes or underscores'),
-  issueDate: z.string().min(1, 'Choose the issue date'),
+  issueDate: z
+    .string()
+    .min(1, 'Enter the issue date')
+    .refine((value) => value === '' || isValidIsoDate(value), { message: DATE_PROBLEM }),
   clientId: z.string().min(1, 'Choose a client'),
   companyDisplayName: optionalText(1000),
-  dueDate: z.string(),
+  dueDate: optionalDate,
 })
 export type ReportInfoValues = z.infer<typeof reportInfoSchema>
 
@@ -41,8 +49,15 @@ export const candidateSchema = z.object({
   parentType: z.enum(['FATHER', 'GUARDIAN']),
   parentName: optionalText(200),
   employeeId: optionalText(50),
-  dob: z.string().refine((value) => value === '' || (value >= '1900-01-01' && value <= todayIso()), {
-    message: 'Enter a date of birth between 1900 and today',
+  dob: z.string().superRefine((value, ctx) => {
+    if (value === '') {
+      return
+    }
+    if (!isValidIsoDate(value)) {
+      ctx.addIssue({ code: 'custom', message: DATE_PROBLEM })
+    } else if (value < '1900-01-01' || value > todayIso()) {
+      ctx.addIssue({ code: 'custom', message: 'Enter a date of birth between 1900 and today' })
+    }
   }),
   phone: z.string().refine((value) => value.trim() === '' || normalizeIndianPhone(value) !== null, {
     message: 'Enter a valid Indian mobile number, for example 98765 43210',
@@ -58,8 +73,8 @@ export const candidateSchema = z.object({
 export type CandidateValues = z.infer<typeof candidateSchema>
 
 export const periodSchema = z
-  .object({ show: z.boolean(), start: z.string(), end: z.string() })
-  .refine((values) => !values.start || !values.end || values.end >= values.start, {
+  .object({ show: z.boolean(), start: optionalDate, end: optionalDate })
+  .refine((values) => !isValidIsoDate(values.start) || !isValidIsoDate(values.end) || values.end >= values.start, {
     path: ['end'],
     message: 'The end date cannot be before the start date',
   })
@@ -100,8 +115,8 @@ export type SettingsValues = z.infer<typeof settingsSchema>
 
 export const newCaseSchema = z.object({
   clientId: z.string().min(1, 'Choose a client'),
-  issueDate: z.string(),
-  dueDate: z.string(),
+  issueDate: optionalDate,
+  dueDate: optionalDate,
 })
 export type NewCaseValues = z.infer<typeof newCaseSchema>
 

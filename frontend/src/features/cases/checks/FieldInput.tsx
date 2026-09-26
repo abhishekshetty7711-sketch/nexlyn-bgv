@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { type UseFormReturn, useWatch } from 'react-hook-form'
 import { describeError } from '@/api/errors'
 import { Button } from '@/components/ui/button'
+import { DateField, DateInput } from '@/components/ui/date-input'
 import { Field, type FieldIssue } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -93,12 +94,12 @@ export function FieldInput({ def, stored, form, caseId, checkId, disabled, canRe
 }
 
 function PlainInput({ def, id, form, disabled, hasError }: { def: FieldDef; id: string; form: UseFormReturn<CheckFormValues>; disabled: boolean; hasError: boolean }) {
+  if (def.type === 'date') {
+    return <DateField control={form.control} name={`fields.${def.key}.value`} id={id} disabled={disabled} aria-invalid={hasError} />
+  }
   const registration = form.register(`fields.${def.key}.value`)
   if (def.type === 'textarea') {
     return <Textarea id={id} disabled={disabled} aria-invalid={hasError} {...registration} />
-  }
-  if (def.type === 'date') {
-    return <Input id={id} type="date" disabled={disabled} aria-invalid={hasError} {...registration} />
   }
   if (def.type === 'boolean') {
     return (
@@ -256,12 +257,21 @@ function RowsEditor({ def, label, form, disabled, error, issue }: { def: FieldDe
           {def.itemFields.map((column) => (
             <label key={column.key} className="flex flex-col gap-1 text-xs text-slate-600">
               {column.label}
-              <Input
-                type={column.type === 'date' ? 'date' : 'text'}
-                aria-label={`${label} ${index + 1} ${column.label}`}
-                value={row[column.key] ?? ''}
-                onChange={(event) => setCell(index, column, event.target.value)}
-              />
+              {column.type === 'date' ? (
+                <DateInput
+                  id={`${def.key}-${index}-${column.key}`}
+                  aria-label={`${label} ${index + 1} ${column.label}`}
+                  value={row[column.key] ?? ''}
+                  onChange={(value) => setCell(index, column, value)}
+                />
+              ) : (
+                <Input
+                  type="text"
+                  aria-label={`${label} ${index + 1} ${column.label}`}
+                  value={row[column.key] ?? ''}
+                  onChange={(event) => setCell(index, column, event.target.value)}
+                />
+              )}
             </label>
           ))}
           <Button type="button" size="sm" variant="ghost" className="self-end" onClick={() => commit(rows.filter((_, i) => i !== index))} aria-label={`Remove ${label} row ${index + 1}`}>

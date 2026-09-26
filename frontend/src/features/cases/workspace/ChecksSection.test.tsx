@@ -174,6 +174,27 @@ describe('Checks section', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument()
   })
 
+  it('takes the check dates typed as dd/mm/yyyy, sends ISO dates, and refuses a half-typed one', async () => {
+    const setup = serve([checkFixture()], {
+      'PUT /api/cases/c-1/checks/ck-1': () => ({ body: checkFixture({ version: 1 }) }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    const form = await screen.findByRole('form', { name: /^Edit / })
+
+    const requested = within(form).getByLabelText('Requested date')
+    await userEvent.clear(requested)
+    await userEvent.type(requested, '1905')
+    await userEvent.click(screen.getByRole('button', { name: 'Save check' }))
+    expect(await within(form).findByText('Enter the date as dd/mm/yyyy')).toBeInTheDocument()
+    expect(setup.calls('PUT', '/checks/ck-1')).toHaveLength(0)
+
+    await userEvent.type(requested, '2026')
+    expect(requested).toHaveValue('19/05/2026')
+    await userEvent.click(screen.getByRole('button', { name: 'Save check' }))
+    await waitFor(() => expect(setup.calls('PUT', '/checks/ck-1')).toHaveLength(1))
+    expect(setup.calls('PUT', '/checks/ck-1')[0]!.body.requestedDate).toBe('2026-05-19')
+  })
+
   it('does not send anything for a wrong Aadhaar number and says which field', async () => {
     const setup = serve([checkFixture()])
     open('/cases/c-1?section=checks&check=ck-1')

@@ -5,8 +5,8 @@ import { describeError } from '@/api/errors'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
+import { DateField } from '@/components/ui/date-input'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { useClients, useCreateCase } from './api'
 import { type NewCaseValues, newCaseSchema, todayIso } from './schemas'
@@ -47,10 +47,10 @@ export function NewCaseDialog({ onClose }: { onClose: () => void }) {
           </Select>
         </Field>
         <Field label="Issue date" htmlFor="nc-issue" hint="Defaults to today." error={errors.issueDate?.message}>
-          <Input id="nc-issue" type="date" {...form.register('issueDate')} />
+          <DateField control={form.control} name="issueDate" id="nc-issue" />
         </Field>
-        <Field label="Due date (optional)" htmlFor="nc-due">
-          <Input id="nc-due" type="date" {...form.register('dueDate')} />
+        <Field label="Due date (optional)" htmlFor="nc-due" error={errors.dueDate?.message}>
+          <DateField control={form.control} name="dueDate" id="nc-due" />
         </Field>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>

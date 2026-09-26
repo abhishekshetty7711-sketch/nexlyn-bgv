@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { PhotoUploader } from '../../documents/PhotoUploader'
+import { DateField } from '@/components/ui/date-input'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { type CandidateValues, candidateSchema } from '../schemas'
@@ -91,7 +92,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
           <Input id="cd-employee-id" {...form.register('employeeId')} />
         </Field>
         <Field label="Date of birth" htmlFor="cd-dob" error={errors.dob?.message} issue={issueFor('dob', !!dirtyFields.dob)}>
-          <Input id="cd-dob" type="date" aria-invalid={!!errors.dob} {...form.register('dob')} />
+          <DateField control={form.control} name="dob" id="cd-dob" />
         </Field>
         <Field label="Phone" htmlFor="cd-phone" hint="Any way you would write it: 98765 43210 or +91 98765 43210." error={errors.phone?.message} issue={issueFor('phone', !!dirtyFields.phone)}>
           <Input id="cd-phone" inputMode="tel" aria-invalid={!!errors.phone} {...form.register('phone')} />
