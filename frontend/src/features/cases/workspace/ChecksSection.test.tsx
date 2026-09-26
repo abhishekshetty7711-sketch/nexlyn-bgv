@@ -195,12 +195,29 @@ describe('Checks section', () => {
     expect(setup.calls('PUT', '/checks/ck-1')[0]!.body.requestedDate).toBe('2026-05-19')
   })
 
+  it('groups the Aadhaar number in fours as it is typed and sends it', async () => {
+    const setup = serve([checkFixture()], {
+      'PUT /api/cases/c-1/checks/ck-1': () => ({ body: checkFixture({ version: 1 }) }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    const form = await screen.findByRole('form', { name: /^Edit / })
+
+    const box = within(form).getByLabelText('Enter Aadhaar Number')
+    await userEvent.type(box, '234567890124')
+    expect(box).toHaveValue('2345 6789 0124')
+    await userEvent.click(screen.getByRole('button', { name: 'Save check' }))
+    await waitFor(() => expect(setup.calls('PUT', '/checks/ck-1')).toHaveLength(1))
+    const sent = setup.calls('PUT', '/checks/ck-1')[0]!.body as { fields: Record<string, unknown>[] }
+    expect(sent.fields.find((f) => f.key === 'aadhaar_number')).toMatchObject({ value: '2345 6789 0124' })
+  })
+
   it('does not send anything for a wrong Aadhaar number and says which field', async () => {
     const setup = serve([checkFixture()])
     open('/cases/c-1?section=checks&check=ck-1')
     const form = await screen.findByRole('form', { name: /^Edit / })
 
     await userEvent.type(within(form).getByLabelText('Enter Aadhaar Number'), '234567890125')
+    await userEvent.clear(within(form).getByLabelText('PIN Code'))
     await userEvent.type(within(form).getByLabelText('PIN Code'), '9')
     await userEvent.click(screen.getByRole('button', { name: 'Save check' }))
 

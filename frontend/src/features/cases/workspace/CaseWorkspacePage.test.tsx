@@ -194,7 +194,7 @@ describe('CaseWorkspacePage', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument()
     const [put] = setup.puts()
     expect(put!.url).toBe('/api/cases/c-1/candidate')
-    expect(put!.body).toMatchObject({ version: 3, fullName: 'Asha Rao', employeeId: 'EMP-1', phone: '98765 43210', parentType: 'FATHER', country: 'India' })
+    expect(put!.body).toMatchObject({ version: 3, fullName: 'ASHA RAO', employeeId: 'EMP-1', phone: '+91 98765 43210', parentType: 'FATHER', country: 'India' })
     expect(put!.body.parentName).toBeNull()
     expect(put!.body.dob).toBeNull()
     await waitFor(() => expect(screen.getByLabelText('Phone')).toHaveValue('+91 98765 43210'))
@@ -211,6 +211,35 @@ describe('CaseWorkspacePage', () => {
     expect(await screen.findByText('Enter a 6-digit PIN code')).toBeInTheDocument()
     expect(screen.getByText(/Enter a valid Indian mobile number/)).toBeInTheDocument()
     expect(setup.puts()).toHaveLength(0)
+  })
+
+  it('puts names in capitals, the phone in +91 groups and the PIN at six digits as they are typed', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    const name = await screen.findByLabelText('Full name (required)')
+    await userEvent.type(name, 'asha rao')
+    expect(name).toHaveValue('ASHA RAO')
+    await userEvent.type(screen.getByLabelText("Father's name"), 'ravi rao')
+    expect(screen.getByLabelText("Father's name")).toHaveValue('RAVI RAO')
+    const phone = screen.getByLabelText('Phone')
+    await userEvent.type(phone, '9876543210')
+    expect(phone).toHaveValue('+91 98765 43210')
+    const pin = screen.getByLabelText('PIN code')
+    await userEvent.clear(pin)
+    await userEvent.type(pin, '56 00389')
+    expect(pin).toHaveValue('560038')
+  })
+
+  it('keeps the cursor in place when a lower-case letter is typed in the middle of a name', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    const name = await screen.findByLabelText('Full name (required)')
+    await userEvent.type(name, 'AR')
+    await userEvent.type(name, 's', { initialSelectionStart: 1, initialSelectionEnd: 1 })
+    expect(name).toHaveValue('ASR')
+    expect((name as HTMLInputElement).selectionStart).toBe(2)
   })
 
   it('takes the date of birth typed as dd/mm/yyyy and sends it as an ISO date', async () => {
@@ -329,11 +358,11 @@ describe('CaseWorkspacePage', () => {
 
     await goTo(/3 Verification/)
     const dialog = await screen.findByRole('dialog', { name: 'Unsaved changes' })
-    expect(screen.getByLabelText('Full name (required)')).toHaveValue('Half typed')
+    expect(screen.getByLabelText('Full name (required)')).toHaveValue('HALF TYPED')
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Stay and keep editing' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Full name (required)')).toHaveValue('Half typed')
+    expect(screen.getByLabelText('Full name (required)')).toHaveValue('HALF TYPED')
 
     await goTo(/3 Verification/)
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Discard changes' }))

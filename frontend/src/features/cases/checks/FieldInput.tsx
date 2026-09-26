@@ -4,6 +4,8 @@ import { describeError } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { DateField, DateInput } from '@/components/ui/date-input'
 import { Field, type FieldIssue } from '@/components/ui/field'
+import { FormattedField } from '@/components/ui/formatted-input'
+import { formatAadhaar, formatPan, formatPhone, formatPin, formatUan } from '@/lib/formatters'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -31,7 +33,14 @@ interface FieldInputProps {
   issue?: FieldIssue
 }
 
-const SOURCE_LABELS = { CANDIDATE: 'From candidate', MANUAL: 'Entered by hand', API: 'From verification API' } as const
+/** How a sensitive number is tidied while it is typed. */
+const SENSITIVE_FORMATS: Partial<Record<FieldDef['type'], (raw: string) => string>> = {
+  aadhaar: formatAadhaar,
+  pan: formatPan,
+  uan: formatUan,
+}
+
+const SOURCE_LABELS ={ CANDIDATE: 'From candidate', MANUAL: 'Entered by hand', API: 'From verification API' } as const
 
 function labelFor(def: FieldDef, parentType: 'FATHER' | 'GUARDIAN') {
   return def.labelByParentType && parentType === 'GUARDIAN' ? def.label.replace(/^Father/, 'Guardian') : def.label
@@ -96,6 +105,19 @@ export function FieldInput({ def, stored, form, caseId, checkId, disabled, canRe
 function PlainInput({ def, id, form, disabled, hasError }: { def: FieldDef; id: string; form: UseFormReturn<CheckFormValues>; disabled: boolean; hasError: boolean }) {
   if (def.type === 'date') {
     return <DateField control={form.control} name={`fields.${def.key}.value`} id={id} disabled={disabled} aria-invalid={hasError} />
+  }
+  if (def.type === 'pin' || def.type === 'phone') {
+    return (
+      <FormattedField
+        control={form.control}
+        name={`fields.${def.key}.value`}
+        id={id}
+        format={def.type === 'pin' ? formatPin : formatPhone}
+        inputMode={def.type === 'pin' ? 'numeric' : 'tel'}
+        disabled={disabled}
+        aria-invalid={hasError}
+      />
+    )
   }
   const registration = form.register(`fields.${def.key}.value`)
   if (def.type === 'textarea') {
@@ -214,12 +236,14 @@ function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disable
         </p>
       )}
       <Field label={hasStored ? `Replace ${label}` : `Enter ${label}`} htmlFor={id} error={error} issue={issue}>
-        <Input
+        <FormattedField
+          control={form.control}
+          name={`fields.${def.key}.replacement`}
           id={id}
-          autoComplete="off"
+          format={SENSITIVE_FORMATS[def.type] ?? ((raw) => raw)}
+          keepCaret={def.type === 'pan'}
           disabled={disabled || clearing}
           aria-invalid={!!error}
-          {...form.register(`fields.${def.key}.replacement`)}
         />
       </Field>
       {hasStored && !disabled && (

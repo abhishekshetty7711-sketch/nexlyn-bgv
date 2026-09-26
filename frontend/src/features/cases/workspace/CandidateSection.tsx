@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { PhotoUploader } from '../../documents/PhotoUploader'
 import { DateField } from '@/components/ui/date-input'
 import { Field } from '@/components/ui/field'
+import { FormattedField } from '@/components/ui/formatted-input'
 import { Input } from '@/components/ui/input'
+import { formatPhone, formatPin, upperCase } from '@/lib/formatters'
 import { type CandidateValues, candidateSchema } from '../schemas'
 import type { CaseView } from '../types'
 import { useReportDirty } from './dirtyGuard'
@@ -73,7 +75,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
       <fieldset disabled={!canEdit} className="grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
           <Field label="Full name" htmlFor="cd-full-name" required error={errors.fullName?.message} issue={issueFor('fullName', !!dirtyFields.fullName)}>
-            <Input id="cd-full-name" autoComplete="off" aria-invalid={!!errors.fullName} {...form.register('fullName')} />
+            <FormattedField control={form.control} name="fullName" id="cd-full-name" format={upperCase} keepCaret />
           </Field>
         </div>
         <fieldset className="flex items-center gap-4 md:col-span-2">
@@ -86,7 +88,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
           </label>
         </fieldset>
         <Field label={parentLabel} htmlFor="cd-parent-name" error={errors.parentName?.message} issue={issueFor('parentName', !!dirtyFields.parentName)}>
-          <Input id="cd-parent-name" {...form.register('parentName')} />
+          <FormattedField control={form.control} name="parentName" id="cd-parent-name" format={upperCase} keepCaret />
         </Field>
         <Field label="Employee ID" htmlFor="cd-employee-id" required error={errors.employeeId?.message} issue={issueFor('employeeId', !!dirtyFields.employeeId)}>
           <Input id="cd-employee-id" {...form.register('employeeId')} />
@@ -94,8 +96,8 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
         <Field label="Date of birth" htmlFor="cd-dob" error={errors.dob?.message} issue={issueFor('dob', !!dirtyFields.dob)}>
           <DateField control={form.control} name="dob" id="cd-dob" />
         </Field>
-        <Field label="Phone" htmlFor="cd-phone" hint="Any way you would write it: 98765 43210 or +91 98765 43210." error={errors.phone?.message} issue={issueFor('phone', !!dirtyFields.phone)}>
-          <Input id="cd-phone" inputMode="tel" aria-invalid={!!errors.phone} {...form.register('phone')} />
+        <Field label="Phone" htmlFor="cd-phone" hint="Type the ten digits; +91 is added for you." error={errors.phone?.message} issue={issueFor('phone', !!dirtyFields.phone)}>
+          <FormattedField control={form.control} name="phone" id="cd-phone" format={formatPhone} inputMode="tel" />
         </Field>
         <div className="md:col-span-2">
           <Field label="Street" htmlFor="cd-street" error={errors.street?.message}>
@@ -109,7 +111,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
           <Input id="cd-state" {...form.register('state')} />
         </Field>
         <Field label="PIN code" htmlFor="cd-pin" error={errors.pin?.message}>
-          <Input id="cd-pin" inputMode="numeric" aria-invalid={!!errors.pin} {...form.register('pin')} />
+          <FormattedField control={form.control} name="pin" id="cd-pin" format={formatPin} inputMode="numeric" />
         </Field>
         <Field label="Country" htmlFor="cd-country" error={errors.country?.message}>
           <Input id="cd-country" {...form.register('country')} />
