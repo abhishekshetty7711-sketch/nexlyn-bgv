@@ -9,7 +9,7 @@ _Last updated: 2026-09-26 (after the parity audit fixes, D-042)_
 
 | Phase | Status |
 |---|---|
-| 1. Foundation | **Done** (commit `db0689b`). Stack starts with `./scripts/local-up.sh -d`; MinIO off by default (D-002). |
+| 1. Foundation | **Done** (commit `789b7ba`). Stack starts with `./scripts/local-up.sh -d`; MinIO off by default (D-002). |
 | 2. Auth & RBAC | **Done** (steps 2a-2f). Done-when met: security tests cover unauthenticated, wrong permission, refresh-token reuse and lockout. 106 auth + 6 common + 5 app backend tests, 97 frontend tests. The Docker stack was rebuilt with this code on 2026-09-25 and answers correctly (see "Docker stack" below). |
 | 3. Clients & Case workspace core | **Done** (3a-3c). Done-when met: every section saves and loads, validation follows section 7.1. 41 cases + 16 common + 106 auth + 5 app backend tests; 155 frontend tests. |
 | 4. Checks | **Done** (4a-4c). Done-when met: all 18 types can be added and saved (backend tests add and save every type; frontend renders any definition). 92 cases + 23 common + 106 auth + 5 app backend tests; 197 frontend tests. |
@@ -86,8 +86,8 @@ Both were reported missing; only the control was. The database, API, assembler a
 
 | Step | Status |
 |---|---|
-| 2a. Database (tables + seeded roles/permissions) | Done (`b07a34c`) |
-| 2b. Passwords, lockout, rate limiting, bootstrap admin | Done (`bae6348`, `faffc6c`) |
+| 2a. Database (tables + seeded roles/permissions) | Done (`a1195e6`) |
+| 2b. Passwords, lockout, rate limiting, bootstrap admin | Done (`2a63191`, `1ff008e`) |
 | 2c. 2FA and tokens (TOTP, backup codes, JWT, refresh rotation, CSRF, `/api/auth/*`) | **Done.** 71 auth tests + 6 common tests + full-app smoke test pass. |
 | 2d. Authorization (`SecurityFilterChain`, `@PreAuthorize`, `CaseAccessPolicy`, headers, CORS, `GET /api/me`) | **Done.** 86 auth tests + 5 app tests pass. Covers unauthenticated, wrong permission, expired/tampered/revoked tokens, per-case rule, CORS, headers. |
 | 2e. Admin management and audit (invites, admin/role CRUD, session revocation, audit persistence) | **Done.** 106 auth tests + 6 common + 5 app tests pass. |
