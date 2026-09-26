@@ -344,18 +344,18 @@ Every ❌ and ⚠️ item of section 9 was fixed except the ones the owner kept 
 
 | Item | Result | Commit |
 |---|---|---|
-| 33 Progress panel | Fixed: total, six statuses with count and %, bar, "✓ COMPLETE" | `c1f6dcc` |
-| 18 "This card verifies" | Fixed: falls back to the document type (changes the printed detail page for checks with a summary and no text of their own) | `eeada87` |
-| 36 Required fields | Fixed: marked in every section; the checklist message sits beside the field | `70bede2` |
-| 53j Dates (and 9's date part) | Fixed: typed as dd/mm/yyyy | `8477805` |
-| 51, 9 Typing and phone | Fixed: capitals, live +91 grouping, PIN, Aadhaar, PAN, UAN. Phone stays `+91 XXXXX XXXXX` (CLAUDE.md), decision logged | `69d8607` |
-| 38 (title-bar badge) | Fixed: badge follows the title | `d7df7d4` |
-| 16 | Test added | `81f06ad` |
-| 45 Delete case | Fixed: button for CASE_DELETE holders, never on a finalized report | `2b49a08` |
-| 31 Zoom and undo | Fixed: viewer with zoom, Undo in the crop editor | `7f8f1e2` |
-| 53g Drag-and-drop and paste | Fixed | `1102dba` |
-| 22 Blank free blocks | Fixed: "Add blank space" | `f59fec8` |
-| 53l Comments on their own page | Fixed: per-check switch | `017c176` |
+| 33 Progress panel | Fixed: total, six statuses with count and %, bar, "✓ COMPLETE" | `f1d3a04` |
+| 18 "This card verifies" | Fixed: falls back to the document type (changes the printed detail page for checks with a summary and no text of their own) | `d036c8a` |
+| 36 Required fields | Fixed: marked in every section; the checklist message sits beside the field | `0c40f80` |
+| 53j Dates (and 9's date part) | Fixed: typed as dd/mm/yyyy | `00dd997` |
+| 51, 9 Typing and phone | Fixed: capitals, live +91 grouping, PIN, Aadhaar, PAN, UAN. Phone stays `+91 XXXXX XXXXX` (CLAUDE.md), decision logged | `55e8be9` |
+| 38 (title-bar badge) | Fixed: badge follows the title | `5ec181d` |
+| 16 | Test added | `953eb8d` |
+| 45 Delete case | Fixed: button for CASE_DELETE holders, never on a finalized report | `9c1e485` |
+| 31 Zoom and undo | Fixed: viewer with zoom, Undo in the crop editor | `5254aa8` |
+| 53g Drag-and-drop and paste | Fixed | `57676a5` |
+| 22 Blank free blocks | Fixed: "Add blank space" | `ec6db31` |
+| 53l Comments on their own page | Fixed: per-check switch | `bb7fa91` |
 | 53m Quality line in the PDF | Decided: not printed (D-042) | none |
 | 34, 46 | Kept as they are (owner) | none |
 | 30, 42, 53c, 53d, 53e | No action suggested in the audit | none |
