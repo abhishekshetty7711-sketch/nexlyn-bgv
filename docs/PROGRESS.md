@@ -3,7 +3,7 @@
 Read this file and `docs/DECISIONS.md` at the start of every session, then continue from
 "Next step". Update it (and commit) after every step.
 
-_Last updated: 2026-09-26 (after features 25 and 26, D-041)_
+_Last updated: 2026-09-26 (after the parity audit fixes, D-042)_
 
 ## Phase status (CLAUDE.md section 15)
 
@@ -77,6 +77,10 @@ The owner approved fixing every Critical and Important item of `docs/ui-audit.md
 ## Features 25 and 26: Move to Next Page and Use Larger Box (2026-09-26, D-041)
 
 Both were reported missing; only the control was. The database, API, assembler and PDF layout already had them (Phases 5 and 6). Now every supporting document row has a **Move to Next Page** switch and (pictures only) a **Use Larger Box** switch, saved at once, with help text; the larger box also moves the document to its own page, as in the reference tool. Two commits (one per feature). New tests check the printed page breaks and box sizes (400 px standard box, 800 px larger box, continued numbering) and compare them with the reference tool itself in the same browser. Sample PDFs of both tools are in `docs/ui/2026-09-26-document-placement/`. Backend 421 tests, frontend 396, all green. The Docker stack was rebuilt with this on 2026-09-26 (`./scripts/local-up.sh -d`, data kept). The 7 px difference of a box on the check's own page was investigated and explained (D-041: fallback font in my test print, plus the tick drawn as SVG here; no bug). **Not done:** the switches were not clicked in a real browser against the running stack.
+
+## Parity audit and its fixes (2026-09-26, D-042)
+
+`docs/parity-audit.md` compares the old HTML tool with the platform item by item (53 items, a fixture PDF printed by both tools, side-by-side pages in `docs/ui/2026-09-26-parity-audit/`). The owner asked for every ❌ and ⚠️ to be fixed, keeping #34 (updates after save) and #46 (no JSON export). **Done, one commit each:** progress panel (33), "This card verifies" falls back to the document type (18), required marks and checklist messages beside the fields (36), dates typed as dd/mm/yyyy (53j), live formatting of names, phone, PIN, Aadhaar, PAN, UAN (51, 9), title-bar badge follows the title (38), same-type test (16), Delete case button (45), picture viewer with zoom and crop Undo (31), drag-and-drop and paste upload (53g), blank spaces (22), and comments (with the attestation) on a page of their own (53l, migration V5). Decisions: phone stays `+91 XXXXX XXXXX`; the quality line is not printed in the PDF; details in D-042. **Not done, by choice or no action needed:** #30, #42, #53c, #53d, #53e, #34, #46. **Not done: nothing was clicked in a real browser**; the manual checks are in section 8 of the audit, plus the new things (progress panel, typed dates, phone typing, Add blank space, comments-on-own-page switch, drop and paste). **Note for a rebuild:** `./scripts/local-up.sh -d` (a migration was added; the Docker stack was NOT rebuilt with these changes). Docker Desktop was not running at the start of this work and was started for the backend integration tests.
 
 ## Phase 2 steps
 
