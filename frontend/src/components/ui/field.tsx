@@ -1,10 +1,18 @@
 import { type ReactElement, type ReactNode, cloneElement, isValidElement } from 'react'
 import { AlertCircle } from 'lucide-react'
 
+/** A message from the case checklist about this field: an error blocks the report, a warning only recommends. */
+export interface FieldIssue {
+  message: string
+  level: 'error' | 'warning'
+}
+
 interface FieldProps {
   label: string
   htmlFor: string
   error?: string
+  /** What the case checklist says about this field (shown when there is no error of the form itself). */
+  issue?: FieldIssue
   hint?: string
   /** Says "(required)" after the label, so nobody has to fail a save to find out. Leave off for optional fields. */
   required?: boolean
@@ -20,15 +28,17 @@ type ControlProps = { 'aria-describedby'?: string; 'aria-invalid'?: boolean | 't
  * control (`aria-describedby`) and the control is marked invalid, so a screen reader announces them with the field
  * (WCAG: errors are identified in text, next to the field, and associated with it).
  */
-export function Field({ label, htmlFor, error, hint, required, keepHint, children }: FieldProps) {
+export function Field({ label, htmlFor, error, issue, hint, required, keepHint, children }: FieldProps) {
   const showHint = !!hint && (!error || !!keepHint)
+  const showIssue = !!issue && !error
   const errorId = `${htmlFor}-error`
+  const issueId = `${htmlFor}-issue`
   const hintId = `${htmlFor}-hint`
   const control = isValidElement<ControlProps>(children)
     ? cloneElement(children as ReactElement<ControlProps>, {
         'aria-describedby':
-          [children.props['aria-describedby'], error ? errorId : undefined, showHint ? hintId : undefined].filter(Boolean).join(' ') || undefined,
-        'aria-invalid': error ? true : children.props['aria-invalid'],
+          [children.props['aria-describedby'], error ? errorId : undefined, showIssue ? issueId : undefined, showHint ? hintId : undefined].filter(Boolean).join(' ') || undefined,
+        'aria-invalid': error || (showIssue && issue?.level === 'error') ? true : children.props['aria-invalid'],
       })
     : children
 
@@ -42,6 +52,12 @@ export function Field({ label, htmlFor, error, hint, required, keepHint, childre
       {showHint && (
         <p id={hintId} className="text-xs text-slate-600">
           {hint}
+        </p>
+      )}
+      {showIssue && (
+        <p id={issueId} className={`flex items-start gap-1 text-xs font-medium ${issue?.level === 'error' ? 'text-red-700' : 'text-amber-800'}`}>
+          <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{issue?.message}</span>
         </p>
       )}
       {error && (

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { describeError } from '@/api/errors'
 import { Button } from '@/components/ui/button'
+import type { FieldIssue } from '@/components/ui/field'
 import { useAuth } from '@/features/auth/AuthContext'
 import type { CaseView } from '../cases/types'
 import { useDeletePhoto, useUploadPhoto } from './api'
@@ -11,7 +12,7 @@ import { ACCEPT_PICTURES, problemWithFile } from './files'
  * The candidate's photo. It saves at once (separately from the Save button of the details form) and
  * does not change the case's version, so typing in the form is never disturbed.
  */
-export function PhotoUploader({ caseView }: { caseView: CaseView }) {
+export function PhotoUploader({ caseView, issue }: { caseView: CaseView; issue?: FieldIssue }) {
   const { hasPermission } = useAuth()
   const upload = useUploadPhoto(caseView.id)
   const remove = useDeletePhoto(caseView.id)
@@ -76,6 +77,9 @@ export function PhotoUploader({ caseView }: { caseView: CaseView }) {
           <p className="text-xs text-slate-500">JPEG or PNG, up to 10 MB. Saved as soon as it is uploaded.</p>
         </div>
       </div>
+      {issue && !photoId && !problem && (
+        <p className={`text-xs font-medium ${issue.level === 'error' ? 'text-red-700' : 'text-amber-800'}`}>{issue.message}</p>
+      )}
       {problem && (
         <p className="text-xs text-red-600" role="alert">
           {problem}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { type UseFormReturn, useWatch } from 'react-hook-form'
 import { describeError } from '@/api/errors'
 import { Button } from '@/components/ui/button'
-import { Field } from '@/components/ui/field'
+import { Field, type FieldIssue } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,6 +26,8 @@ interface FieldInputProps {
   parentType: 'FATHER' | 'GUARDIAN'
   followsCandidate: boolean
   onFollowCandidate: (key: string) => void
+  /** What the case checklist says about this field (for example a required number that is missing). */
+  issue?: FieldIssue
 }
 
 const SOURCE_LABELS = { CANDIDATE: 'From candidate', MANUAL: 'Entered by hand', API: 'From verification API' } as const
@@ -35,7 +37,7 @@ function labelFor(def: FieldDef, parentType: 'FATHER' | 'GUARDIAN') {
 }
 
 /** One field of a check, drawn from its definition: input by kind, verified tick and source badge. */
-export function FieldInput({ def, stored, form, caseId, checkId, disabled, canReveal, parentType, followsCandidate, onFollowCandidate }: FieldInputProps) {
+export function FieldInput({ def, stored, form, caseId, checkId, disabled, canReveal, parentType, followsCandidate, onFollowCandidate, issue }: FieldInputProps) {
   const { errors } = form.formState
   const fieldErrors = errors.fields?.[def.key]
   const error = fieldErrors?.value?.message ?? fieldErrors?.replacement?.message ?? fieldErrors?.root?.message
@@ -77,11 +79,12 @@ export function FieldInput({ def, stored, form, caseId, checkId, disabled, canRe
           disabled={disabled}
           canReveal={canReveal}
           error={error}
+          issue={issue}
         />
       ) : def.type === 'repeatable' ? (
-        <RowsEditor def={def} label={label} form={form} disabled={disabled} error={error} />
+        <RowsEditor def={def} label={label} form={form} disabled={disabled} error={error} issue={issue} />
       ) : (
-        <Field label={label} htmlFor={id} error={error}>
+        <Field label={label} htmlFor={id} required={def.required} error={error} issue={issue}>
           <PlainInput def={def} id={id} form={form} disabled={disabled} hasError={!!error} />
         </Field>
       )}
@@ -132,6 +135,7 @@ interface SensitiveProps {
   disabled: boolean
   canReveal: boolean
   error?: string
+  issue?: FieldIssue
 }
 
 /**
@@ -139,7 +143,7 @@ interface SensitiveProps {
  * (audited by the server), keeps it in this component's state only, and hides it after 30 seconds.
  * Typing in the box replaces the stored number; the old one is never put back into the form.
  */
-function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disabled, canReveal, error }: SensitiveProps) {
+function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disabled, canReveal, error, issue }: SensitiveProps) {
   const [revealed, setRevealed] = useState<string | null>(null)
   const [revealError, setRevealError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -176,7 +180,10 @@ function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disable
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <span className="text-sm font-medium text-slate-700">
+        {label}
+        {def.required && <span className="font-normal text-slate-600"> (required)</span>}
+      </span>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         {hasStored ? (
           <>
@@ -205,7 +212,7 @@ function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disable
           {revealError}
         </p>
       )}
-      <Field label={hasStored ? `Replace ${label}` : `Enter ${label}`} htmlFor={id} error={error}>
+      <Field label={hasStored ? `Replace ${label}` : `Enter ${label}`} htmlFor={id} error={error} issue={issue}>
         <Input
           id={id}
           autoComplete="off"
@@ -224,7 +231,7 @@ function SensitiveInput({ def, label, id, stored, form, caseId, checkId, disable
 }
 
 /** A repeatable field (for example gap periods): rows of small inputs, stored as one JSON value. */
-function RowsEditor({ def, label, form, disabled, error }: { def: FieldDef; label: string; form: UseFormReturn<CheckFormValues>; disabled: boolean; error?: string }) {
+function RowsEditor({ def, label, form, disabled, error, issue }: { def: FieldDef; label: string; form: UseFormReturn<CheckFormValues>; disabled: boolean; error?: string; issue?: FieldIssue }) {
   // Rows are kept here (empty rows included) and written to the form as JSON; empty rows are dropped there.
   const [rows, setRows] = useState<Record<string, string>[]>(() => parseRows(form.getValues(`fields.${def.key}.value`)))
 
@@ -239,7 +246,10 @@ function RowsEditor({ def, label, form, disabled, error }: { def: FieldDef; labe
 
   return (
     <fieldset className="flex flex-col gap-2" disabled={disabled}>
-      <legend className="text-sm font-medium text-slate-700">{label}</legend>
+      <legend className="text-sm font-medium text-slate-700">
+        {label}
+        {def.required && <span className="font-normal text-slate-600"> (required)</span>}
+      </legend>
       {rows.length === 0 && <p className="text-xs text-slate-500">No rows yet.</p>}
       {rows.map((row, index) => (
         <div key={index} className="grid gap-2 rounded-md bg-slate-50 p-2 md:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))_auto]">
@@ -264,6 +274,7 @@ function RowsEditor({ def, label, form, disabled, error }: { def: FieldDef; labe
           Add row
         </Button>
       </div>
+      {issue && !error && <p className={`text-xs font-medium ${issue.level === 'error' ? 'text-red-700' : 'text-amber-800'}`}>{issue.message}</p>}
       {error && (
         <p className="text-xs text-red-600" role="alert">
           {error}

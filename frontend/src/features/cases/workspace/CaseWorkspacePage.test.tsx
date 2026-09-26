@@ -186,8 +186,8 @@ describe('CaseWorkspacePage', () => {
     await screen.findByRole('heading', { name: 'NX-2026-0001' })
     await goTo(/2 Candidate/)
 
-    await userEvent.type(await screen.findByLabelText('Full name'), '  Asha Rao ')
-    await userEvent.type(screen.getByLabelText('Employee ID'), 'EMP-1')
+    await userEvent.type(await screen.findByLabelText('Full name (required)'), '  Asha Rao ')
+    await userEvent.type(screen.getByLabelText('Employee ID (required)'), 'EMP-1')
     await userEvent.type(screen.getByLabelText('Phone'), '98765 43210')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
@@ -211,6 +211,45 @@ describe('CaseWorkspacePage', () => {
     expect(await screen.findByText('Enter a 6-digit PIN code')).toBeInTheDocument()
     expect(screen.getByText(/Enter a valid Indian mobile number/)).toBeInTheDocument()
     expect(setup.puts()).toHaveLength(0)
+  })
+
+  it('marks the required fields of the candidate and puts the checklist message next to the empty one', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    const name = await screen.findByLabelText('Full name (required)')
+    expect(screen.getByLabelText('Employee ID (required)')).toBeInTheDocument()
+    // "Candidate's full name is required." is what section 8 lists; here it also sits beside the box it is about
+    expect(await screen.findByText("Candidate's full name is required.")).toBeInTheDocument()
+    expect(name).toHaveAttribute('aria-invalid', 'true')
+    expect(name.getAttribute('aria-describedby')).toContain('cd-full-name-issue')
+  })
+
+  it('takes the checklist message away while the empty field is being filled in', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=candidate' })
+
+    await screen.findByText("Candidate's full name is required.")
+    await userEvent.type(screen.getByLabelText('Full name (required)'), 'A')
+    expect(screen.queryByText("Candidate's full name is required.")).not.toBeInTheDocument()
+  })
+
+  it('shows a recommendation beside the remarks box as a warning, not as an error', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1?section=remarks' })
+
+    const note = await screen.findByText('Analyst remarks are empty.')
+    expect(note).toHaveClass('text-amber-800')
+    expect(screen.getByLabelText('Analyst remarks')).not.toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('shows the required Report ID and issue date as required', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { route: '/cases/c-1' })
+
+    expect(await screen.findByLabelText('Report ID (required)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Issue date (required)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Client (required)')).toBeInTheDocument()
   })
 
   it('switches the parent label between Father and Guardian', async () => {
@@ -242,15 +281,15 @@ describe('CaseWorkspacePage', () => {
   it('asks before leaving a section with unsaved changes, and lets you stay or discard', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=candidate' })
-    await userEvent.type(await screen.findByLabelText('Full name'), 'Half typed')
+    await userEvent.type(await screen.findByLabelText('Full name (required)'), 'Half typed')
 
     await goTo(/3 Verification/)
     const dialog = await screen.findByRole('dialog', { name: 'Unsaved changes' })
-    expect(screen.getByLabelText('Full name')).toHaveValue('Half typed')
+    expect(screen.getByLabelText('Full name (required)')).toHaveValue('Half typed')
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Stay and keep editing' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Full name')).toHaveValue('Half typed')
+    expect(screen.getByLabelText('Full name (required)')).toHaveValue('Half typed')
 
     await goTo(/3 Verification/)
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Discard changes' }))
@@ -260,7 +299,7 @@ describe('CaseWorkspacePage', () => {
   it('does not ask when nothing was changed', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=candidate' })
-    await screen.findByLabelText('Full name')
+    await screen.findByLabelText('Full name (required)')
 
     await goTo(/3 Verification/)
     expect(await screen.findByRole('form', { name: '3. Verification period' })).toBeInTheDocument()
@@ -288,7 +327,7 @@ describe('CaseWorkspacePage', () => {
   it('asks before leaving the case for another page', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=candidate' })
-    await userEvent.type(await screen.findByLabelText('Full name'), 'typing')
+    await userEvent.type(await screen.findByLabelText('Full name (required)'), 'typing')
 
     await userEvent.click(screen.getByRole('link', { name: 'Cases' }))
     const dialog = await screen.findByRole('dialog', { name: 'Unsaved changes' })
@@ -303,7 +342,7 @@ describe('CaseWorkspacePage', () => {
     open(setup, { route: '/cases/c-1?section=candidate' })
 
     expect(await screen.findByText(/locked for editing/)).toBeInTheDocument()
-    expect(screen.getByLabelText('Full name')).toBeDisabled()
+    expect(screen.getByLabelText('Full name (required)')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
   })
 
@@ -312,7 +351,7 @@ describe('CaseWorkspacePage', () => {
     open(setup, { route: '/cases/c-1?section=candidate', permissions: ['CASE_READ_ASSIGNED'] })
 
     expect(await screen.findByText('You can read this case but not change it.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Full name')).toBeDisabled()
+    expect(screen.getByLabelText('Full name (required)')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
   })
 

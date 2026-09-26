@@ -8,6 +8,7 @@ import type { CaseView } from '../types'
 import { useReportDirty } from './dirtyGuard'
 import { SectionShell } from './SectionShell'
 import type { SectionProps } from './sectionProps'
+import { useFieldIssues } from './useFieldIssues'
 import { useSectionSaving } from './useSectionSaving'
 
 function toValues(c: CaseView): PeriodValues {
@@ -18,7 +19,8 @@ function toValues(c: CaseView): PeriodValues {
 export function PeriodSection({ caseView, canEdit, onReload }: SectionProps) {
   const saving = useSectionSaving(caseView, 'verification-period')
   const form = useForm<PeriodValues>({ resolver: zodResolver(periodSchema), defaultValues: toValues(caseView) })
-  const { errors, isDirty } = form.formState
+  const { errors, isDirty, dirtyFields } = form.formState
+  const issueFor = useFieldIssues(caseView.id, 'verification-period')
 
   useEffect(() => form.reset(toValues(caseView)), [caseView.version]) // eslint-disable-line
   useReportDirty(isDirty)
@@ -41,10 +43,10 @@ export function PeriodSection({ caseView, canEdit, onReload }: SectionProps) {
         <label className="flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
           <input type="checkbox" {...form.register('show')} /> Show the verification period on the report
         </label>
-        <Field label="Start date" htmlFor="vp-start" error={errors.start?.message}>
+        <Field label="Start date" htmlFor="vp-start" error={errors.start?.message} issue={issueFor('start', !!dirtyFields.start || !!dirtyFields.show)}>
           <Input id="vp-start" type="date" {...form.register('start')} />
         </Field>
-        <Field label="End date" htmlFor="vp-end" error={errors.end?.message}>
+        <Field label="End date" htmlFor="vp-end" error={errors.end?.message} issue={issueFor('end', !!dirtyFields.end || !!dirtyFields.show)}>
           <Input id="vp-end" type="date" aria-invalid={!!errors.end} {...form.register('end')} />
         </Field>
       </fieldset>

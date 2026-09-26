@@ -11,6 +11,7 @@ import type { CaseView } from '../types'
 import { useReportDirty } from './dirtyGuard'
 import { SectionShell } from './SectionShell'
 import type { SectionProps } from './sectionProps'
+import { useFieldIssues } from './useFieldIssues'
 import { useSectionSaving } from './useSectionSaving'
 
 function toValues(c: CaseView): ReportInfoValues {
@@ -28,7 +29,8 @@ export function ReportInfoSection({ caseView, canEdit, onReload }: SectionProps)
   const saving = useSectionSaving(caseView, 'report-info')
   const clients = useClients()
   const form = useForm<ReportInfoValues>({ resolver: zodResolver(reportInfoSchema), defaultValues: toValues(caseView) })
-  const { errors, isDirty } = form.formState
+  const { errors, isDirty, dirtyFields } = form.formState
+  const issueFor = useFieldIssues(caseView.id, 'report-info')
 
   useEffect(() => form.reset(toValues(caseView)), [caseView.version]) // eslint-disable-line
   useReportDirty(isDirty)
@@ -57,10 +59,10 @@ export function ReportInfoSection({ caseView, canEdit, onReload }: SectionProps)
       onEdit={saving.clearFeedback}
     >
       <fieldset disabled={!canEdit} className="grid gap-4 md:grid-cols-2">
-        <Field label="Report ID" htmlFor="ri-report-id" required error={errors.reportId?.message}>
+        <Field label="Report ID" htmlFor="ri-report-id" required error={errors.reportId?.message} issue={issueFor('reportId', !!dirtyFields.reportId)}>
           <Input id="ri-report-id" aria-invalid={!!errors.reportId} {...form.register('reportId')} />
         </Field>
-        <Field label="Issue date" htmlFor="ri-issue-date" required error={errors.issueDate?.message}>
+        <Field label="Issue date" htmlFor="ri-issue-date" required error={errors.issueDate?.message} issue={issueFor('issueDate', !!dirtyFields.issueDate)}>
           <Input id="ri-issue-date" type="date" aria-invalid={!!errors.issueDate} {...form.register('issueDate')} />
         </Field>
         <Field label="Client" htmlFor="ri-client" required error={errors.clientId?.message}>

@@ -7,6 +7,7 @@ import { BoldTextEditor } from './BoldTextEditor'
 import { useReportDirty } from './dirtyGuard'
 import { SectionShell } from './SectionShell'
 import type { SectionProps } from './sectionProps'
+import { useFieldIssues } from './useFieldIssues'
 import { useSectionSaving } from './useSectionSaving'
 
 function toValues(c: CaseView): RemarksValues {
@@ -17,7 +18,8 @@ function toValues(c: CaseView): RemarksValues {
 export function RemarksSection({ caseView, canEdit, onReload }: SectionProps) {
   const saving = useSectionSaving(caseView, 'remarks')
   const form = useForm<RemarksValues>({ resolver: zodResolver(remarksSchema), defaultValues: toValues(caseView) })
-  const { errors, isDirty } = form.formState
+  const { errors, isDirty, dirtyFields } = form.formState
+  const issueFor = useFieldIssues(caseView.id, 'remarks')
 
   useEffect(() => form.reset(toValues(caseView)), [caseView.version]) // eslint-disable-line
   useReportDirty(isDirty)
@@ -50,6 +52,7 @@ export function RemarksSection({ caseView, canEdit, onReload }: SectionProps) {
             onChange={(next) => field.onChange(next)}
             disabled={!canEdit}
             error={errors.analystRemarks?.message}
+            issue={issueFor('analystRemarks', !!dirtyFields.analystRemarks)}
           />
         )}
       />
@@ -64,6 +67,7 @@ export function RemarksSection({ caseView, canEdit, onReload }: SectionProps) {
             onChange={(next) => field.onChange(next)}
             disabled={!canEdit}
             error={errors.finalRecommendation?.message}
+            issue={issueFor('finalRecommendation', !!dirtyFields.finalRecommendation)}
           />
         )}
       />

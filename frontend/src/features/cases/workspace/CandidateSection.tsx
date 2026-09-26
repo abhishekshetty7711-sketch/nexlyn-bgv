@@ -9,6 +9,7 @@ import type { CaseView } from '../types'
 import { useReportDirty } from './dirtyGuard'
 import { SectionShell } from './SectionShell'
 import type { SectionProps } from './sectionProps'
+import { useFieldIssues } from './useFieldIssues'
 import { useSectionSaving } from './useSectionSaving'
 
 function toValues(c: CaseView): CandidateValues {
@@ -32,7 +33,8 @@ function toValues(c: CaseView): CandidateValues {
 export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) {
   const saving = useSectionSaving(caseView, 'candidate')
   const form = useForm<CandidateValues>({ resolver: zodResolver(candidateSchema), defaultValues: toValues(caseView) })
-  const { errors, isDirty } = form.formState
+  const { errors, isDirty, dirtyFields } = form.formState
+  const issueFor = useFieldIssues(caseView.id, 'candidate')
   const parentType = useWatch({ control: form.control, name: 'parentType' })
 
   useEffect(() => form.reset(toValues(caseView)), [caseView.version]) // eslint-disable-line
@@ -69,7 +71,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
     >
       <fieldset disabled={!canEdit} className="grid gap-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          <Field label="Full name" htmlFor="cd-full-name" error={errors.fullName?.message}>
+          <Field label="Full name" htmlFor="cd-full-name" required error={errors.fullName?.message} issue={issueFor('fullName', !!dirtyFields.fullName)}>
             <Input id="cd-full-name" autoComplete="off" aria-invalid={!!errors.fullName} {...form.register('fullName')} />
           </Field>
         </div>
@@ -82,16 +84,16 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
             <input type="radio" value="GUARDIAN" {...form.register('parentType')} /> Guardian
           </label>
         </fieldset>
-        <Field label={parentLabel} htmlFor="cd-parent-name" error={errors.parentName?.message}>
+        <Field label={parentLabel} htmlFor="cd-parent-name" error={errors.parentName?.message} issue={issueFor('parentName', !!dirtyFields.parentName)}>
           <Input id="cd-parent-name" {...form.register('parentName')} />
         </Field>
-        <Field label="Employee ID" htmlFor="cd-employee-id" error={errors.employeeId?.message}>
+        <Field label="Employee ID" htmlFor="cd-employee-id" required error={errors.employeeId?.message} issue={issueFor('employeeId', !!dirtyFields.employeeId)}>
           <Input id="cd-employee-id" {...form.register('employeeId')} />
         </Field>
-        <Field label="Date of birth" htmlFor="cd-dob" error={errors.dob?.message}>
+        <Field label="Date of birth" htmlFor="cd-dob" error={errors.dob?.message} issue={issueFor('dob', !!dirtyFields.dob)}>
           <Input id="cd-dob" type="date" aria-invalid={!!errors.dob} {...form.register('dob')} />
         </Field>
-        <Field label="Phone" htmlFor="cd-phone" hint="Any way you would write it: 98765 43210 or +91 98765 43210." error={errors.phone?.message}>
+        <Field label="Phone" htmlFor="cd-phone" hint="Any way you would write it: 98765 43210 or +91 98765 43210." error={errors.phone?.message} issue={issueFor('phone', !!dirtyFields.phone)}>
           <Input id="cd-phone" inputMode="tel" aria-invalid={!!errors.phone} {...form.register('phone')} />
         </Field>
         <div className="md:col-span-2">
@@ -112,7 +114,7 @@ export function CandidateSection({ caseView, canEdit, onReload }: SectionProps) 
           <Input id="cd-country" {...form.register('country')} />
         </Field>
       </fieldset>
-      <PhotoUploader caseView={caseView} />
+      <PhotoUploader caseView={caseView} issue={issueFor('photo')} />
     </SectionShell>
   )
 }

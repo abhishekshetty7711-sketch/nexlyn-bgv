@@ -105,6 +105,33 @@ describe('Checks section', () => {
     expect(screen.getByRole('group', { name: 'Remarks for this check preview' })).toBeInTheDocument()
   })
 
+  it('marks a required check field and shows what the checklist says next to the fields it is about', async () => {
+    serve([checkFixture()], {
+      'GET /api/cases/c-1/validation': () => ({
+        body: {
+          errors: [],
+          warnings: [
+            { section: 'checks', field: 'check:ck-1:requestedDate', message: 'Identity Verification (Aadhaar): requested date is missing.' },
+            { section: 'checks', field: 'check:ck-1:status', message: 'Identity Verification (Aadhaar): status is still Pending.' },
+            { section: 'checks', field: 'check:ck-1:Aadhaar Number', message: 'Identity Verification (Aadhaar): Aadhaar Number is missing.' },
+            { section: 'checks', field: 'check:ck-2:requestedDate', message: 'Another check: requested date is missing.' },
+          ],
+        },
+      }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+
+    const form = await screen.findByRole('form', { name: 'Edit Identity Verification (Aadhaar)' })
+    // the Aadhaar number is the only required field of this type, and it says so beside its name
+    expect(within(form).getByText('(required)').parentElement).toHaveTextContent('Aadhaar Number (required)')
+    expect(await within(form).findByText('Identity Verification (Aadhaar): requested date is missing.')).toBeInTheDocument()
+    expect(within(form).getByText('Identity Verification (Aadhaar): status is still Pending.')).toBeInTheDocument()
+    expect(within(form).getByText('Identity Verification (Aadhaar): Aadhaar Number is missing.')).toBeInTheDocument()
+    // a message about another check does not appear on this one
+    expect(within(form).queryByText('Another check: requested date is missing.')).not.toBeInTheDocument()
+    expect(within(form).getByLabelText('Requested date').getAttribute('aria-describedby')).toContain('ck-requested-issue')
+  })
+
   it('opens a check by clicking it, and keeps the choice in the address', async () => {
     serve([checkFixture(), courtFixture()])
     const { router } = open()

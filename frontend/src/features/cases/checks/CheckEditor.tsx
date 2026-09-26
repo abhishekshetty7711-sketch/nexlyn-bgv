@@ -15,6 +15,7 @@ import { formatDate } from '../format'
 import type { CaseView } from '../types'
 import { BoldTextEditor } from '../workspace/BoldTextEditor'
 import { useReportDirty } from '../workspace/dirtyGuard'
+import { useFieldIssues } from '../workspace/useFieldIssues'
 import { useSaveCheck } from './api'
 import { buildCheckSchema, type CheckFormValues, toFormValues, toSaveInput } from './checkForm'
 import { FieldInput } from './FieldInput'
@@ -50,6 +51,7 @@ export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps)
   const [follow, setFollow] = useState<ReadonlySet<string>>(new Set())
   const [message, setMessage] = useState<{ kind: 'saved' | 'error' | 'conflict'; text: string } | null>(null)
   const save = useSaveCheck(caseView.id, check.id)
+  const issueFor = useFieldIssues(caseView.id, 'checks', `check:${check.id}:`)
 
   useReportDirty(isDirty || follow.size > 0)
 
@@ -116,7 +118,7 @@ export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps)
             <Field label="This card verifies (detail page)" htmlFor="ck-verifies" hint={`Leave blank to use "${check.documentName}".`} error={errors.thisCardVerifies?.message}>
               <Textarea id="ck-verifies" rows={2} {...form.register('thisCardVerifies')} />
             </Field>
-            <Field label="Status" htmlFor="ck-status">
+            <Field label="Status" htmlFor="ck-status" issue={issueFor('status', !!dirtyFields.status)}>
               <Select id="ck-status" {...form.register('status')}>
                 {STATUS_ORDER.map((status) => (
                   <option key={status} value={status}>
@@ -128,10 +130,10 @@ export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps)
             <Field label="Verification type" htmlFor="ck-vtype" error={errors.verificationType?.message}>
               <Input id="ck-vtype" {...form.register('verificationType')} />
             </Field>
-            <Field label="Requested date" htmlFor="ck-requested" hint={check.requestedDate ? formatDate(check.requestedDate) : undefined}>
+            <Field label="Requested date" htmlFor="ck-requested" hint={check.requestedDate ? formatDate(check.requestedDate) : undefined} issue={issueFor('requestedDate', !!dirtyFields.requestedDate)}>
               <Input id="ck-requested" type="date" {...form.register('requestedDate')} />
             </Field>
-            <Field label="Completed date" htmlFor="ck-completed" hint={check.completedDate ? formatDate(check.completedDate) : undefined}>
+            <Field label="Completed date" htmlFor="ck-completed" hint={check.completedDate ? formatDate(check.completedDate) : undefined} issue={issueFor('completedDate', !!dirtyFields.completedDate)}>
               <Input id="ck-completed" type="date" {...form.register('completedDate')} />
             </Field>
             <p className="text-xs text-slate-500 md:col-span-2" title={badge.hint}>
@@ -153,6 +155,7 @@ export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps)
                 disabled={!canEdit}
                 canReveal={canReveal}
                 parentType={caseView.candidate.parentType}
+                issue={issueFor(fieldDef.label, !!dirtyFields.fields?.[fieldDef.key])}
                 followsCandidate={follow.has(fieldDef.key)}
                 onFollowCandidate={(key) => setFollow((current) => new Set(current).add(key))}
               />

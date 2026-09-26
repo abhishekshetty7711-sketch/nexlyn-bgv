@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify'
 import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
+import type { FieldIssue } from '@/components/ui/field'
 import { Textarea } from '@/components/ui/textarea'
 
 interface BoldTextEditorProps {
@@ -10,6 +11,8 @@ interface BoldTextEditorProps {
   onChange: (value: string) => void
   disabled?: boolean
   error?: string
+  /** What the case checklist says about this box (for example "Analyst remarks are empty."). */
+  issue?: FieldIssue
 }
 
 /**
@@ -17,7 +20,7 @@ interface BoldTextEditorProps {
  * HTML; the Bold button wraps the selection in a strong tag. The preview runs through DOMPurify with
  * only that tag allowed, and the server sanitises again on save, so a pasted script can never run.
  */
-export function BoldTextEditor({ id, label, value, onChange, disabled, error }: BoldTextEditorProps) {
+export function BoldTextEditor({ id, label, value, onChange, disabled, error, issue }: BoldTextEditorProps) {
   const area = useRef<HTMLTextAreaElement>(null)
 
   function makeBold() {
@@ -49,13 +52,16 @@ export function BoldTextEditor({ id, label, value, onChange, disabled, error }: 
         rows={6}
         value={value}
         disabled={disabled}
-        aria-invalid={!!error}
+        aria-invalid={!!error || issue?.level === 'error'}
         onChange={(event) => onChange(event.target.value)}
       />
       {error && (
         <p className="text-xs text-red-600" role="alert">
           {error}
         </p>
+      )}
+      {issue && !error && (
+        <p className={`text-xs font-medium ${issue.level === 'error' ? 'text-red-700' : 'text-amber-800'}`}>{issue.message}</p>
       )}
       <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-2 text-sm text-slate-700">
         <span className="mb-1 block text-xs uppercase text-slate-500">Preview</span>
