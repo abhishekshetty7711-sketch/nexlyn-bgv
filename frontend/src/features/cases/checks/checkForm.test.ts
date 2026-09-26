@@ -12,6 +12,11 @@ describe('toFormValues', () => {
     expect(values.fields.aadhaar_number!.replacement).toBe('')
     expect(values.status).toBe('PENDING')
     expect(values.requestedDate).toBe('')
+    expect(values.commentsOnNextPage).toBe(false)
+  })
+
+  it('takes the comments-on-their-own-page switch from the check', () => {
+    expect(toFormValues(checkFixture({ commentsOnNextPage: true })).commentsOnNextPage).toBe(true)
   })
 })
 

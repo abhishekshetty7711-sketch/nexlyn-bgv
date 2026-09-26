@@ -26,6 +26,7 @@ export interface CheckFormValues {
   hasAttestation: boolean
   barCouncilNo: string
   disclaimer: string
+  commentsOnNextPage: boolean
   fields: Record<string, FieldFormValue>
   details: { label: string; value: string }[]
 }
@@ -53,6 +54,7 @@ export function toFormValues(check: CheckView): CheckFormValues {
     hasAttestation: check.hasAttestation,
     barCouncilNo: check.barCouncilNo ?? '',
     disclaimer: check.disclaimer ?? '',
+    commentsOnNextPage: check.commentsOnNextPage,
     fields,
     details: check.details.map((d) => ({ label: d.label, value: d.value ?? '' })),
   }
@@ -87,6 +89,7 @@ export function buildCheckSchema(def: CheckTypeDef): z.ZodType<CheckFormValues, 
     hasAttestation: z.boolean(),
     barCouncilNo: z.string().max(50, 'That is too long'),
     disclaimer: z.string().max(5000, 'That is too long'),
+    commentsOnNextPage: z.boolean(),
     fields: z.object(fieldShape),
     details: z.array(z.object({ label: z.string().max(200, 'Too long'), value: z.string().max(1000, 'Too long') })).max(30),
   })
@@ -149,6 +152,7 @@ export function toSaveInput(values: CheckFormValues, context: RequestContext): S
     hasAttestation: values.hasAttestation,
     barCouncilNo: orNull(values.barCouncilNo),
     disclaimer: orNull(values.disclaimer),
+    commentsOnNextPage: values.commentsOnNextPage,
     fields,
     details: values.details
       .filter((row) => row.label.trim() !== '' || row.value.trim() !== '')

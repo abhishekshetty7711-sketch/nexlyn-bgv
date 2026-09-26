@@ -50,7 +50,7 @@ public final class ReportPages {
     }
 
     /** What every page knows about its place in the document. */
-    public sealed interface Page permits Cover, RemarksPage, OverflowPage, DetailPage, DocumentPage, ServicesPage {
+    public sealed interface Page permits Cover, RemarksPage, OverflowPage, DetailPage, CommentsPage, DocumentPage, ServicesPage {
         int number();
 
         int total();
@@ -91,6 +91,17 @@ public final class ReportPages {
         @Override
         public String kind() {
             return "detail";
+        }
+    }
+
+    /**
+     * A check's comments and legal attestation moved to a page of their own, straight after its main page (the reference
+     * tool's "Move Comments to next page"). It carries the "— Continued" title bar.
+     */
+    public record CommentsPage(int number, int total, TitleBar title, String remarksHtml, Attestation attestation) implements Page {
+        @Override
+        public String kind() {
+            return "comments";
         }
     }
 

@@ -112,6 +112,8 @@ export interface CheckView {
   hasAttestation: boolean
   barCouncilNo: string | null
   disclaimer: string | null
+  /** The comments and the attestation print on a page of their own, right after this check's main page. */
+  commentsOnNextPage: boolean
   sortOrder: number
   version: number
   fields: CheckFieldView[]

@@ -6,6 +6,7 @@ import com.nexlyn.bgv.common.enums.CheckStatus;
 import com.nexlyn.bgv.documents.DocumentApi.Crop;
 import com.nexlyn.bgv.reports.ReportFixtures;
 import com.nexlyn.bgv.reports.ReportFixtures.StubDocuments;
+import com.nexlyn.bgv.reports.internal.model.ReportPages.CommentsPage;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.Cover;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.DetailPage;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.DocumentPage;
@@ -245,6 +246,53 @@ class ReportModelAssemblerTest {
         assertThat(second.large()).isTrue();
         assertThat(first.title().continued()).isTrue();
         assertThat(doc.pages()).extracting(Page::number).containsExactly(1, 2, 3, 4, 5);
+    }
+
+    @Test
+    void commentsOnTheirOwnPageTakeTheAttestationWithThemAndComeBeforeTheMovedDocuments() {
+        Check court = ReportFixtures.withCommentsOnNextPage(ReportFixtures.withAttestation(ReportFixtures.withRemarks(
+                ReportFixtures.check("COURT", "court", "Court", CheckStatus.VERIFIED), "No record was found."), "", ""), true);
+        documents.attach(court.id(), "image/png", ReportFixtures.png(100, 80, Color.WHITE), true, false, null); // moved
+        ReportDocument doc = assembler.assemble(ReportFixtures.report(List.of(court), null));
+
+        assertThat(kinds(doc)).containsExactly("cover", "detail", "comments", "document", "services");
+        DetailPage detail = (DetailPage) doc.pages().get(1);
+        assertThat(detail.remarksHtml()).as("the main page no longer carries the comments").isNull();
+        assertThat(detail.attestation()).as("nor the attestation, which follows the comments").isNull();
+        CommentsPage comments = (CommentsPage) doc.pages().get(2);
+        assertThat(comments.remarksHtml()).isEqualTo("No record was found.");
+        assertThat(comments.attestation().barCouncil()).isEqualTo(ReportModelAssembler.DEFAULT_BAR_COUNCIL);
+        assertThat(comments.title().continued()).isTrue();
+        assertThat(doc.pages()).extracting(Page::number).containsExactly(1, 2, 3, 4, 5);
+        assertThat(doc.total()).isEqualTo(5);
+    }
+
+    @Test
+    void commentsStayOnTheMainPageUnlessAskedTo() {
+        Check court = ReportFixtures.withAttestation(ReportFixtures.withRemarks(
+                ReportFixtures.check("COURT", "court", "Court", CheckStatus.VERIFIED), "No record was found."), "", "");
+        ReportDocument doc = assembler.assemble(ReportFixtures.report(List.of(court), null));
+        assertThat(kinds(doc)).containsExactly("cover", "detail", "services");
+        assertThat(((DetailPage) doc.pages().get(1)).remarksHtml()).isEqualTo("No record was found.");
+        assertThat(((DetailPage) doc.pages().get(1)).attestation()).isNotNull();
+    }
+
+    @Test
+    void thereIsNoEmptyExtraPageWhenThereAreNoCommentsAndNoAttestation() {
+        // the reference tool printed a blank continuation page here
+        Check plain = ReportFixtures.withCommentsOnNextPage(ReportFixtures.check("AADHAAR", "identity", "Identity", CheckStatus.VERIFIED), true);
+        ReportDocument doc = assembler.assemble(ReportFixtures.report(List.of(plain), null));
+        assertThat(kinds(doc)).containsExactly("cover", "detail", "services");
+    }
+
+    @Test
+    void anAttestationAloneIsEnoughToNeedTheOwnPage() {
+        Check court = ReportFixtures.withCommentsOnNextPage(ReportFixtures.withAttestation(
+                ReportFixtures.check("COURT", "court", "Court", CheckStatus.VERIFIED), "", ""), true);
+        ReportDocument doc = assembler.assemble(ReportFixtures.report(List.of(court), null));
+        assertThat(kinds(doc)).containsExactly("cover", "detail", "comments", "services");
+        assertThat(((CommentsPage) doc.pages().get(2)).remarksHtml()).isNull();
+        assertThat(((CommentsPage) doc.pages().get(2)).attestation()).isNotNull();
     }
 
     @Test

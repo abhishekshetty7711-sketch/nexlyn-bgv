@@ -8,6 +8,7 @@ import com.nexlyn.bgv.documents.DocumentApi;
 import com.nexlyn.bgv.documents.DocumentApi.DocumentInfo;
 import com.nexlyn.bgv.reports.internal.layout.Pagination;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.Attestation;
+import com.nexlyn.bgv.reports.internal.model.ReportPages.CommentsPage;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.Cover;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.DetailPage;
 import com.nexlyn.bgv.reports.internal.model.ReportPages.DetailRow;
@@ -93,7 +94,8 @@ public class ReportModelAssembler {
         List<Integer> moved = checks.stream()
                 .map(c -> (int) docsByCheck.get(c.id()).stream().filter(d -> movesToNextPage(d, forcedToNextPage)).count())
                 .toList();
-        Pagination.Plan plan = Pagination.plan(groups, moved, report.settings().layoutCards());
+        List<Boolean> commentsPages = checks.stream().map(ReportModelAssembler::hasCommentsPage).toList();
+        Pagination.Plan plan = Pagination.plan(groups, moved, commentsPages, report.settings().layoutCards());
         boolean compact = plan.layout() == 6;
         int total = plan.totalPages();
 
@@ -180,9 +182,15 @@ public class ReportModelAssembler {
                 .map(f -> new Row(f.label(), ReportFormat.fieldValue(f.type(), f.value(), dateFormat), f.verifiedTick()))
                 .toList();
 
+        String remarksHtml = blank(check.remarks()) ? null : BoldOnlyHtml.sanitize(check.remarks());
+        Attestation attestation = check.hasAttestation() ? attestation(check) : null;
+        boolean ownPage = hasCommentsPage(check);
+        // With the comments on a page of their own, the attestation goes with them (it follows the comments in the reference tool)
         pages.add(new DetailPage(pages.size() + 1, total, main, rows, detailRows(check, dateFormat),
-                blank(check.remarks()) ? null : BoldOnlyHtml.sanitize(check.remarks()), freeBlocks(check),
-                check.hasAttestation() ? attestation(check) : null, frames));
+                ownPage ? null : remarksHtml, freeBlocks(check), ownPage ? null : attestation, frames));
+        if (ownPage) {
+            pages.add(new CommentsPage(pages.size() + 1, total, continuedBar, remarksHtml, attestation));
+        }
 
         for (int i = 0; i < movedDocs.size(); i++) {
             DocumentInfo doc = movedDocs.get(i);
@@ -190,6 +198,14 @@ public class ReportModelAssembler {
                     // a document moved here by the job runner has the page to itself, so it gets the big box too
                     doc.useLargerBox() || (forced.contains(doc.id()) && !doc.moveToNextPage())));
         }
+    }
+
+    /**
+     * The comments have a page of their own when the analyst asked for it and there is something to put on it. The reference tool
+     * printed an empty continuation page when there was nothing; that is not repeated.
+     */
+    static boolean hasCommentsPage(Check check) {
+        return check.commentsOnNextPage() && (!blank(check.remarks()) || check.hasAttestation());
     }
 
     /** Verification Type, Document Type, the two dates, then the check's own extra rows. */

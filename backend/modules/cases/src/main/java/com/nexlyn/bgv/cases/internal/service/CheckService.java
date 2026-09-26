@@ -88,7 +88,9 @@ public class CheckService {
     public record SaveCheckInput(String title, String summaryDescription, String thisCardVerifies, CheckStatus status,
                                  String verificationType, LocalDate requestedDate, LocalDate completedDate, String remarks,
                                  boolean hasAttestation, String barCouncilNo, String disclaimer,
-                                 List<FieldInput> fields, List<DetailInput> details) {
+                                 List<FieldInput> fields, List<DetailInput> details,
+                                 /** Comments and attestation on a page of their own; null leaves it as it is. */
+                                 Boolean commentsOnNextPage) {
     }
 
     private final CaseRepository cases;
@@ -251,6 +253,9 @@ public class CheckService {
 
         // ---- attestation (the advocate's seal needs its own permission) ----
         applyAttestation(check, in, me);
+        if (in.commentsOnNextPage() != null) {
+            check.applyCommentsPlacement(in.commentsOnNextPage());
+        }
 
         // ---- fields ----
         List<String> changedKeys = applyFields(check, def, candidate, in.fields());
@@ -600,6 +605,7 @@ public class CheckService {
         map.put("requestedDate", String.valueOf(check.getRequestedDate()));
         map.put("completedDate", String.valueOf(check.getCompletedDate()));
         map.put("attestation", check.isHasAttestation());
+        map.put("commentsOnNextPage", check.isCommentsOnNextPage());
         return map;
     }
 

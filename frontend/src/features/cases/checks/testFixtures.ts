@@ -93,6 +93,7 @@ export function checkFixture(overrides: Partial<CheckView> = {}): CheckView {
     hasAttestation: false,
     barCouncilNo: null,
     disclaimer: null,
+    commentsOnNextPage: false,
     sortOrder: 0,
     version: 0,
     fields: [
@@ -124,6 +125,7 @@ export function courtFixture(overrides: Partial<CheckView> = {}): CheckView {
     hasAttestation: true,
     barCouncilNo: 'KAR/670/06',
     disclaimer: 'This report is based on information available in accessible court records.',
+    commentsOnNextPage: false,
     fields: [
       field(courtDef, 'father_name', { value: 'Ravi Rao', hasValue: true }),
       field(courtDef, 'search_period', {}),

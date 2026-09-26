@@ -57,6 +57,7 @@ export interface SaveCheckInput {
   hasAttestation: boolean
   barCouncilNo: string | null
   disclaimer: string | null
+  commentsOnNextPage?: boolean
   fields: FieldInput[]
   details: { label: string; value: string | null }[]
 }

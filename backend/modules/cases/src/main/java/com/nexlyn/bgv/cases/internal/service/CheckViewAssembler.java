@@ -82,7 +82,7 @@ class CheckViewAssembler {
         return new CheckView(check.getId(), check.getCaseId(), check.getType(), def.displayName(), def.documentName(), def.groupKey(),
                 check.getTitle(), check.getSummaryDescription(), check.getThisCardVerifies(), check.getStatus(),
                 check.getVerificationType(), check.getRequestedDate(), check.getCompletedDate(), sync, check.getRemarks(),
-                check.isHasAttestation(), check.getBarCouncilNo(), check.getDisclaimer(), check.getSortOrder(),
+                check.isHasAttestation(), check.getBarCouncilNo(), check.getDisclaimer(), check.isCommentsOnNextPage(), check.getSortOrder(),
                 check.getVersion(), fieldViews, detailViews, freeViews, check.getUpdatedAt());
     }
 

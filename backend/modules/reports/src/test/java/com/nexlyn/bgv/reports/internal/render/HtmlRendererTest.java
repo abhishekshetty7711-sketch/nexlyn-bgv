@@ -118,6 +118,26 @@ class HtmlRendererTest {
     }
 
     @Test
+    void theCommentsPageCarriesTheCommentsTheAttestationAndTheContinuedMark() {
+        Check court = ReportFixtures.withCommentsOnNextPage(ReportFixtures.withAttestation(ReportFixtures.withRemarks(
+                ReportFixtures.check("COURT", "court", "Court Record", CheckStatus.VERIFIED), "No record <strong>found</strong>."), "", ""), true);
+        var pages = render(List.of(court)).select("#pagesArea > .page");
+
+        assertThat(pages).hasSize(4);
+        var main = pages.get(1);
+        var comments = pages.get(2);
+        assertThat(main.select(".legal-attestation")).as("the attestation moved with the comments").isEmpty();
+        assertThat(main.text()).doesNotContain("No record found.");
+        assertThat(comments.select(".det-title-text").text()).contains("Court Record").contains("Continued");
+        assertThat(comments.select(".sub-section-title").eachText()).contains("Comments");
+        assertThat(comments.text()).contains("No record found.");
+        assertThat(comments.select(".legal-attestation")).hasSize(1);
+        assertThat(comments.select(".legal-attestation").text()).contains("BAR Council Number", "Disclaimer");
+        assertThat(comments.select(".page-footer .pf-pagenum").text()).isEqualTo("Page 3 of 4");
+        assertThat(comments.select(".pf-leg")).hasSize(4);
+    }
+
+    @Test
     void aBlankTextBlockPrintsAsEightyPixelsOfBlankSpaceAndATextBlockAsABox() {
         Check check = ReportFixtures.withFields(ReportFixtures.check("POLICE", "POLICE", "Police Verification", CheckStatus.VERIFIED), List.of(), List.of(),
                 List.of(new CaseReport.FreeBlock("TEXT", "Visited the station.", null), new CaseReport.FreeBlock("TEXT", "", null)));

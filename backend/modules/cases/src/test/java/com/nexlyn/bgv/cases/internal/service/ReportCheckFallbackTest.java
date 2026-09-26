@@ -17,7 +17,7 @@ class ReportCheckFallbackTest {
     private static CheckView view(String summary, String verifies) {
         return new CheckView(UUID.randomUUID(), UUID.randomUUID(), "EMPLOYMENT", "Employment Verification", "Experience Letter", "employment",
                 "Employment Verification", summary, verifies, CheckStatus.VERIFIED, "Standard", null, null, null,
-                null, false, null, null, 0, 0, List.of(), List.of(), List.of(), Instant.EPOCH);
+                null, false, null, null, false, 0, 0, List.of(), List.of(), List.of(), Instant.EPOCH);
     }
 
     @Test

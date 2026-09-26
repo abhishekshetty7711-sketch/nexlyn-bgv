@@ -620,6 +620,22 @@ class CheckApiIntegrationTest extends CasesIntegrationTestBase {
     }
 
     @Test
+    void theCommentsPageSwitchIsSavedReturnedAndLeftAloneWhenNotSent() throws Exception {
+        JsonNode check = addCheck(analyst, "COURT");
+        assertThat(check.get("commentsOnNextPage").asBoolean()).as("off by default").isFalse();
+
+        JsonNode on = saved(analyst, check, "commentsOnNextPage", true);
+        assertThat(on.get("commentsOnNextPage").asBoolean()).isTrue();
+        assertThat(listChecks().get(0).get("commentsOnNextPage").asBoolean()).isTrue();
+
+        JsonNode untouched = saved(analyst, on, "remarks", "Some comment");
+        assertThat(untouched.get("commentsOnNextPage").asBoolean()).as("a save that does not mention it keeps it").isTrue();
+
+        JsonNode off = saved(analyst, untouched, "commentsOnNextPage", false);
+        assertThat(off.get("commentsOnNextPage").asBoolean()).isFalse();
+    }
+
+    @Test
     void aTextBlockMayBeLeftEmptyAsABlankSpaceForHandwriting() throws Exception {
         JsonNode check = addCheck(analyst, "POLICE");
         String base = checksPath("/" + check.get("id").asText() + "/free-sections");

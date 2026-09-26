@@ -64,6 +64,10 @@ public class VerificationCheck {
     @Column(name = "has_attestation", nullable = false)
     private boolean hasAttestation;
 
+    /** The comments and the attestation print on a page of their own, right after this check's main page. */
+    @Column(name = "comments_on_next_page", nullable = false)
+    private boolean commentsOnNextPage;
+
     @Column(name = "bar_council_no")
     private String barCouncilNo;
 
@@ -127,6 +131,14 @@ public class VerificationCheck {
         this.requestedDate = requested;
         this.completedDate = completed;
         this.datesManual = manual;
+    }
+
+    public void applyCommentsPlacement(boolean onNextPage) {
+        this.commentsOnNextPage = onNextPage;
+    }
+
+    public boolean isCommentsOnNextPage() {
+        return commentsOnNextPage;
     }
 
     public void applyAttestation(boolean on, String barCouncilNo, String disclaimer) {

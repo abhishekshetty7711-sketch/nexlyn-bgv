@@ -354,6 +354,30 @@ describe('Checks section', () => {
     expect(setup.calls('POST', '/free-sections')[0]!.body).toEqual({ kind: 'TEXT', text: 'Verified on call' })
   })
 
+  it('lets the comments and the attestation be moved to a page of their own, and sends the choice', async () => {
+    const setup = serve([checkFixture()], {
+      'PUT /api/cases/c-1/checks/ck-1': () => ({ body: checkFixture({ version: 1, commentsOnNextPage: true }) }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    const form = await screen.findByRole('form', { name: /^Edit / })
+
+    const box = within(form).getByLabelText('Print the comments (and the attestation) on a page of their own')
+    expect(box).not.toBeChecked()
+    await userEvent.click(box)
+    await userEvent.click(screen.getByRole('button', { name: 'Save check' }))
+
+    await waitFor(() => expect(setup.calls('PUT', '/checks/ck-1')).toHaveLength(1))
+    expect(setup.calls('PUT', '/checks/ck-1')[0]!.body.commentsOnNextPage).toBe(true)
+    await waitFor(() => expect(within(form).getByLabelText('Print the comments (and the attestation) on a page of their own')).toBeChecked())
+  })
+
+  it('shows a check whose comments already have their own page with the switch on', async () => {
+    serve([checkFixture({ commentsOnNextPage: true })])
+    open('/cases/c-1?section=checks&check=ck-1')
+    const form = await screen.findByRole('form', { name: /^Edit / })
+    expect(within(form).getByLabelText('Print the comments (and the attestation) on a page of their own')).toBeChecked()
+  })
+
   it('adds a blank space in one click: a block with no text', async () => {
     const setup = serve([checkFixture()], {
       'POST /api/cases/c-1/checks/ck-1/free-sections': () => ({

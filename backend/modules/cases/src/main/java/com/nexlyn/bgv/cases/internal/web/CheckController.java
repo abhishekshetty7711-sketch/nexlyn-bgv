@@ -60,7 +60,8 @@ public class CheckController {
             @Size(max = 50) String barCouncilNo,
             @Size(max = 5000) String disclaimer,
             @Size(max = 100) List<@Valid FieldRequest> fields,
-            @Size(max = 30) List<@Valid DetailRequest> details) {
+            @Size(max = 30) List<@Valid DetailRequest> details,
+            Boolean commentsOnNextPage) {
     }
 
     record OrderRequest(@NotNull @Size(max = 100) List<UUID> ids) {
@@ -102,7 +103,8 @@ public class CheckController {
                 b.status(), b.verificationType(), b.requestedDate(), b.completedDate(), b.remarks(), b.hasAttestation(),
                 b.barCouncilNo(), b.disclaimer(),
                 b.fields() == null ? null : b.fields().stream().map(f -> new CheckService.FieldInput(f.key(), f.value(), f.verifiedTick(), f.manual(), f.clear())).toList(),
-                b.details() == null ? null : b.details().stream().map(d -> new CheckService.DetailInput(d.label(), d.value())).toList());
+                b.details() == null ? null : b.details().stream().map(d -> new CheckService.DetailInput(d.label(), d.value())).toList(),
+                b.commentsOnNextPage());
         return ResponseEntity.ok().header(HttpHeaders.CACHE_CONTROL, "no-store").body(checks.save(id, checkId, b.version(), input));
     }
 

@@ -136,7 +136,8 @@ class CaseApiImpl implements CaseApi {
                 v.details().stream().map(d -> new CaseReport.Detail(d.label(), d.value())).toList(),
                 v.freeSections().stream()
                         .map(b -> new CaseReport.FreeBlock(b.kind().name(), b.text(), b.documentId()))
-                        .toList());
+                        .toList(),
+                v.commentsOnNextPage());
     }
 
     private static boolean notBlank(String value) {

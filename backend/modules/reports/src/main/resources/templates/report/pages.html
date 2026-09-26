@@ -183,6 +183,17 @@
   <div th:if="${frame.imageSrc != null and frame.note != null}" style="text-align:center;font-size:10px;color:#6b7280;padding:0 0 6px;" th:text="${frame.note}">Note</div>
 </div>
 
+<!-- ═════════ THE LEGAL ATTESTATION (advocate seal, Bar Council number, disclaimer) ═════════ -->
+<th:block th:fragment="attestationBlock(attestation)">
+  <div th:if="${attestation != null}" class="legal-attestation" style="margin:14px 0;page-break-inside:avoid;break-inside:avoid;">
+    <div style="margin-bottom:10px;"><img th:src="${attestation.sealSrc}" alt="Advocate Seal" style="width:140px;height:auto;display:block;"></div>
+    <div style="border:1px solid #e5e7eb;background:#f9fafb;border-radius:6px;padding:12px 16px;font-size:11px;line-height:1.6;color:#374151;">
+      <strong style="color:#0c2d6b;">BAR Council Number:</strong> <span th:text="${attestation.barCouncil}">KAR/670/06</span>
+      <strong style="color:#0c2d6b;">Disclaimer:</strong> <span th:text="${attestation.disclaimer}">Disclaimer</span>
+    </div>
+  </div>
+</th:block>
+
 <!-- ═════════ DETAIL PAGE OF ONE CHECK ═════════ -->
 <div th:fragment="detailPage(page)" class="page detail-page">
   <div th:replace="~{report/pages :: watermark}"></div>
@@ -207,19 +218,26 @@
     <div th:if="${!block.image and !#strings.isEmpty(block.text)}" style="margin-top:10px;padding:10px 14px;border:1px solid #e5eaf0;border-radius:10px;font-size:12px;color:#374151;line-height:1.7;white-space:pre-wrap;" th:text="${block.text}">Text</div>
   </th:block>
 
-  <div th:if="${page.attestation != null}" class="legal-attestation" style="margin:14px 0;page-break-inside:avoid;break-inside:avoid;">
-    <div style="margin-bottom:10px;"><img th:src="${page.attestation.sealSrc}" alt="Advocate Seal" style="width:140px;height:auto;display:block;"></div>
-    <div style="border:1px solid #e5e7eb;background:#f9fafb;border-radius:6px;padding:12px 16px;font-size:11px;line-height:1.6;color:#374151;">
-      <strong style="color:#0c2d6b;">BAR Council Number:</strong> <span th:text="${page.attestation.barCouncil}">KAR/670/06</span>
-      <strong style="color:#0c2d6b;">Disclaimer:</strong> <span th:text="${page.attestation.disclaimer}">Disclaimer</span>
-    </div>
-  </div>
+  <th:block th:replace="~{report/pages :: attestationBlock(attestation=${page.attestation})}"></th:block>
 
   <div class="doc-section-wrap" th:if="${!#lists.isEmpty(page.frames)}">
     <div class="sub-section-title" style="margin-bottom:8px;color:var(--color-primary);">Supporting Documents</div>
     <th:block th:each="frame : ${page.frames}"><div th:replace="~{report/pages :: frame(frame=${frame}, large=false, alone=false)}"></div></th:block>
   </div>
 
+  <div th:replace="~{report/pages :: footer(page=${page}, legend=true)}"></div>
+</div>
+
+<!-- ═════════ A CHECK'S COMMENTS (AND ATTESTATION) ON A PAGE OF THEIR OWN ═════════ -->
+<div th:fragment="commentsPage(page)" class="page detail-page">
+  <div th:replace="~{report/pages :: watermark}"></div>
+  <div th:replace="~{report/pages :: titleBar(bar=${page.title})}"></div>
+  <div style="margin-bottom:14px;"></div>
+  <th:block th:if="${page.remarksHtml != null}">
+    <div class="sub-section-title" style="margin-bottom:6px;color:#0c2d6b;">Comments</div>
+    <p style="font-size:11px;color:#374151;line-height:1.6;white-space:pre-line;" th:utext="${page.remarksHtml}">Comments</p>
+  </th:block>
+  <th:block th:replace="~{report/pages :: attestationBlock(attestation=${page.attestation})}"></th:block>
   <div th:replace="~{report/pages :: footer(page=${page}, legend=true)}"></div>
 </div>
 

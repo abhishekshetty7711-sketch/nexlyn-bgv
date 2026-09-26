@@ -125,6 +125,18 @@ class PaginationTest {
     }
 
     @Test
+    void aChecksCommentsOnAPageOfTheirOwnAddOnePageAfterItsMainPage() {
+        Plan plan = Pagination.plan(List.of("identity", "court"), List.of(1, 0), List.of(false, true), 4);
+        assertThat(plan.totalPages()).as("cover, identity + 1 moved, court + its comments, services").isEqualTo(1 + 2 + 2 + 1);
+        assertThat(Pagination.plan(List.of("identity"), List.of(0), List.of(false), 4).totalPages()).isEqualTo(3);
+    }
+
+    @Test
+    void withoutSayingAnythingAboutCommentsThereIsNoExtraPage() {
+        assertThat(Pagination.plan(List.of("identity", "court"), List.of(1, 0), 4).totalPages()).isEqualTo(1 + 2 + 1 + 1);
+    }
+
+    @Test
     void noChecksIsCoverAndServices() {
         Plan plan = Pagination.plan(List.of(), List.of(), 4);
         assertThat(plan.totalPages()).isEqualTo(2);

@@ -52,14 +52,15 @@ public record CaseReport(
 
     /**
      * One verification. {@code iconGroup} decides how checks share a summary card (identity, court,
-     * address, employment, education, or the check type itself). {@code cardVerifies} is what the detail
-     * page shows next to the title; it already falls back to the summary description or document name.
+     * address, employment, education, or the check type itself). {@code commentsOnNextPage} moves the comments and the
+     * attestation to a page of their own after the detail page. {@code cardVerifies} is what the detail
+     * page shows next to the title; it already falls back to the document name.
      */
     public record Check(UUID id, String type, String iconGroup, String title, String summaryDescription,
                         String cardVerifies, String documentName, CheckStatus status, String verificationType,
                         LocalDate requestedDate, LocalDate completedDate, String remarks, boolean hasAttestation,
                         String barCouncilNo, String disclaimer, List<Field> fields, List<Detail> details,
-                        List<FreeBlock> freeBlocks) {
+                        List<FreeBlock> freeBlocks, boolean commentsOnNextPage) {
     }
 
     /** {@code type} is the field kind (text, date, aadhaar, repeatable ...); {@code value} is masked for sensitive fields. */

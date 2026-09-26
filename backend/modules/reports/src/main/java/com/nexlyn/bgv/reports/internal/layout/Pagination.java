@@ -52,6 +52,13 @@ public final class Pagination {
      * @param layout         summary cards on page 1: 4 (spacious) or 6 (compact)
      */
     public static Plan plan(List<String> iconGroups, List<Integer> movedDocuments, int layout) {
+        return plan(iconGroups, movedDocuments, iconGroups.stream().map(group -> false).toList(), layout);
+    }
+
+    /**
+     * @param commentsPages whether each check's comments (and attestation) have a page of their own after its main page
+     */
+    public static Plan plan(List<String> iconGroups, List<Integer> movedDocuments, List<Boolean> commentsPages, int layout) {
         if (layout != 4 && layout != 6) {
             throw new IllegalArgumentException("layout must be 4 or 6");
         }
@@ -77,7 +84,7 @@ public final class Pagination {
         int firstDetail = page + 1;
         int total = page;
         for (int i = 0; i < iconGroups.size(); i++) {
-            total += 1 + Math.max(0, movedDocuments.get(i));
+            total += 1 + (commentsPages.get(i) ? 1 : 0) + Math.max(0, movedDocuments.get(i));
         }
         total += 1; // services page
         return new Plan(groups, layout, List.copyOf(cover), remarksInline, dedicatedRemarks, overflow, firstDetail, total);

@@ -34,25 +34,32 @@ public final class ReportFixtures {
                 "Document of " + title, status, "Standard", LocalDate.of(2026, 5, 19), LocalDate.of(2026, 6, 11),
                 null, false, null, null,
                 List.of(new Field("Full Name", "text", "Asha Rao", true), new Field("DOB", "date", "1994-05-17", false)),
-                List.of(), List.of());
+                List.of(), List.of(), false);
     }
 
     public static Check withRemarks(Check c, String remarks) {
         return new Check(c.id(), c.type(), c.iconGroup(), c.title(), c.summaryDescription(), c.cardVerifies(), c.documentName(),
                 c.status(), c.verificationType(), c.requestedDate(), c.completedDate(), remarks, c.hasAttestation(),
-                c.barCouncilNo(), c.disclaimer(), c.fields(), c.details(), c.freeBlocks());
+                c.barCouncilNo(), c.disclaimer(), c.fields(), c.details(), c.freeBlocks(), c.commentsOnNextPage());
     }
 
     public static Check withAttestation(Check c, String barCouncil, String disclaimer) {
         return new Check(c.id(), c.type(), c.iconGroup(), c.title(), c.summaryDescription(), c.cardVerifies(), c.documentName(),
                 c.status(), c.verificationType(), c.requestedDate(), c.completedDate(), c.remarks(), true,
-                barCouncil, disclaimer, c.fields(), c.details(), c.freeBlocks());
+                barCouncil, disclaimer, c.fields(), c.details(), c.freeBlocks(), c.commentsOnNextPage());
+    }
+
+    /** The check with its comments (and attestation) on a page of their own, or not. */
+    public static Check withCommentsOnNextPage(Check c, boolean onNextPage) {
+        return new Check(c.id(), c.type(), c.iconGroup(), c.title(), c.summaryDescription(), c.cardVerifies(), c.documentName(),
+                c.status(), c.verificationType(), c.requestedDate(), c.completedDate(), c.remarks(), c.hasAttestation(),
+                c.barCouncilNo(), c.disclaimer(), c.fields(), c.details(), c.freeBlocks(), onNextPage);
     }
 
     public static Check withFields(Check c, List<Field> fields, List<Detail> details, List<FreeBlock> blocks) {
         return new Check(c.id(), c.type(), c.iconGroup(), c.title(), c.summaryDescription(), c.cardVerifies(), c.documentName(),
                 c.status(), c.verificationType(), c.requestedDate(), c.completedDate(), c.remarks(), c.hasAttestation(),
-                c.barCouncilNo(), c.disclaimer(), fields, details, blocks);
+                c.barCouncilNo(), c.disclaimer(), fields, details, blocks, c.commentsOnNextPage());
     }
 
     /** A case with these checks, a photo id (or null), and default settings (4 cards, numeric dates, no watermark). */

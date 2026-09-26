@@ -36,7 +36,7 @@ public final class CheckViews {
     public record CheckView(UUID id, UUID caseId, String type, String displayName, String documentName, String groupKey,
                             String title, String summaryDescription, String thisCardVerifies, CheckStatus status,
                             String verificationType, LocalDate requestedDate, LocalDate completedDate, DateSync dateSync,
-                            String remarks, boolean hasAttestation, String barCouncilNo, String disclaimer, int sortOrder,
+                            String remarks, boolean hasAttestation, String barCouncilNo, String disclaimer, boolean commentsOnNextPage, int sortOrder,
                             long version, List<FieldView> fields, List<DetailView> details,
                             List<FreeSectionView> freeSections, Instant updatedAt) {
     }

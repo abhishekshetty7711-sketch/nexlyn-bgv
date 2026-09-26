@@ -194,6 +194,18 @@ export function CheckEditor({ caseView, check, def, canEdit }: CheckEditorProps)
             )}
           />
 
+          {/* F2. Where the comments print */}
+          <div className="flex flex-col gap-1">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input type="checkbox" {...form.register('commentsOnNextPage')} />
+              Print the comments (and the attestation) on a page of their own
+            </label>
+            <p className="ml-6 text-xs text-slate-600">
+              Puts them on a "— Continued" page straight after this check&apos;s main page, before any document that has its own page. Use it when
+              long comments would crowd the page. Nothing changes if there are no comments and no attestation.
+            </p>
+          </div>
+
           {/* G. Attestation */}
           <section className="flex flex-col gap-2" aria-label="Legal attestation">
             <label className="flex items-center gap-2 text-sm font-medium text-slate-700">

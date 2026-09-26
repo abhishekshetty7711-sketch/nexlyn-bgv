@@ -201,7 +201,7 @@ class PdfRendererTest {
         // the reference keeps the badge next to the title (about 60% across the page for this title); it must not be pushed to the right edge
         Check base = ReportFixtures.check("AADHAAR", "identity", "Identity Verification (Aadhaar)", CheckStatus.VERIFIED);
         Check aadhaar = new Check(base.id(), base.type(), base.iconGroup(), base.title(), "Aadhaar Card", "Aadhaar Card", "Aadhaar Card", base.status(),
-                base.verificationType(), base.requestedDate(), base.completedDate(), null, false, null, null, base.fields(), List.of(), List.of());
+                base.verificationType(), base.requestedDate(), base.completedDate(), null, false, null, null, base.fields(), List.of(), List.of(), false);
         PdfRenderer.Rendered rendered = print(ReportFixtures.report(List.of(aadhaar), null));
         double[] badge = topWordRange(rendered.pdf(), 2, "Verified");
         assertThat(badge).as("the badge is in the title bar").isNotNull();
@@ -217,6 +217,18 @@ class PdfRendererTest {
         double[] badge = topWordRange(rendered.pdf(), 2, "Verified");
         assertThat(badge).isNotNull();
         assertThat(badge[1]).as("the badge ends inside the page, not off its right edge").isLessThan(0.97);
+    }
+
+    @Test
+    void commentsOnTheirOwnPageArePrintedAfterTheMainPageWithTheAttestation() throws Exception {
+        Check court = ReportFixtures.withCommentsOnNextPage(ReportFixtures.withAttestation(ReportFixtures.withRemarks(
+                ReportFixtures.check("COURT", "court", "Court Record", CheckStatus.VERIFIED), "No criminal record was found."), "", ""), true);
+        PdfRenderer.Rendered rendered = print(ReportFixtures.report(List.of(court), null)); // print() also checks the page count against the plan
+        assertThat(rendered.pageCount()).isEqualTo(4);
+        assertThat(text(rendered.pdf(), 2)).doesNotContain("no criminal record was found", "bar council");
+        assertThat(text(rendered.pdf(), 3)).contains("court record", "continued", "comments", "no criminal record was found", "bar council number");
+        assertThat(text(rendered.pdf(), 3)).contains("page 3 of 4");
+        assertThat(rendered.overflows()).isEmpty();
     }
 
     @Test
