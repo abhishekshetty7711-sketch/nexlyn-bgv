@@ -1,0 +1,281 @@
+package com.nexlyn.bgv.reports.internal.render;
+
+import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.*;
+import com.nexlyn.bgv.cases.CaseReport;
+import com.nexlyn.bgv.cases.CaseReport.*;
+import com.nexlyn.bgv.common.enums.CheckStatus;
+import com.nexlyn.bgv.reports.ReportFixtures;
+import com.nexlyn.bgv.reports.ReportFixtures.StubDocuments;
+import com.nexlyn.bgv.reports.internal.assemble.AssetSource;
+import com.nexlyn.bgv.reports.internal.assemble.ReportModelAssembler;
+import com.nexlyn.bgv.reports.internal.config.ReportsProperties;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templatemode.TemplateMode;
+
+import javax.imageio.ImageIO;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/** Scratch: the same five-check fixture through the new report code and through the old tool. Writes to the given folder only. */
+public class FixtureRun {
+
+    static byte[] picture(String text, int w, int h, Color bg) throws Exception {
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g.setColor(bg);
+        g.fillRect(0, 0, w, h);
+        g.setColor(new Color(12, 45, 107));
+        g.setStroke(new BasicStroke(8));
+        g.drawRect(4, 4, w - 8, h - 8);
+        g.setFont(new Font("SansSerif", Font.BOLD, Math.max(28, w / 22)));
+        g.drawString(text, 40, 80);
+        g.setFont(new Font("SansSerif", Font.PLAIN, Math.max(20, w / 34)));
+        g.drawString(w + " x " + h + " px", 40, 130);
+        g.setColor(Color.RED);
+        g.fillRect(w - 160, h - 160, 120, 120);
+        g.dispose();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(img, "png", out);
+        return out.toByteArray();
+    }
+
+    record Row(String label, String type, String value) {
+    }
+
+    static final Row[] AADHAAR = {new Row("Aadhaar Number", "aadhaar", "XXXX XXXX 0124"), new Row("Full Name", "text", "ASHA RAO"), new Row("DOB", "date", "1994-05-17"),
+            new Row("Father's Name", "text", "RAVI RAO"), new Row("Street Address", "text", "14, 3rd Cross, Indiranagar"), new Row("City / Town", "text", "Bengaluru"),
+            new Row("State", "text", "Karnataka"), new Row("PIN Code", "pin", "560038"), new Row("Country", "text", "India")};
+    static final Row[] PAN = {new Row("PAN Number", "pan", "ABXXXXX12F"), new Row("Full Name", "text", "ASHA RAO"), new Row("Father's Name", "text", "RAVI RAO"),
+            new Row("DOB", "date", "1994-05-17"), new Row("Street Address", "text", "14, 3rd Cross, Indiranagar"), new Row("City / Town", "text", "Bengaluru"),
+            new Row("State", "text", "Karnataka"), new Row("PIN Code", "pin", "560038"), new Row("Country", "text", "India")};
+    static final Row[] COURT = {new Row("Full Name", "text", "ASHA RAO"), new Row("Father's Name", "text", "RAVI RAO"), new Row("Address", "textarea", "14, 3rd Cross, Indiranagar"),
+            new Row("City / Town", "text", "Bengaluru"), new Row("State", "text", "Karnataka"), new Row("PIN Code", "pin", "560038"), new Row("Country", "text", "India"),
+            new Row("Search Period", "text", "2019 to 2026")};
+    static final Row[] EMPLOYMENT = {new Row("Company", "text", "Globex Technologies Pvt Ltd"), new Row("Employee ID", "text", "EMP-1001"), new Row("Designation", "text", "Senior Analyst"),
+            new Row("Date of Joining", "date", "2019-07-01"), new Row("Date of Leaving", "date", "2026-03-31"), new Row("Reason for Leaving", "text", "Better opportunity"),
+            new Row("Eligible for Rehire", "select", "Yes"), new Row("Verifier Name", "text", "Meera Nair"), new Row("Verifier Designation", "text", "HR Manager"),
+            new Row("Verifier Contact", "text", "hr@globex.example")};
+    static final Row[] EDUCATION = {new Row("Institution", "text", "Christ University"), new Row("University / Board", "text", "Bangalore University"), new Row("Degree", "text", "B.Com"),
+            new Row("Specialization", "text", "Finance"), new Row("Year of Passing", "number", "2015"), new Row("Roll / Registration No.", "text", "BU15/0421"),
+            new Row("Grade / %", "text", "78%"), new Row("Verifier", "text", "Registrar Office")};
+
+    static List<Field> fields(Row[] rows) {
+        List<Field> f = new ArrayList<>();
+        for (Row r : rows) {
+            f.add(new Field(r.label(), r.type(), r.value(), true));
+        }
+        return f;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Path out = Path.of(args[0]);
+        Path reference = Path.of(args[1]);
+        Path reportsModule = Path.of(args[2]);
+        Files.createDirectories(out);
+
+        byte[] photo = picture("PHOTO", 300, 380, new Color(200, 210, 225));
+        byte[] aadhaar1 = picture("AADHAAR - Original Document", 1200, 800, new Color(232, 241, 250));
+        byte[] aadhaar2 = picture("AADHAAR - Additional (moved to next page)", 1200, 800, new Color(238, 246, 232));
+        byte[] pan1 = picture("PAN CARD - Original Document", 1100, 700, new Color(250, 244, 226));
+        byte[] court1 = picture("COURT RECORD - larger box", 1000, 1400, new Color(250, 236, 236));
+        byte[] emp1 = picture("EXPERIENCE LETTER - moved to next page", 1200, 800, new Color(240, 232, 250));
+        byte[] emp2 = picture("EXPERIENCE LETTER - stays on page", 1200, 800, new Color(232, 250, 246));
+        byte[] edu1 = picture("DEGREE CERTIFICATE - Original", 1300, 900, new Color(250, 250, 226));
+
+        // ---------------- OURS ----------------
+        StubDocuments docs = new StubDocuments();
+        Check aad = ReportFixtures.check("AADHAAR", "identity", "Identity Verification (Aadhaar)", CheckStatus.VERIFIED);
+        Check pan = ReportFixtures.check("PAN", "identity", "Identity Verification (PAN)", CheckStatus.VERIFIED);
+        Check court = ReportFixtures.check("COURT", "court", "Court Record (Permanent Address)", CheckStatus.VERIFIED);
+        Check emp = ReportFixtures.check("EMPLOYMENT", "employment", "Employment Verification", CheckStatus.VERIFIED);
+        Check edu = ReportFixtures.check("EDUCATION", "education", "Education Verification", CheckStatus.UNABLE_TO_VERIFY);
+        aad = withCard(aad, "Aadhaar Card", "Electronic", fields(AADHAAR), List.of(), List.of(), null, false);
+        pan = withCard(pan, "PAN Card", "Electronic", fields(PAN), List.of(), List.of(), null, false);
+        court = withCard(court, "Court Document", "Standard", fields(COURT), List.of(new Detail("Court Type", "District Court"), new Detail("Jurisdiction", "Permanent Address")),
+                List.of(new FreeBlock("TEXT", "Free text block: searched the district court records for the last 7 years.", null)),
+                "No criminal or civil record was found against the candidate.", true);
+        emp = withCard(emp, "Experience Letter", "Standard", fields(EMPLOYMENT), List.of(), List.of(), null, false);
+        edu = withCard(edu, "Degree Certificate", "Standard", fields(EDUCATION), List.of(), List.of(), "University did not respond within the turnaround time.", false);
+        docs.attach(aad.id(), "image/png", aadhaar1, false, false, null);
+        docs.attach(aad.id(), "image/png", aadhaar2, true, false, null);
+        docs.attach(pan.id(), "image/png", pan1, false, false, null);
+        docs.attach(court.id(), "image/png", court1, true, true, null);
+        docs.attach(emp.id(), "image/png", emp1, true, false, null);
+        docs.attach(emp.id(), "image/png", emp2, false, false, null);
+        docs.attach(edu.id(), "image/png", edu1, false, false, null);
+        UUID photoId = docs.photo(photo);
+        CaseReport base = ReportFixtures.report(List.of(aad, pan, court, emp, edu), photoId);
+        CaseReport report = ReportFixtures.withSettings(base, 4, "TEXT", true, "NEXLYN VERIFIED");
+
+        AssetSource assets = new AssetSource();
+        ReportModelAssembler assembler = new ReportModelAssembler(docs, new ImageEmbedder(2400), assets);
+        SpringTemplateEngine engine = new SpringTemplateEngine();
+        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setTemplateMode(TemplateMode.HTML);
+        resolver.setCharacterEncoding("UTF-8");
+        engine.setTemplateResolver(resolver);
+        HtmlRenderer html = new HtmlRenderer(engine, assets);
+        var document = assembler.assemble(report);
+        String page = html.render(document, false);
+        Files.writeString(out.resolve("ours.html"), page);
+        PdfRenderer pdf = new PdfRenderer(new ReportsProperties(null, null, null, null, null));
+        PdfRenderer.Rendered rendered = pdf.render(page);
+        Files.write(out.resolve("ours.pdf"), rendered.pdf());
+        System.out.println("OURS frames=" + rendered.frames());
+        System.out.println("OURS pages=" + rendered.pageCount() + " planned=" + document.total() + " overflows=" + rendered.overflows());
+
+        // ---------------- OLD TOOL ----------------
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("photo", "data:image/png;base64," + Base64.getEncoder().encodeToString(photo));
+        List<Map<String, Object>> cards = new ArrayList<>();
+        cards.add(card("Identity Verification (Aadhaar)", "Aadhaar Card", "verified", oldRows(AADHAAR), details("Electronic", "Aadhaar Card"),
+                List.of(doc("Original Document", aadhaar1, false, false), doc("Additional Document", aadhaar2, true, false)), false, "", null, "Identity Verification (PAN)"));
+        cards.add(card("Identity Verification (PAN)", "PAN Card", "verified", oldRows(PAN), details("Electronic", "PAN Card"),
+                List.of(doc("Original Document", pan1, false, false)), false, "", null, "Identity Verification (PAN)"));
+        cards.add(card("Court Record (Permanent Address)", "Court Document", "verified", oldRows(COURT), courtDetails(),
+                List.of(doc("Original Document", court1, true, true)), true, "No criminal or civil record was found against the candidate.",
+                "Free text block: searched the district court records for the last 7 years.", "Court Record (Permanent Address)"));
+        cards.add(card("Employment Verification", "Experience Letter", "verified", oldRows(EMPLOYMENT), details("Standard", "Experience Letter"),
+                List.of(doc("Original Document", emp1, true, false), doc("Additional Document", emp2, false, false)), false, "", null, "Employment Verification"));
+        cards.add(card("Education Verification", "Degree Certificate", "unverified", oldRows(EDUCATION), details("Standard", "Degree Certificate"),
+                List.of(doc("Original Document", edu1, false, false)), false, "University did not respond within the turnaround time.", null, "Education Verification"));
+        data.put("cards", cards);
+
+        try (Playwright playwright = Playwright.create(new Playwright.CreateOptions().setEnv(Map.of("PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD", "1")))) {
+            BrowserType.LaunchOptions launch = new BrowserType.LaunchOptions().setHeadless(true);
+            pdf.configuredBrowser().ifPresent(launch::setExecutablePath);
+            try (Browser browser = playwright.chromium().launch(launch)) {
+                var context = browser.newContext();
+                context.route(url -> !url.startsWith("file:"), route -> route.abort());
+                Page p = context.newPage();
+                p.setViewportSize(1400, 1123);
+                p.navigate(reference.toUri().toString(), new Page.NavigateOptions().setWaitUntil(WaitUntilState.LOAD));
+                StringBuilder faces = new StringBuilder();
+                for (int weight : new int[]{300, 400, 500, 600, 700, 800, 900}) {
+                    Path file = reportsModule.resolve("src/main/resources/static/report/fonts/inter-latin-" + weight + "-normal.woff2").toAbsolutePath();
+                    if (Files.exists(file)) {
+                        faces.append("@font-face{font-family:'Inter';font-weight:").append(weight).append(";src:url('").append(file.toUri()).append("') format('woff2');}");
+                    }
+                }
+                p.addStyleTag(new Page.AddStyleTagOptions().setContent(faces.toString()));
+                p.waitForTimeout(400);
+                p.evaluate("""
+                        (d) => {
+                          const set = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', {bubbles:true})); };
+                          const lib = n => VERIFICATION_LIBRARY.find(v => v.name === n);
+                          verifCards = d.cards.map(c => { const l = lib(c.libName); if (l && l.icon) c.customIcon = l.icon; delete c.libName; return c; });
+                          set('e_reportId', 'NX-2026-0142'); set('e_issueDate', '11/06/2026');
+                          set('e_companyName', 'Acme Corp\\nPrivate Limited');
+                          set('e_fullName', 'Asha Rao'); set('e_fatherName', 'Ravi Rao'); set('e_employeeId', 'EMP-1001');
+                          set('e_dob', '17/05/1994'); set('e_phone', '9876543210');
+                          set('e_startDate', '19/05/2026'); set('e_endDate', '11/06/2026');
+                          set('e_remarks', 'All checks were completed. Education is pending a university response.');
+                          set('e_finalRec', 'Approved for the <strong>next stage</strong>.');
+                          document.getElementById('dateFmtText').click();
+                          const ph = document.getElementById('candidatePhoto'); ph.src = d.photo;
+                          document.querySelector('.photo-wrap').classList.add('has-photo');
+                          renderAll();
+                          document.getElementById('applyBtn').click();
+                        }
+                        """, data);
+                p.waitForTimeout(300);
+                p.evaluate("() => { const t = document.getElementById('watermarkToggle'); if (!t.checked) t.click(); }");
+                p.waitForTimeout(300);
+                p.emulateMedia(new Page.EmulateMediaOptions().setMedia(Media.PRINT));
+                p.evaluate("() => document.fonts.ready");
+                p.waitForTimeout(1500);
+                Object all = p.evaluate("() => document.querySelectorAll('.page').length");
+                Object shown = p.evaluate("() => Array.from(document.querySelectorAll('.page')).filter(e => getComputedStyle(e).display !== 'none').length");
+                System.out.println("OLD frames=" + p.evaluate("() => Array.from(document.querySelectorAll('.page')).flatMap((pg, i) => Array.from(pg.querySelectorAll('.doc-frame')).map(f => { const img = f.querySelector('img'); const h = pg.querySelector('.page-footer'); return JSON.stringify({ page: i + 1, large: f.classList.contains('doc-frame-large'), h: Math.round(f.getBoundingClientRect().height), pic: img ? Math.round(img.getBoundingClientRect().height) : 0, gapToFooter: h ? Math.round(h.getBoundingClientRect().top - f.getBoundingClientRect().bottom) : -1 }); }))"));
+                byte[] old = p.pdf(new Page.PdfOptions().setFormat("A4").setPrintBackground(true).setPreferCSSPageSize(true)
+                        .setMargin(new Margin().setTop("0").setBottom("0").setLeft("0").setRight("0")));
+                Files.write(out.resolve("old.pdf"), old);
+                System.out.println("OLD .page elements=" + all + " visible=" + shown);
+            }
+        }
+    }
+
+    static Check withCard(Check c, String docName, String vtype, List<Field> fields, List<Detail> details, List<FreeBlock> blocks, String remarks, boolean attest) {
+        return new Check(c.id(), c.type(), c.iconGroup(), c.title(), docName, docName, docName, c.status(), vtype, LocalDate.of(2026, 5, 19), LocalDate.of(2026, 6, 11),
+                remarks, attest, null, null, fields, details, blocks);
+    }
+
+    static List<Map<String, Object>> oldRows(Row[] rows) {
+        List<Map<String, Object>> l = new ArrayList<>();
+        for (Row r : rows) {
+            String v = r.value();
+            if (r.type().equals("date")) {
+                String[] s = v.split("-");
+                v = s[2] + "/" + s[1] + "/" + s[0];
+            }
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("label", r.label());
+            m.put("val", v);
+            m.put("tick", true);
+            m.put("isManual", true);
+            l.add(m);
+        }
+        return l;
+    }
+
+    static List<Map<String, String>> details(String vt, String doc) {
+        return List.of(Map.of("label", "Verification Type", "val", vt), Map.of("label", "Document Type", "val", doc),
+                Map.of("label", "Requested Date", "val", "19/05/2026"), Map.of("label", "Completed Date", "val", "11/06/2026"));
+    }
+
+    /** The old tool's own library entry for a court check (no Document Type row). */
+    static List<Map<String, String>> courtDetails() {
+        return List.of(Map.of("label", "Verification Type", "val", "Standard"), Map.of("label", "Court Type", "val", "District Court"),
+                Map.of("label", "Jurisdiction", "val", "Permanent Address"), Map.of("label", "Requested Date", "val", "19/05/2026"),
+                Map.of("label", "Completed Date", "val", "11/06/2026"));
+    }
+
+    static Map<String, Object> doc(String label, byte[] png, boolean next, boolean large) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("label", label);
+        m.put("img", "data:image/png;base64," + Base64.getEncoder().encodeToString(png));
+        m.put("splitToNext", next);
+        m.put("useLargerBox", large);
+        return m;
+    }
+
+    static Map<String, Object> card(String title, String docName, String status, List<Map<String, Object>> rows, List<Map<String, String>> det,
+                                    List<Map<String, Object>> docs, boolean attest, String remarks, String free, String lib) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("title", title);
+        m.put("doc", docName);
+        m.put("status", status);
+        m.put("checks", rows);
+        m.put("details", det);
+        m.put("remarks", remarks);
+        m.put("docImg", "");
+        m.put("docs", docs);
+        m.put("splitDoc", false);
+        m.put("splitRemarks", false);
+        m.put("freeSections", free == null ? List.of() : List.of(Map.of("type", "text", "val", free)));
+        m.put("hasAttestation", attest);
+        m.put("barCouncilNumber", attest ? "KAR/670/06" : "");
+        m.put("disclaimer", "");
+        m.put("libName", lib);
+        return m;
+    }
+}

@@ -17,7 +17,7 @@
   - **Never weaken a locked decision (§2) or a security rule (§11) to avoid asking.** If a step seems to need that, log a compliant alternative in `docs/DECISIONS.md`; if none exists, stop and ask.
   - When stopped or done, give a short summary of what was built, what was decided, and what (if anything) needs the owner.
 - Before writing code in an area, read the relevant section of this file and the existing code in that module.
-- The original tool is at `docs/reference/nexlyn-bgv-report-v3.2.html` (and its notes at `docs/reference/ALL_data_of_bgv.md`). Port report layout, CSS, pagination and formatting rules **from that source**, not from memory.
+- The original tool is at `docs/reference/nexlyn-bgv-report-v3.2.html` (and its notes at `docs/reference/Nexlyn_BGV_Tool_Documentation_v4.0_PhaseOne.md`). Port report layout, CSS, pagination and formatting rules **from that source**, not from memory.
 - Every phase must compile, pass tests (`./mvnw verify`, `npm run build && npm test`) and start with `docker compose up` before it is called done.
 - Never commit secrets. Never weaken a security rule in §11 to make something work — ask instead.
 - Keep this file updated when the user approves a change to a locked decision.
@@ -310,7 +310,7 @@ nexlyn-bgv/
 │
 ├── scripts/  build-all.sh  local-up.sh  local-down.sh  generate-api-client.sh  db-reset-local.sh
 ├── docs/
-│   ├── reference/  nexlyn-bgv-report-v3.2.html  ALL_data_of_bgv.md
+│   ├── reference/  nexlyn-bgv-report-v3.2.html  Nexlyn_BGV_Tool_Documentation_v4.0_PhaseOne.md
 │   ├── architecture.md  data-model.md  api/  adr/  runbooks/
 └── .github/workflows/  ci-backend.yml  ci-frontend.yml  deploy.yml
 ```

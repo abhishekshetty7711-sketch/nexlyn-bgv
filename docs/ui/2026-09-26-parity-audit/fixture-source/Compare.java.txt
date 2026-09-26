@@ -1,0 +1,55 @@
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.text.PDFTextStripper;
+
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
+
+/** Scratch: side-by-side pictures (old left, new right) and per-page text of two PDFs. */
+public class Compare {
+    public static void main(String[] a) throws Exception {
+        Path dir = Path.of(a[0]);
+        int dpi = Integer.parseInt(a[1]);
+        try (PDDocument old = Loader.loadPDF(dir.resolve("old.pdf").toFile()); PDDocument ours = Loader.loadPDF(dir.resolve("ours.pdf").toFile())) {
+            PDFRenderer ro = new PDFRenderer(old);
+            PDFRenderer rn = new PDFRenderer(ours);
+            System.out.println("old pages=" + old.getNumberOfPages() + " ours pages=" + ours.getNumberOfPages());
+            Files.createDirectories(dir.resolve("pages"));
+            int n = Math.max(old.getNumberOfPages(), ours.getNumberOfPages());
+            for (int i = 0; i < n; i++) {
+                BufferedImage l = i < old.getNumberOfPages() ? ro.renderImageWithDPI(i, dpi) : null;
+                BufferedImage r = i < ours.getNumberOfPages() ? rn.renderImageWithDPI(i, dpi) : null;
+                int w = (l != null ? l.getWidth() : r.getWidth()) + (r != null ? r.getWidth() : l.getWidth()) + 30;
+                int h = Math.max(l != null ? l.getHeight() : 0, r != null ? r.getHeight() : 0);
+                BufferedImage c = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g = c.createGraphics();
+                g.setColor(new Color(120, 120, 120));
+                g.fillRect(0, 0, w, h);
+                if (l != null) g.drawImage(l, 0, 0, null);
+                if (r != null) g.drawImage(r, (l != null ? l.getWidth() : r.getWidth()) + 30, 0, null);
+                g.dispose();
+                ImageIO.write(c, "png", dir.resolve("pages/page-" + (i + 1) + ".png").toFile());
+            }
+            PDFTextStripper st = new PDFTextStripper();
+            for (int i = 1; i <= n; i++) {
+                String t1 = "", t2 = "";
+                if (i <= old.getNumberOfPages()) { st.setStartPage(i); st.setEndPage(i); t1 = st.getText(old).replaceAll("\\s+", " ").trim(); }
+                if (i <= ours.getNumberOfPages()) { st.setStartPage(i); st.setEndPage(i); t2 = st.getText(ours).replaceAll("\\s+", " ").trim(); }
+                Files.writeString(dir.resolve("pages/old-" + i + ".txt"), t1);
+                Files.writeString(dir.resolve("pages/ours-" + i + ".txt"), t2);
+                Set<String> w1 = new HashSet<>(java.util.List.of(t1.toLowerCase().split(" ")));
+                Set<String> w2 = new HashSet<>(java.util.List.of(t2.toLowerCase().split(" ")));
+                Set<String> onlyOld = new HashSet<>(w1); onlyOld.removeAll(w2);
+                Set<String> onlyNew = new HashSet<>(w2); onlyNew.removeAll(w1);
+                System.out.println("PAGE " + i + "\n  only OLD : " + onlyOld + "\n  only NEW : " + onlyNew);
+            }
+        }
+    }
+}
