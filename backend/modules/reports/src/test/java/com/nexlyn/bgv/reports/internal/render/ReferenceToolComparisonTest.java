@@ -88,6 +88,14 @@ class ReferenceToolComparisonTest {
                 Page page = context.newPage();
                 page.setViewportSize(794, 1123);
                 page.navigate(REFERENCE.toUri().toString(), new Page.NavigateOptions().setWaitUntil(WaitUntilState.LOAD));
+                // The reference loads Inter from Google Fonts, which is blocked here, so it would print in a fallback font with
+                // taller lines. Give it the same Inter files this platform bundles, so the two are compared in the same font.
+                StringBuilder faces = new StringBuilder();
+                for (int weight : new int[]{400, 500, 600, 700, 800, 900}) {
+                    Path file = Path.of("src", "main", "resources", "static", "report", "fonts", "inter-latin-" + weight + "-normal.woff2").toAbsolutePath();
+                    faces.append("@font-face{font-family:'Inter';font-weight:").append(weight).append(";src:url('").append(file.toUri()).append("') format('woff2');}");
+                }
+                page.addStyleTag(new Page.AddStyleTagOptions().setContent(faces.toString()));
                 List<List<Boolean>> spec = new ArrayList<>();
                 for (boolean[] d : docs) {
                     spec.add(List.of(d[0], d[1]));
@@ -96,7 +104,7 @@ class ReferenceToolComparisonTest {
                         (rows) => {
                           verifCards = [verifCards[0]];
                           verifCards[0].checks = rows.map(r => ({ label: r[0], val: r[1], tick: true }));
-                          verifCards[0].details = [{ label: 'Verification Type', val: 'Standard' }, { label: 'Document Type', val: 'Document of Identity' },
+                          verifCards[0].details = [{ label: 'Verification Type', val: 'Standard' }, { label: 'Document Type', val: 'Document of Identity Verification (Aadhaar)' },
                             { label: 'Requested Date', val: '19/05/2026' }, { label: 'Completed Date', val: '11/06/2026' }];
                         }
                         """, List.of(ROWS[0], ROWS[1], ROWS[2], ROWS[3], ROWS[4], ROWS[5], ROWS[6], ROWS[7], ROWS[8]));
@@ -159,10 +167,12 @@ class ReferenceToolComparisonTest {
         for (int i = 0; i < theirs.size(); i++) {
             assertThat(mine.get(i).detailPage()).as("page of box %d", i).isEqualTo(theirs.get(i).detailPage());
             assertThat(mine.get(i).large()).as("larger class of box %d", i).isEqualTo(theirs.get(i).large());
-            // A box on a page of its own has a fixed size (400 px, or 800 px for the larger box) and must match to the pixel
-            // rounding. A box on the check's own page takes the room left below the rows above it, so it is allowed a few
-            // more pixels (measured: the reference 316 px, this platform 323 px, with the same rows).
-            int slack = theirs.get(i).detailPage() == 1 ? 12 : 3;
+            // Boxes on a page of their own have a fixed size (400 px, or 800 px for the larger box) and must match to within pixel
+            // rounding. A box on the check's own page takes the room left under the rows above it, and each row of the
+            // checks table is 1 px shorter here than in the reference: the reference draws the tick as a text glyph (a
+            // fallback font makes the line taller) and this platform as an SVG, so the box may be up to one pixel per
+            // row (+ the header row) taller here. Measured with the same font and the same rows: reference 314, here 323.
+            int slack = theirs.get(i).detailPage() == 1 ? ROWS.length + 1 + 3 : 3;
             assertThat(mine.get(i).height()).as("height of box %d", i).isBetween(theirs.get(i).height() - slack, theirs.get(i).height() + slack);
             assertThat(mine.get(i).picture()).as("picture height of box %d", i).isBetween(theirs.get(i).picture() - 3, theirs.get(i).picture() + 3);
         }
