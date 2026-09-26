@@ -92,6 +92,19 @@ export function useCreateCase() {
   })
 }
 
+/** Removes a case from every list (a soft delete on the server: the Report ID stays reserved and the audit log keeps the record). */
+export function useDeleteCase(caseId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<void>(`/cases/${caseId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: caseKey(caseId) })
+      void queryClient.invalidateQueries({ queryKey: ['cases'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 /** Section names as the API spells them in the URL. */
 export type SaveSection = 'report-info' | 'candidate' | 'verification-period' | 'overview' | 'remarks' | 'settings'
 

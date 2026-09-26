@@ -213,6 +213,55 @@ describe('CaseWorkspacePage', () => {
     expect(setup.puts()).toHaveLength(0)
   })
 
+  it('has no Delete case button without the permission to delete cases', async () => {
+    const setup = serve(caseFixture())
+    open(setup)
+    await screen.findByRole('heading', { name: 'NX-2026-0001' })
+    expect(screen.queryByRole('button', { name: 'Delete case' })).not.toBeInTheDocument()
+  })
+
+  it('does not offer Delete case on a finalized report even to someone who may delete cases', async () => {
+    const setup = serve(caseFixture({ lifecycle: 'FINALIZED', editable: false }))
+    open(setup, { permissions: [...EDITOR, 'CASE_DELETE'] })
+    await screen.findByRole('heading', { name: 'NX-2026-0001' })
+    expect(screen.queryByRole('button', { name: 'Delete case' })).not.toBeInTheDocument()
+  })
+
+  it('asks before deleting a case, then deletes it and goes back to the list', async () => {
+    const setup = serve(caseFixture(), { 'DELETE /api/cases/c-1': () => ({ status: 204 }) })
+    open(setup, { permissions: [...EDITOR, 'CASE_DELETE'] })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete case' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Delete this case?' })
+    expect(within(dialog).getByText(/will disappear from every list/)).toBeInTheDocument()
+    expect(setup.fake.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(false)
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete case' }))
+    expect(await screen.findByText('the case list')).toBeInTheDocument()
+    expect(setup.fake.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(1)
+  })
+
+  it('keeps the case when the delete question is answered with Keep the case', async () => {
+    const setup = serve(caseFixture())
+    open(setup, { permissions: [...EDITOR, 'CASE_DELETE'] })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete case' }))
+    await userEvent.click(within(await screen.findByRole('dialog', { name: 'Delete this case?' })).getByRole('button', { name: 'Keep the case' }))
+    expect(screen.queryByRole('dialog', { name: 'Delete this case?' })).not.toBeInTheDocument()
+    expect(setup.fake.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(false)
+  })
+
+  it("shows the server's reason inside the dialog when a case cannot be deleted", async () => {
+    const setup = serve(caseFixture(), {
+      'DELETE /api/cases/c-1': () => ({ status: 409, body: { code: 'CONFLICT', message: 'A finalized report cannot be deleted.' } }),
+    })
+    open(setup, { permissions: [...EDITOR, 'CASE_DELETE'] })
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete case' }))
+    await userEvent.click(within(await screen.findByRole('dialog', { name: 'Delete this case?' })).getByRole('button', { name: 'Delete case' }))
+    expect(await screen.findByText('A finalized report cannot be deleted.')).toBeInTheDocument()
+  })
+
   it('puts names in capitals, the phone in +91 groups and the PIN at six digits as they are typed', async () => {
     const setup = serve(caseFixture())
     open(setup, { route: '/cases/c-1?section=candidate' })

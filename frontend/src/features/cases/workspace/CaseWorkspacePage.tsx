@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useBlocker, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useBlocker, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { ApiError } from '@/api/httpClient'
 import { describeError } from '@/api/errors'
@@ -11,7 +11,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { Spinner } from '@/components/ui/spinner'
 import { useAuth } from '@/features/auth/AuthContext'
 import { usePageTitle } from '@/lib/usePageTitle'
-import { useCase, useProgress } from '../api'
+import { useCase, useDeleteCase, useProgress } from '../api'
 import { useChecks } from '../checks/api'
 import { formatDate } from '../format'
 import { LifecycleBadge } from '../LifecycleBadge'
@@ -41,6 +41,10 @@ export function CaseWorkspacePage() {
   const caseQuery = useCase(id)
   const progress = useProgress(id)
   const checks = useChecks(id)
+  const deleteCase = useDeleteCase(id)
+  const navigate = useNavigate()
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   usePageTitle(caseQuery.data?.reportId ?? (caseQuery.isError ? 'Case not available' : 'Case'))
 
   const requested = search.get('section')
@@ -107,6 +111,19 @@ export function CaseWorkspacePage() {
   const caseView = caseQuery.data
   const canEdit = caseView.editable && hasPermission('CASE_UPDATE')
   const props = { caseView, canEdit, onReload: reload }
+  // A finalized report is never deleted (the server refuses it too); everything else can be, by whoever holds CASE_DELETE.
+  const canDelete = hasPermission('CASE_DELETE') && caseView.lifecycle !== 'FINALIZED'
+
+  async function confirmDelete() {
+    setDeleteError(null)
+    try {
+      await deleteCase.mutateAsync()
+      dirty.current = false
+      navigate('/cases')
+    } catch (problem) {
+      setDeleteError(describeError(problem))
+    }
+  }
 
   return (
     <DirtyGuardContext.Provider value={guard}>
@@ -127,6 +144,11 @@ export function CaseWorkspacePage() {
               {caseView.candidate.fullName ? ` · ${caseView.candidate.fullName}` : ''}
               {` · issued ${formatDate(caseView.issueDate)}`}
             </span>
+            {canDelete && (
+              <Button type="button" size="sm" variant="ghost" className="ml-auto text-red-700 hover:bg-red-50" onClick={() => setDeleting(true)}>
+                Delete case
+              </Button>
+            )}
           </div>
         </div>
 
@@ -171,6 +193,28 @@ export function CaseWorkspacePage() {
           </Card>
         </div>
 
+        {deleting && (
+          <Dialog title="Delete this case?" onClose={() => (deleteCase.isPending ? undefined : setDeleting(false))}>
+            <p className="mb-2 text-sm text-slate-600">
+              {caseView.reportId} will disappear from every list, with its checks, documents and report versions. Its Report ID stays reserved and the audit log
+              keeps the record.
+            </p>
+            <p className="mb-4 text-sm font-medium text-slate-800">This cannot be undone from the dashboard.</p>
+            {deleteError && (
+              <div className="mb-3">
+                <Alert variant="error">{deleteError}</Alert>
+              </div>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDeleting(false)} disabled={deleteCase.isPending}>
+                Keep the case
+              </Button>
+              <Button variant="danger" onClick={() => void confirmDelete()} disabled={deleteCase.isPending}>
+                {deleteCase.isPending ? 'Deleting...' : 'Delete case'}
+              </Button>
+            </div>
+          </Dialog>
+        )}
         {pending && (
           <UnsavedDialog
             onStay={() => setPending(null)}
