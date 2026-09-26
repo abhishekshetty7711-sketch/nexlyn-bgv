@@ -174,6 +174,51 @@ class PdfRendererTest {
                 "verification type", "supporting documents", "document 1");
     }
 
+    /** Where the word sits in the top part of a page, as fractions of the page width: {start, end}; null when it is not there. */
+    private static double[] topWordRange(byte[] pdfBytes, int page, String word) throws IOException {
+        final double[][] found = {null};
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            float width = document.getPage(page - 1).getMediaBox().getWidth();
+            PDFTextStripper stripper = new PDFTextStripper() {
+                @Override
+                protected void writeString(String text, List<org.apache.pdfbox.text.TextPosition> positions) {
+                    int at = text.indexOf(word);
+                    if (found[0] == null && at >= 0 && positions.get(at).getYDirAdj() < 110) {
+                        var last = positions.get(at + word.length() - 1);
+                        found[0] = new double[]{positions.get(at).getXDirAdj() / width, (last.getXDirAdj() + last.getWidthDirAdj()) / width};
+                    }
+                }
+            };
+            stripper.setStartPage(page);
+            stripper.setEndPage(page);
+            stripper.getText(document);
+        }
+        return found[0];
+    }
+
+    @Test
+    void theStatusBadgeOfADetailPageSitsRightAfterTheTitleLikeInTheReferenceTool() throws Exception {
+        // the reference keeps the badge next to the title (about 60% across the page for this title); it must not be pushed to the right edge
+        Check base = ReportFixtures.check("AADHAAR", "identity", "Identity Verification (Aadhaar)", CheckStatus.VERIFIED);
+        Check aadhaar = new Check(base.id(), base.type(), base.iconGroup(), base.title(), "Aadhaar Card", "Aadhaar Card", "Aadhaar Card", base.status(),
+                base.verificationType(), base.requestedDate(), base.completedDate(), null, false, null, null, base.fields(), List.of(), List.of());
+        PdfRenderer.Rendered rendered = print(ReportFixtures.report(List.of(aadhaar), null));
+        double[] badge = topWordRange(rendered.pdf(), 2, "Verified");
+        assertThat(badge).as("the badge is in the title bar").isNotNull();
+        // measured in the reference tool with the same title: the badge starts about 58% across the page; the previous rule (flex:1) pushed it to the right edge, past 80%
+        assertThat(badge[0]).as("badge starts at %s of the page width", badge[0]).isBetween(0.45, 0.72);
+    }
+
+    @Test
+    void aVeryLongTitleWrapsInsideItsBarAndKeepsTheBadgeOnThePage() throws Exception {
+        Check longTitle = ReportFixtures.check("EMPLOYMENT", "employment",
+                "Employment Verification of the candidate with the previous employer, including designation, tenure, salary and the reason for leaving", CheckStatus.VERIFIED);
+        PdfRenderer.Rendered rendered = print(ReportFixtures.report(List.of(longTitle), null));
+        double[] badge = topWordRange(rendered.pdf(), 2, "Verified");
+        assertThat(badge).isNotNull();
+        assertThat(badge[1]).as("the badge ends inside the page, not off its right edge").isLessThan(0.97);
+    }
+
     @Test
     void theAttestationAndTheLargerBoxDocumentPageArePrinted() throws Exception {
         PdfRenderer.Rendered rendered = print(sampleCase());
