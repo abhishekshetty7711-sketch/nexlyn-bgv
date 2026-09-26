@@ -169,6 +169,25 @@ class CheckApiIntegrationTest extends CasesIntegrationTestBase {
     }
 
     @Test
+    void twoChecksOfTheSameTypeCanBeOnOneCaseAndKeepTheirOwnValues() throws Exception {
+        // for example a candidate with two identity cards, or two employers: the type is not a unique key of a case
+        JsonNode first = addCheck(analyst, "EMPLOYMENT");
+        JsonNode second = addCheck(analyst, "EMPLOYMENT");
+        assertThat(second.get("id").asText()).isNotEqualTo(first.get("id").asText());
+
+        saved(analyst, first, "fields", List.of(fieldInput("company", "Globex Technologies")));
+        saved(analyst, second, "fields", List.of(fieldInput("company", "Initech")));
+
+        JsonNode checks = listChecks();
+        assertThat(checks).hasSize(2);
+        assertThat(checks.get(0).get("type").asText()).isEqualTo("EMPLOYMENT");
+        assertThat(checks.get(1).get("type").asText()).isEqualTo("EMPLOYMENT");
+        assertThat(field(checks.get(0), "company").get("value").asText()).isEqualTo("Globex Technologies");
+        assertThat(field(checks.get(1), "company").get("value").asText()).isEqualTo("Initech");
+        assertThat(checks.get(0).get("sortOrder").asInt()).isLessThan(checks.get(1).get("sortOrder").asInt());
+    }
+
+    @Test
     void everyOneOfTheEighteenTypesCanBeAddedAndSaved() throws Exception {
         JsonNode types = body(send(get("/api/check-types"), superToken(), null));
         assertThat(types).hasSize(18);
