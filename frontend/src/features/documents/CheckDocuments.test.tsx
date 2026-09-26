@@ -387,14 +387,78 @@ describe('CheckDocuments', () => {
     expect(await within(dialog).findByText(/changed by someone else/)).toBeInTheDocument()
   })
 
+  // ---- the viewer and Undo ----------------------------------------------------------------------------
+
+  it('shows a picture in a viewer that zooms from 50% to 300% and can be reset', async () => {
+    serve([documentFixture()])
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'View Original Document' }))
+    const dialog = await screen.findByRole('dialog', { name: 'View Original Document' })
+    const level = within(dialog).getByRole('status', { name: 'Zoom level' })
+    const picture = within(dialog).getByTestId('zoomed-picture')
+    expect(level).toHaveTextContent('100%')
+    expect(within(dialog).getByRole('button', { name: 'Reset zoom' })).toBeDisabled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Zoom in' }))
+    expect(level).toHaveTextContent('125%')
+    expect(picture).toHaveStyle({ width: '125%' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Reset zoom' }))
+    expect(level).toHaveTextContent('100%')
+
+    for (let i = 0; i < 4; i += 1) {
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Zoom out' }))
+    }
+    expect(level).toHaveTextContent('50%')
+    expect(within(dialog).getByRole('button', { name: 'Zoom out' })).toBeDisabled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Reset zoom' }))
+    for (let i = 0; i < 8; i += 1) {
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Zoom in' }))
+    }
+    expect(level).toHaveTextContent('300%')
+    expect(within(dialog).getByRole('button', { name: 'Zoom in' })).toBeDisabled()
+  })
+
+  it('closes the viewer with Escape and does not change the document', async () => {
+    const setup = serve([documentFixture()])
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'View Original Document' }))
+    await screen.findByRole('dialog', { name: 'View Original Document' })
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(setup.calls('PUT', '/documents/')).toHaveLength(0)
+  })
+
+  it('takes the crop changes back with Undo, to what is saved', async () => {
+    serve([documentFixture({ crop: { x: 0.1, y: 0.1, width: 0.5, height: 0.5 } })])
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit Original Document' }))
+    const dialog = await screen.findByRole('dialog')
+    const undo = within(dialog).getByRole('button', { name: 'Undo changes' })
+    expect(undo).toBeDisabled()
+
+    fireEvent.change(within(dialog).getByLabelText('Width'), { target: { value: '80' } })
+    expect(undo).toBeEnabled()
+    expect(within(dialog).getByLabelText('Width')).toHaveValue('80')
+    await userEvent.click(undo)
+    expect(within(dialog).getByLabelText('Width')).toHaveValue('50')
+    expect(undo).toBeDisabled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Use the whole picture' }))
+    expect(within(dialog).queryByTestId('crop-box')).not.toBeInTheDocument()
+    await userEvent.click(undo)
+    expect(within(dialog).getByTestId('crop-box')).toBeInTheDocument()
+  })
+
   // ---- opening ----------------------------------------------------------------------------------------
 
-  it('opens a picture in a new tab from an in-memory copy', async () => {
+  it('opens a picture in a new tab from an in-memory copy, from the viewer', async () => {
     const setup = serve([documentFixture()])
     const opened: unknown[][] = []
     window.open = ((...args: unknown[]) => (opened.push(args), null)) as typeof window.open
     show()
     await userEvent.click(await screen.findByRole('button', { name: 'View Original Document' }))
+    await userEvent.click(within(await screen.findByRole('dialog', { name: 'View Original Document' })).getByRole('button', { name: 'Open in a new tab' }))
     await waitFor(() => expect(opened).toHaveLength(1))
     expect(String(opened[0]![0])).toMatch(/^blob:/)
     expect(opened[0]![2]).toBe('noopener')

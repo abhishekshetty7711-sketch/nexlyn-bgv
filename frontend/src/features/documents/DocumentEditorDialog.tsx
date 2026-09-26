@@ -51,7 +51,7 @@ export function DocumentEditorDialog({ caseId, checkId, document, onClose }: Doc
         <Field label="Label" htmlFor="doc-label" hint={`Leave blank to use the numbered name. Currently: ${document.displayLabel}.`}>
           <Input id="doc-label" maxLength={100} value={label} onChange={(event) => setLabel(event.target.value)} />
         </Field>
-        {isImage && <CropEditor documentId={document.id} crop={crop} onChange={setCrop} />}
+        {isImage && <CropEditor documentId={document.id} crop={crop} savedCrop={document.crop} onChange={setCrop} />}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel

@@ -9,6 +9,7 @@ import { fetchDocumentBlob, useDeleteDocument, useDocuments, useReorderDocuments
 import { DocumentEditorDialog } from './DocumentEditorDialog'
 import { DocumentImage } from './DocumentImage'
 import { DocumentPlacement, type PlacementChange } from './DocumentPlacement'
+import { DocumentPreviewDialog } from './DocumentPreviewDialog'
 import { ACCEPT_DOCUMENTS, formatBytes, problemWithFile } from './files'
 import { type DocumentView, QUALITY_LABELS } from './types'
 
@@ -32,6 +33,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
   const [problems, setProblems] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [editing, setEditing] = useState<DocumentView | null>(null)
+  const [viewing, setViewing] = useState<DocumentView | null>(null)
   const [deleting, setDeleting] = useState<DocumentView | null>(null)
 
   const supporting = (documents.data ?? []).filter((document) => document.kind === 'CHECK_DOC')
@@ -164,7 +166,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-1">
-                <Button type="button" size="sm" variant="ghost" onClick={() => void openFile(document, setProblems)} aria-label={`${document.mimeType === 'application/pdf' ? 'Download' : 'View'} ${document.displayLabel}`}>
+                <Button type="button" size="sm" variant="ghost" onClick={() => (document.mimeType === 'application/pdf' ? void openFile(document, setProblems) : setViewing(document))} aria-label={`${document.mimeType === 'application/pdf' ? 'Download' : 'View'} ${document.displayLabel}`}>
                   {document.mimeType === 'application/pdf' ? 'Download' : 'View'}
                 </Button>
                 {canUpload && (
@@ -192,6 +194,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
         </ol>
       )}
 
+      {viewing && <DocumentPreviewDialog key={viewing.id} document={viewing} onClose={() => setViewing(null)} onOpenInTab={() => void openFile(viewing, setProblems)} />}
       {editing && <DocumentEditorDialog key={editing.id} caseId={caseId} checkId={checkId} document={editing} onClose={() => setEditing(null)} />}
       {deleting && (
         <Dialog title="Remove this document?" onClose={() => setDeleting(null)}>

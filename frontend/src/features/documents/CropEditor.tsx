@@ -8,6 +8,8 @@ interface CropEditorProps {
   documentId: string
   /** null = show the whole picture. */
   crop: Crop | null
+  /** What is saved now, so the changes made here can be taken back with Undo. */
+  savedCrop?: Crop | null
   onChange: (crop: Crop | null) => void
 }
 
@@ -22,7 +24,7 @@ const SLIDERS: { key: keyof Crop; label: string; min: number }[] = [
  * Chooses which part of a picture the report shows (the file itself is never changed). Drag on the
  * picture to draw the part to keep, or fine-tune with the sliders: a narrow crop is a zoom.
  */
-export function CropEditor({ documentId, crop, onChange }: CropEditorProps) {
+export function CropEditor({ documentId, crop, savedCrop = null, onChange }: CropEditorProps) {
   const frame = useRef<HTMLDivElement>(null)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
   const [dragging, setDragging] = useState<Crop | null>(null)
@@ -115,9 +117,12 @@ export function CropEditor({ documentId, crop, onChange }: CropEditorProps) {
           )
         })}
       </div>
-      <div>
+      <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" variant="outline" disabled={crop === null} onClick={() => onChange(null)}>
           Use the whole picture
+        </Button>
+        <Button type="button" size="sm" variant="outline" disabled={JSON.stringify(crop) === JSON.stringify(savedCrop)} onClick={() => onChange(savedCrop)}>
+          Undo changes
         </Button>
       </div>
     </div>
