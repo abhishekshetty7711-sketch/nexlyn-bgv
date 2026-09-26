@@ -118,9 +118,15 @@ class CaseApiImpl implements CaseApi {
                 reportChecks);
     }
 
-    private static CaseReport.Check reportCheck(CheckViews.CheckView v) {
+    /**
+     * What the report shows for a check. "This card verifies" (the detail page and the document frames) falls back to the
+     * check type's document name, as CLAUDE.md sections 7 and 6.2 say; the summary description (page 1) does too.
+     * The reference tool fell back to the summary description here, which could put a long page-1 sentence on the
+     * detail page (audit item 18).
+     */
+    static CaseReport.Check reportCheck(CheckViews.CheckView v) {
         String summary = notBlank(v.summaryDescription()) ? v.summaryDescription() : v.documentName();
-        String verifies = notBlank(v.thisCardVerifies()) ? v.thisCardVerifies() : summary;
+        String verifies = notBlank(v.thisCardVerifies()) ? v.thisCardVerifies() : v.documentName();
         return new CaseReport.Check(v.id(), v.type(), v.groupKey(), v.title(), summary, verifies, v.documentName(),
                 v.status(), v.verificationType(), v.requestedDate(), v.completedDate(), v.remarks(), v.hasAttestation(),
                 v.barCouncilNo(), v.disclaimer(),
