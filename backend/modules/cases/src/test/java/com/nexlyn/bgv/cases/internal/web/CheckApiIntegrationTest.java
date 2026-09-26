@@ -610,13 +610,34 @@ class CheckApiIntegrationTest extends CasesIntegrationTestBase {
         assertThat(body(updated).get("freeSections")).hasSize(2);
 
         assertThat(status(send(post(base), analyst, obj("kind", "IMAGE", "text", null)))).as("images need documents").isEqualTo(400);
-        assertThat(status(send(post(base), analyst, obj("kind", "TEXT", "text", "   ")))).isEqualTo(400);
+        assertThat(status(send(post(base), analyst, obj("kind", "TEXT", "text", "x".repeat(5001))))).as("too long").isEqualTo(400);
         assertThat(status(send(put(base + "/" + UUID.randomUUID()), analyst, obj("text", "x")))).isEqualTo(404);
 
         MvcResult removed = send(delete(base + "/" + sectionId), analyst, null);
         assertThat(status(removed)).isEqualTo(200);
         assertThat(body(removed).get("freeSections")).hasSize(1);
         assertThat(listChecks().get(0).get("freeSections")).hasSize(1);
+    }
+
+    @Test
+    void aTextBlockMayBeLeftEmptyAsABlankSpaceForHandwriting() throws Exception {
+        JsonNode check = addCheck(analyst, "POLICE");
+        String base = checksPath("/" + check.get("id").asText() + "/free-sections");
+
+        MvcResult blank = send(post(base), analyst, obj("kind", "TEXT", "text", "   "));
+        assertThat(status(blank)).as("an empty text block is a blank space").isEqualTo(201);
+        JsonNode section = body(blank).get("freeSections").get(0);
+        assertThat(section.get("kind").asText()).isEqualTo("TEXT");
+        assertThat(section.get("text").isNull()).as("stored without text").isTrue();
+
+        assertThat(status(send(post(base), analyst, obj("kind", "TEXT")))).as("no text at all is the same").isEqualTo(201);
+        String id = section.get("id").asText();
+        MvcResult filled = send(put(base + "/" + id), analyst, obj("text", "Written later"));
+        assertThat(body(filled).get("freeSections").get(0).get("text").asText()).isEqualTo("Written later");
+        MvcResult cleared = send(put(base + "/" + id), analyst, obj("text", ""));
+        assertThat(status(cleared)).as("a block can be emptied again").isEqualTo(200);
+        assertThat(body(cleared).get("freeSections").get(0).get("text").isNull()).isTrue();
+        assertThat(listChecks().get(0).get("freeSections")).hasSize(2);
     }
 
     // ---- what the checks do to the rest of the case ----------------------------------------------------------------------------------

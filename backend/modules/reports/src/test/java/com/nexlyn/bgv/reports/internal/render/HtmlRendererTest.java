@@ -118,6 +118,17 @@ class HtmlRendererTest {
     }
 
     @Test
+    void aBlankTextBlockPrintsAsEightyPixelsOfBlankSpaceAndATextBlockAsABox() {
+        Check check = ReportFixtures.withFields(ReportFixtures.check("POLICE", "POLICE", "Police Verification", CheckStatus.VERIFIED), List.of(), List.of(),
+                List.of(new CaseReport.FreeBlock("TEXT", "Visited the station.", null), new CaseReport.FreeBlock("TEXT", "", null)));
+        var page = render(List.of(check)).select("#pagesArea > .page").get(1);
+
+        assertThat(page.select(".free-blank")).as("one blank space").hasSize(1);
+        assertThat(page.select(".free-blank").attr("style")).contains("height:80px");
+        assertThat(page.text()).contains("Visited the station.");
+    }
+
+    @Test
     void everythingUserTypedIsEscapedAndOnlyBoldSurvivesInRemarks() {
         Check evil = ReportFixtures.withRemarks(ReportFixtures.check("AADHAAR", "identity", "<img src=x onerror=alert(1)>", CheckStatus.VERIFIED),
                 "<script>alert(1)</script><b>bold</b> & <img src=x>");

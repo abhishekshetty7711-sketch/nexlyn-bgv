@@ -354,6 +354,36 @@ describe('Checks section', () => {
     expect(setup.calls('POST', '/free-sections')[0]!.body).toEqual({ kind: 'TEXT', text: 'Verified on call' })
   })
 
+  it('adds a blank space in one click: a block with no text', async () => {
+    const setup = serve([checkFixture()], {
+      'POST /api/cases/c-1/checks/ck-1/free-sections': () => ({
+        body: checkFixture({ version: 1, freeSections: [{ id: 'fs-1', kind: 'TEXT', text: null, documentId: null, sortOrder: 0 }] }),
+      }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    await userEvent.click(await screen.findByRole('button', { name: 'Add blank space' }))
+    await waitFor(() => expect(setup.calls('POST', '/free-sections')).toHaveLength(1))
+    expect(setup.calls('POST', '/free-sections')[0]!.body).toEqual({ kind: 'TEXT', text: '' })
+  })
+
+  it('shows an empty block as a blank space, and lets a saved block be emptied again', async () => {
+    const withBlocks = checkFixture({
+      freeSections: [
+        { id: 'fs-1', kind: 'TEXT', text: null, documentId: null, sortOrder: 0 },
+        { id: 'fs-2', kind: 'TEXT', text: 'Visited', documentId: null, sortOrder: 1 },
+      ],
+    })
+    const setup = serve([withBlocks], { 'PUT /api/cases/c-1/checks/ck-1/free-sections/fs-2': () => ({ body: withBlocks }) })
+    open('/cases/c-1?section=checks&check=ck-1')
+
+    expect(await screen.findByLabelText(/Blank space 1/)).toHaveValue('')
+    const filled = screen.getByLabelText('Text block 2')
+    await userEvent.clear(filled)
+    await userEvent.click(screen.getByRole('button', { name: 'Save text block 2' }))
+    await waitFor(() => expect(setup.calls('PUT', '/free-sections/fs-2')).toHaveLength(1))
+    expect(setup.calls('PUT', '/free-sections/fs-2')[0]!.body).toEqual({ text: '' })
+  })
+
   it('adds a picture block: uploads the picture for the check, then attaches it as a block', async () => {
     const setup = serve([checkFixture()], {
       'POST /api/checks/ck-1/documents': () => ({ status: 201, body: { id: 'pic-1' } }),

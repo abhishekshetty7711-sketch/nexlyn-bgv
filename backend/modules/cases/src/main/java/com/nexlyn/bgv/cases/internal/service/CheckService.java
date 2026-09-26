@@ -329,7 +329,7 @@ public class CheckService {
             }
             freeSections.saveAndFlush(CheckFreeSection.image(checkId, documentId, next));
         } else {
-            freeSections.saveAndFlush(new CheckFreeSection(checkId, FreeSectionKind.TEXT, requiredText("text", text), next));
+            freeSections.saveAndFlush(new CheckFreeSection(checkId, FreeSectionKind.TEXT, blockText(text), next));
         }
         return freeSectionsChanged(c, check, "FREE_SECTION_ADDED");
     }
@@ -345,7 +345,7 @@ public class CheckService {
         if (section.getKind() != FreeSectionKind.TEXT) {
             throw invalid("kind", "only text sections can be edited here");
         }
-        section.setTextValue(requiredText("text", text));
+        section.setTextValue(blockText(text));
         freeSections.saveAndFlush(section);
         return freeSectionsChanged(c, check, "FREE_SECTION_UPDATED");
     }
@@ -567,6 +567,18 @@ public class CheckService {
         String text = blankToNull(value);
         if (text != null && text.length() > max) {
             throw invalid(field, "is too long");
+        }
+        return text;
+    }
+
+    /**
+     * The text of a free text block. A block may be left empty: it then prints as a blank space to write in by hand, as the
+     * reference tool's blank sections did (an empty block is stored without text).
+     */
+    private static String blockText(String value) {
+        String text = blankToNull(value);
+        if (text != null && text.length() > 5000) {
+            throw invalid("text", "is at most 5000 characters");
         }
         return text;
     }

@@ -191,7 +191,19 @@ class ReportModelAssemblerTest {
         assertThat(page.attestation().barCouncil()).isEqualTo(ReportModelAssembler.DEFAULT_BAR_COUNCIL);
         assertThat(page.attestation().disclaimer()).isEqualTo(ReportModelAssembler.DEFAULT_DISCLAIMER);
         assertThat(page.attestation().sealSrc()).startsWith("data:image/png;base64,");
-        assertThat(page.freeBlocks()).as("a blank text block is dropped").hasSize(1);
+        assertThat(page.freeBlocks()).as("a blank text block is kept, as a blank space to write in").hasSize(2);
+        assertThat(page.freeBlocks().get(0).text()).isEqualTo("Searched twice.");
+        assertThat(page.freeBlocks().get(1).image()).isFalse();
+        assertThat(page.freeBlocks().get(1).text()).isEmpty();
+    }
+
+    @Test
+    void aTextBlockWithNoTextAtAllIsAlsoABlankSpace() {
+        Check check = ReportFixtures.withFields(ReportFixtures.check("POLICE", "POLICE", "Police", CheckStatus.VERIFIED), List.of(), List.of(),
+                List.of(new CaseReport.FreeBlock("TEXT", null, null)));
+        DetailPage page = (DetailPage) assembler.assemble(ReportFixtures.report(List.of(check), null)).pages().get(1);
+        assertThat(page.freeBlocks()).hasSize(1);
+        assertThat(page.freeBlocks().get(0).text()).isEmpty();
     }
 
     @Test

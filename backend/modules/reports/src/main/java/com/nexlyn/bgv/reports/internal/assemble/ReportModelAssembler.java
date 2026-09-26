@@ -216,8 +216,9 @@ public class ReportModelAssembler {
             if ("IMAGE".equals(block.kind())) {
                 String src = block.documentId() == null ? null : embedded(block.documentId());
                 blocks.add(new FreeBlock(true, null, src));
-            } else if (!blank(block.text())) {
-                blocks.add(new FreeBlock(false, block.text(), null));
+            } else {
+                // an empty text block is a blank space to write in by hand (the reference tool's blank sections)
+                blocks.add(new FreeBlock(false, blank(block.text()) ? "" : block.text(), null));
             }
         }
         return blocks;

@@ -21,6 +21,16 @@ export function FreeSections({ caseId, check, canEdit }: { caseId: string; check
   const [draft, setDraft] = useState<string | null>(null)
   const blocks = [...check.freeSections].sort((a, b) => a.sortOrder - b.sortOrder)
 
+  /** A block with no text: it prints as a blank space (about 2 cm) to write in by hand, like the reference tool's blank sections. */
+  async function addBlankBlock() {
+    setError(null)
+    try {
+      await add.mutateAsync('')
+    } catch (problem) {
+      setError(describeError(problem))
+    }
+  }
+
   async function addBlock() {
     setError(null)
     try {
@@ -67,6 +77,9 @@ export function FreeSections({ caseId, check, canEdit }: { caseId: string; check
             <Button type="button" size="sm" variant="outline" disabled={draft !== null} onClick={() => setDraft('')}>
               Add text block
             </Button>
+            <Button type="button" size="sm" variant="outline" disabled={add.isPending} onClick={() => void addBlankBlock()}>
+              Add blank space
+            </Button>
             <input ref={picker} type="file" accept={ACCEPT_PICTURES} className="sr-only" aria-label="Choose a picture for a block" onChange={(event) => void addPictures(event.target.files)} />
             <Button type="button" size="sm" variant="outline" disabled={addImage.isPending} onClick={() => picker.current?.click()}>
               {addImage.isPending ? 'Uploading...' : 'Add picture block'}
@@ -74,7 +87,7 @@ export function FreeSections({ caseId, check, canEdit }: { caseId: string; check
           </div>
         )}
       </div>
-      {canEdit && <p className="text-xs text-slate-500">You can also drag a picture onto this area, or click here and paste one (Ctrl+V), to add a picture block.</p>}
+      {canEdit && <p className="text-xs text-slate-500">You can also drag a picture onto this area, or click here and paste one (Ctrl+V), to add a picture block. A blank space is an empty block: it prints as an empty area (about 2 cm) to write in by hand.</p>}
       {error && <Alert variant="error">{error}</Alert>}
       {draft !== null && (
         <div className="flex flex-col gap-2 rounded-md border border-dashed border-slate-300 p-3">
@@ -167,7 +180,7 @@ function TextBlock({ caseId, checkId, section, index, canEdit }: BlockProps) {
   return (
     <div className="flex flex-col gap-2 rounded-md border border-slate-200 p-3">
       <label className="text-sm font-medium text-slate-700" htmlFor={`fs-${section.id}`}>
-        Text block {index + 1}
+        {(section.text ?? '') === '' ? `Blank space ${index + 1} (prints as an empty area; type here to fill it)` : `Text block ${index + 1}`}
       </label>
       <Textarea
         id={`fs-${section.id}`}
@@ -189,7 +202,7 @@ function TextBlock({ caseId, checkId, section, index, canEdit }: BlockProps) {
           <Button
             type="button"
             size="sm"
-            disabled={!changed || text.trim() === '' || update.isPending}
+            disabled={!changed || update.isPending}
             onClick={() => run(() => update.mutateAsync({ id: section.id, text: text.trim() }), () => setSaved(true))}
             aria-label={`Save text block ${index + 1}`}
           >
