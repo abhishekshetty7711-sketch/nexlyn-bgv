@@ -24,6 +24,7 @@ import { GenerateSection } from './GenerateSection'
 import { OverviewSection } from './OverviewSection'
 import { PeriodSection } from './PeriodSection'
 import { RemarksSection } from './RemarksSection'
+import { ReportProgress } from './ReportProgress'
 import { ReportInfoSection } from './ReportInfoSection'
 import { SectionNavigator } from './SectionNavigator'
 import { SettingsSection } from './SettingsSection'
@@ -153,6 +154,7 @@ export function CaseWorkspacePage() {
                 currentCheckId={checkParam}
                 onSelectCheck={(checkId) => goTo('checks', checkId)}
               >
+                <ReportProgress progress={progress.data} />
                 <AssignmentsPanel caseView={caseView} />
               </SectionNavigator>
             </Card>
