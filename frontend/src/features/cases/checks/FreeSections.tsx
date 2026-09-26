@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { DocumentImage } from '../../documents/DocumentImage'
 import { ACCEPT_PICTURES, problemWithFile } from '../../documents/files'
+import { useFileDrop } from '../../documents/useFileDrop'
 import { useAddFreeImage, useAddFreeSection, useDeleteFreeSection, useUpdateFreeSection } from './api'
 import type { CheckFreeSectionView, CheckView } from './types'
 
@@ -30,29 +31,35 @@ export function FreeSections({ caseId, check, canEdit }: { caseId: string; check
     }
   }
 
-  async function addPicture(files: FileList | null) {
-    const file = files?.[0]
-    if (!file) {
-      return
-    }
-    const problem = problemWithFile(file, false)
-    if (problem) {
-      setError(problem)
-      return
-    }
+  /** Every picture chosen, dropped or pasted becomes a block of its own; a file that is not a picture is reported and skipped. */
+  async function addPictures(files: FileList | File[] | null) {
     setError(null)
-    try {
-      await addImage.mutateAsync(file)
-    } catch (failure) {
-      setError(describeError(failure))
+    for (const file of Array.from(files ?? [])) {
+      const problem = problemWithFile(file, false)
+      if (problem) {
+        setError(problem)
+        continue
+      }
+      try {
+        await addImage.mutateAsync(file)
+      } catch (failure) {
+        setError(describeError(failure))
+      }
     }
     if (picker.current) {
       picker.current.value = ''
     }
   }
 
+  const drop = useFileDrop((files) => void addPictures(files), canEdit && !addImage.isPending)
+
   return (
-    <section className="flex flex-col gap-3 border-t border-slate-200 pt-4" aria-label="Free blocks">
+    <section
+      className={`flex flex-col gap-3 border-t border-slate-200 pt-4 focus:outline-none ${drop.over ? 'rounded-md bg-brand-50 ring-2 ring-brand-600' : ''}`}
+      aria-label="Free blocks"
+      tabIndex={-1}
+      {...drop.props}
+    >
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-sm font-semibold text-slate-800">Free blocks (text or picture)</h4>
         {canEdit && (
@@ -60,13 +67,14 @@ export function FreeSections({ caseId, check, canEdit }: { caseId: string; check
             <Button type="button" size="sm" variant="outline" disabled={draft !== null} onClick={() => setDraft('')}>
               Add text block
             </Button>
-            <input ref={picker} type="file" accept={ACCEPT_PICTURES} className="sr-only" aria-label="Choose a picture for a block" onChange={(event) => void addPicture(event.target.files)} />
+            <input ref={picker} type="file" accept={ACCEPT_PICTURES} className="sr-only" aria-label="Choose a picture for a block" onChange={(event) => void addPictures(event.target.files)} />
             <Button type="button" size="sm" variant="outline" disabled={addImage.isPending} onClick={() => picker.current?.click()}>
               {addImage.isPending ? 'Uploading...' : 'Add picture block'}
             </Button>
           </div>
         )}
       </div>
+      {canEdit && <p className="text-xs text-slate-500">You can also drag a picture onto this area, or click here and paste one (Ctrl+V), to add a picture block.</p>}
       {error && <Alert variant="error">{error}</Alert>}
       {draft !== null && (
         <div className="flex flex-col gap-2 rounded-md border border-dashed border-slate-300 p-3">

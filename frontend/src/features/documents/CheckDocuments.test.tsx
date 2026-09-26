@@ -87,6 +87,63 @@ describe('CheckDocuments', () => {
     expect((first!.form!.get('file') as File).name).toBe('a.jpg')
   })
 
+  // ---- dragging and pasting -----------------------------------------------------------------------------
+
+  it('takes files dragged onto the documents area as supporting documents', async () => {
+    const setup = serve([], { 'POST /api/checks/ck-1/documents': () => ({ status: 201, body: documentFixture() }) })
+    show()
+    await screen.findByText(/No documents attached yet/)
+    const area = screen.getByRole('region', { name: 'Supporting documents' })
+
+    fireEvent.dragOver(area, { dataTransfer: { types: ['Files'], files: [] } })
+    expect(area.className).toContain('ring-2')
+    fireEvent.drop(area, { dataTransfer: { types: ['Files'], files: [picture('dropped-1.jpg'), picture('dropped-2.jpg')] } })
+
+    await waitFor(() => expect(setup.calls('POST', '/documents')).toHaveLength(2))
+    expect((setup.calls('POST', '/documents')[0]!.form!.get('file') as File).name).toBe('dropped-1.jpg')
+    expect(area.className).not.toContain('ring-2')
+  })
+
+  it('takes a picture pasted while the area has the focus, such as a screenshot', async () => {
+    const setup = serve([], { 'POST /api/checks/ck-1/documents': () => ({ status: 201, body: documentFixture() }) })
+    show()
+    await screen.findByText(/No documents attached yet/)
+    const area = screen.getByRole('region', { name: 'Supporting documents' })
+
+    fireEvent.paste(area, { clipboardData: { files: [picture('image.png')] } })
+
+    await waitFor(() => expect(setup.calls('POST', '/documents')).toHaveLength(1))
+    expect((setup.calls('POST', '/documents')[0]!.form!.get('file') as File).name).toBe('image.png')
+  })
+
+  it('leaves pasted text alone', async () => {
+    const setup = serve([])
+    show()
+    await screen.findByText(/No documents attached yet/)
+    fireEvent.paste(screen.getByRole('region', { name: 'Supporting documents' }), { clipboardData: { files: [], getData: () => 'just words' } })
+    expect(setup.calls('POST', '/documents')).toHaveLength(0)
+  })
+
+  it('checks a dropped file like a chosen one, and says what is wrong with it', async () => {
+    const setup = serve([])
+    show()
+    await screen.findByText(/No documents attached yet/)
+    const gif = new File([new Uint8Array([1])], 'anim.gif', { type: 'image/gif' })
+    fireEvent.drop(screen.getByRole('region', { name: 'Supporting documents' }), { dataTransfer: { types: ['Files'], files: [gif] } })
+    expect(await screen.findByText('anim.gif is not a JPEG, PNG or PDF file.')).toBeInTheDocument()
+    expect(setup.calls('POST', '/documents')).toHaveLength(0)
+  })
+
+  it('takes no dropped or pasted files from someone who may not upload', async () => {
+    const setup = serve([documentFixture()])
+    show({ canUpload: false })
+    const area = await screen.findByRole('region', { name: 'Supporting documents' })
+    fireEvent.drop(area, { dataTransfer: { types: ['Files'], files: [picture()] } })
+    fireEvent.paste(area, { clipboardData: { files: [picture()] } })
+    expect(setup.calls('POST', '/documents')).toHaveLength(0)
+    expect(screen.queryByText(/drag files onto this area/)).not.toBeInTheDocument()
+  })
+
   it('checks a file before sending and reports each problem', async () => {
     const setup = serve([])
     show()

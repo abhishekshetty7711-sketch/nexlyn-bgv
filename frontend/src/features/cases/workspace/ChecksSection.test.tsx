@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, mockFetch, renderRoutes, type FakeHandler } from '@/test/testUtils'
@@ -369,6 +369,22 @@ describe('Checks section', () => {
     await waitFor(() => expect(setup.calls('POST', '/free-sections')).toHaveLength(1))
     expect(setup.calls('POST', '/checks/ck-1/documents')[0]!.url).toBe('/api/checks/ck-1/documents?kind=FREE_IMAGE')
     expect(setup.calls('POST', '/free-sections')[0]!.body).toEqual({ kind: 'IMAGE', documentId: 'pic-1' })
+  })
+
+  it('adds a picture block for a picture dropped or pasted onto the free blocks area', async () => {
+    const setup = serve([checkFixture()], {
+      'POST /api/checks/ck-1/documents': () => ({ status: 201, body: { id: 'pic-1' } }),
+      'POST /api/cases/c-1/checks/ck-1/free-sections': () => ({ body: checkFixture({ version: 1 }) }),
+    })
+    open('/cases/c-1?section=checks&check=ck-1')
+    const area = await screen.findByRole('region', { name: 'Free blocks' })
+    const file = (name: string) => new File([new Uint8Array([1, 2, 3])], name, { type: 'image/png' })
+
+    fireEvent.drop(area, { dataTransfer: { types: ['Files'], files: [file('dropped.png')] } })
+    await waitFor(() => expect(setup.calls('POST', '/free-sections')).toHaveLength(1))
+    fireEvent.paste(area, { clipboardData: { files: [file('pasted.png')] } })
+    await waitFor(() => expect(setup.calls('POST', '/free-sections')).toHaveLength(2))
+    expect(setup.calls('POST', '/checks/ck-1/documents')).toHaveLength(2)
   })
 
   it('shows a picture block with its picture, and can delete it', async () => {

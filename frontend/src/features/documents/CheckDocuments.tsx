@@ -12,6 +12,7 @@ import { DocumentPlacement, type PlacementChange } from './DocumentPlacement'
 import { DocumentPreviewDialog } from './DocumentPreviewDialog'
 import { ACCEPT_DOCUMENTS, formatBytes, problemWithFile } from './files'
 import { type DocumentView, QUALITY_LABELS } from './types'
+import { useFileDrop } from './useFileDrop'
 
 interface CheckDocumentsProps {
   caseId: string
@@ -38,7 +39,7 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
 
   const supporting = (documents.data ?? []).filter((document) => document.kind === 'CHECK_DOC')
 
-  async function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | File[] | null) {
     if (!files || files.length === 0) {
       return
     }
@@ -103,8 +104,15 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
     setDeleting(null)
   }
 
+  const drop = useFileDrop((files) => void addFiles(files), canUpload && !uploading)
+
   return (
-    <section className="flex flex-col gap-3 border-t border-slate-200 pt-4" aria-label="Supporting documents">
+    <section
+      className={`flex flex-col gap-3 border-t border-slate-200 pt-4 focus:outline-none ${drop.over ? 'rounded-md bg-brand-50 ring-2 ring-brand-600' : ''}`}
+      aria-label="Supporting documents"
+      tabIndex={-1}
+      {...drop.props}
+    >
       <div className="flex items-center justify-between gap-3">
         <h4 className="text-sm font-semibold text-slate-800">Supporting documents</h4>
         {canUpload && (
@@ -126,7 +134,10 @@ export function CheckDocuments({ caseId, checkId, canUpload, canDelete }: CheckD
           </div>
         )}
       </div>
-      <p className="text-xs text-slate-500">JPEG, PNG or PDF, up to 10 MB each. Pictures are cleaned of location and camera details when stored.</p>
+      <p className="text-xs text-slate-500">
+        JPEG, PNG or PDF, up to 10 MB each. Pictures are cleaned of location and camera details when stored.
+        {canUpload && ' You can also drag files onto this area, or click here and paste a picture (Ctrl+V).'}
+      </p>
 
       {problems.length > 0 && (
         <Alert variant="error">
