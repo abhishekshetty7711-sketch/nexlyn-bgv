@@ -3,7 +3,7 @@
 # Build from the backend/ folder:  docker build -f bgv-app/Dockerfile -t nexlyn-bgv-backend .
 
 # ---- build: the application jar, and the Playwright driver jars needed to install Chromium ----------------
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3-eclipse-temurin-24 AS build
 WORKDIR /build
 COPY pom.xml ./pom.xml
 COPY bgv-common ./bgv-common
