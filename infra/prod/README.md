@@ -1,11 +1,12 @@
 # Production on one machine
 
 Three containers on one Linux server (about 4 GB RAM): `proxy` (nginx, TLS, rate limits), `frontend` (the web app's
-files and the `/api` pass-through) and `backend` (the Spring Boot app). The database is **AWS RDS PostgreSQL 16** and
+files) and `backend` (the Spring Boot app). The database is **AWS RDS PostgreSQL 16** and
 the files are in **AWS S3 (ap-south-1)**; neither runs on the server.
 
 ```
-Internet ─► proxy :80/:443 ─► frontend :8080 ─► backend :8080 ─► RDS, S3
+Internet ─► proxy :80/:443 ─┬─ /api/**, /actuator/health ─► backend :8080 ─► RDS, S3
+                            └─ everything else ──────────► frontend :8080 (static files)
 ```
 
 Only the proxy publishes ports. The backend cannot be reached from outside.
@@ -17,9 +18,17 @@ These need accounts, money, real secrets or DNS, so they are not automated and n
 1. **A Linux server** (Ubuntu 22.04/24.04 LTS, 2 vCPU, 4 GB RAM, 40 GB disk) with Docker Engine and the Compose plugin,
    in the AWS Mumbai region (data stays in India).
 2. **A domain name** pointing at the server (an `A` record), for example `bgv.nexlyn.example`.
-3. **A TLS certificate.** Free option: Let's Encrypt with certbot (`sudo certbot certonly --webroot -w
-   /opt/nexlyn-bgv/infra/prod/acme -d YOUR-DOMAIN`, then `TLS_CERT_DIR=/etc/letsencrypt/live/YOUR-DOMAIN`).
-   Renewal: certbot's timer renews it; add `--deploy-hook "docker compose -f /opt/nexlyn-bgv/infra/prod/docker-compose.yml restart proxy"`.
+3. **A TLS certificate.** Free option: Let's Encrypt with certbot. The proxy cannot start without a certificate, so
+   the first one is fetched with `--standalone` (before the stack is up); renewals then use the webroot `./acme`:
+   ```bash
+   sudo certbot certonly --standalone -d YOUR-DOMAIN --deploy-hook /opt/nexlyn-bgv/infra/prod/certbot-deploy-hook.sh
+   # after the stack is running:
+   sudo certbot reconfigure --cert-name YOUR-DOMAIN --webroot -w /opt/nexlyn-bgv/infra/prod/acme \
+        --deploy-hook /opt/nexlyn-bgv/infra/prod/certbot-deploy-hook.sh
+   ```
+   The hook copies the certificate into `infra/prod/certs` (readable by the proxy's user) and reloads the proxy;
+   keep `TLS_CERT_DIR=./certs`. Mounting `/etc/letsencrypt/live/...` directly does not work (links into
+   `../../archive`, root-only permissions).
 4. **RDS**: PostgreSQL 16, not public, encrypted, automated backups on (14+ days), reachable only from the server's
    security group. Create the database `nexlyn_bgv`, then run `infra/local/postgres/init/01-create-schemas.sql` once
    as the master user. Create an app user with rights on that database (the app applies its own migrations).
@@ -28,7 +37,8 @@ These need accounts, money, real secrets or DNS, so they are not automated and n
    keys empty), or create an access key limited to that bucket.
 6. **Secrets**: generate and store the keys as described in [`docs/runbooks/key-management.md`](../../docs/runbooks/key-management.md),
    **including the offline copy of `PII_ENCRYPTION_KEY`**.
-7. **The site name in the proxy**: replace `nexlyn.example.com` in `nginx/nexlyn.conf` with the real host name.
+7. **The site name in the proxy**: `server_name` in `nginx/nexlyn.conf` is `nexlynservices.com`; change it if the
+   host name changes.
 
 ## First start
 

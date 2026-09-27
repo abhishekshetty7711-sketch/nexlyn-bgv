@@ -46,3 +46,7 @@ scripts/demo-data/output/
 
 # --- encrypted key backups (belong on a USB stick, never in git) ---
 nexlyn-keys-*.enc
+
+# Production server: TLS certificate copies and ACME challenge files (infra/prod/certbot-deploy-hook.sh)
+infra/prod/certs/
+infra/prod/acme/

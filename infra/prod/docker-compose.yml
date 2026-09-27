@@ -89,12 +89,18 @@ services:
       - "443:8443"
     volumes:
       - ./nginx/nexlyn.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${TLS_CERT_DIR}:/etc/nginx/certs:ro          # fullchain.pem and privkey.pem
+      # fullchain.pem and privkey.pem as plain files readable by the proxy's user (uid 101). Not the Let's Encrypt
+      # "live" folder itself: its files are links into ../../archive (they would dangle inside the container) and
+      # it is readable by root only. certbot-deploy-hook.sh copies the certificate here on every issue/renewal.
+      - ${TLS_CERT_DIR:-./certs}:/etc/nginx/certs:ro
       - ${ACME_WEBROOT:-./acme}:/var/www/acme:ro     # for certificate renewal (Let's Encrypt webroot)
     tmpfs:
       - /tmp
     depends_on:
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
     mem_limit: 128m
     networks: [internal]
 

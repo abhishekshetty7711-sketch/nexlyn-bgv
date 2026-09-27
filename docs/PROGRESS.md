@@ -3,7 +3,7 @@
 Read this file and `docs/DECISIONS.md` at the start of every session, then continue from
 "Next step". Update it (and commit) after every step.
 
-_Last updated: 2026-09-26 (after the parity audit fixes, D-042)_
+_Last updated: 2026-09-27 (production deploy config for EC2 / nexlynservices.com, D-046)_
 
 ## Phase status (CLAUDE.md section 15)
 
@@ -81,6 +81,10 @@ Both were reported missing; only the control was. The database, API, assembler a
 ## Parity audit and its fixes (2026-09-26, D-042)
 
 `docs/parity-audit.md` compares the old HTML tool with the platform item by item (53 items, a fixture PDF printed by both tools, side-by-side pages in `docs/ui/2026-09-26-parity-audit/`). The owner asked for every ❌ and ⚠️ to be fixed, keeping #34 (updates after save) and #46 (no JSON export). **Done, one commit each:** progress panel (33), "This card verifies" falls back to the document type (18), required marks and checklist messages beside the fields (36), dates typed as dd/mm/yyyy (53j), live formatting of names, phone, PIN, Aadhaar, PAN, UAN (51, 9), title-bar badge follows the title (38), same-type test (16), Delete case button (45), picture viewer with zoom and crop Undo (31), drag-and-drop and paste upload (53g), blank spaces (22), and comments (with the attestation) on a page of their own (53l, migration V5). Decisions: phone stays `+91 XXXXX XXXXX`; the quality line is not printed in the PDF; details in D-042. **Not done, by choice or no action needed:** #30, #42, #53c, #53d, #53e, #34, #46. **Not done: nothing was clicked in a real browser**; the manual checks are in section 8 of the audit, plus the new things (progress panel, typed dates, phone typing, Add blank space, comments-on-own-page switch, drop and paste). **Stack rebuilt 2026-09-26** with `./scripts/local-up.sh -d` (Avast HTTPS scanning off): migration V5 applied at start-up (`cases.verification_checks.comments_on_next_page`, default false), all four containers healthy, the report font self-check passed, the web app answers 200 and `/actuator/health` is UP, `/api/me` without a token is 401; the 12 cases and 35 checks were kept. The commit history was also re-authored to the owner's new e-mail (D-043) and the full backend `verify` (439 tests, `ModularityTests` included) and the frontend gate (459 tests) pass on it. Docker Desktop was not running at the start of this work and was started for the backend integration tests.
+
+## Production deploy config for EC2 (2026-09-27, D-046)
+
+Target: EC2 t4g.medium (ARM64, Ubuntu 24.04, ap-south-1), RDS PostgreSQL `nexlyn_bgv`, S3 bucket `nexlyn-bgv-files`, domain `nexlynservices.com`. The proxy now routes `/api` straight to the backend; the TLS certificate is copied into `infra/prod/certs` by `infra/prod/certbot-deploy-hook.sh`. `infra/prod/.env` was written on the owner's machine (git-ignored) with `FILL_IN` markers. **Not done here (owner only):** filling in the secrets, the RDS schema and app user, the certificate, building and starting on the server. S3 versioning is off; the code does not need it (recommended only for recovering deleted files).
 
 ## Phase 2 steps
 
