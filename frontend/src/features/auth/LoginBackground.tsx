@@ -25,7 +25,7 @@ export function LoginBackground() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden md:static md:h-auto md:w-auto md:basis-2/5 md:self-stretch lg:basis-[55%]"
+      className="pointer-events-none absolute inset-0 overflow-hidden md:relative md:h-screen md:w-auto md:basis-2/5 lg:basis-[55%]"
     >
       <picture>
         <source type="image/webp" srcSet={WEBP_SRCSET} sizes={SIZES} />

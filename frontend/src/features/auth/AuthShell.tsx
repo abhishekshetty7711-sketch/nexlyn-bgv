@@ -29,7 +29,7 @@ export function AuthShell({ subtitle, children }: AuthShellProps) {
           </div>
           {children}
         </Card>
-        <p className="max-w-md text-center text-xs text-slate-600">
+        <p className="max-w-md rounded-lg bg-slate-950/40 px-4 py-1.5 text-center text-xs text-white shadow-sm backdrop-blur-sm md:bg-transparent md:px-0 md:py-0 md:text-slate-600 md:shadow-none md:backdrop-blur-none">
           For authorised Nexlyn staff only. Your session ends after 30 minutes without activity.
         </p>
       </div>
