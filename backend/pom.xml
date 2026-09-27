@@ -23,7 +23,7 @@
     <spring-modulith.version>1.2.5</spring-modulith.version>
     <!-- Newer than the Spring Boot default: older docker-java cannot talk to Docker Engine 29 -->
     <testcontainers.version>1.21.4</testcontainers.version>
-    <bouncycastle.version>1.78.1</bouncycastle.version>
+    <bouncycastle.version>1.86</bouncycastle.version>
     <bucket4j.version>8.14.0</bucket4j.version>
     <nimbus-jose-jwt.version>9.40</nimbus-jose-jwt.version>
     <!-- Tests tagged @Tag("load") take minutes and are run by hand: mvnw -pl modules/reports -am test -Dtest.excluded.groups=none -Dgroups=load -->
