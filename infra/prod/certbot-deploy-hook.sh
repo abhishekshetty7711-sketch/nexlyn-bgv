@@ -3,7 +3,7 @@
 # /etc/letsencrypt (root-only, and made of links into ../../archive) into ./certs as plain files that the proxy
 # container's user (uid/gid 101, nginx-unprivileged) can read, then asks the proxy to reload.
 # certbot sets RENEWED_LINEAGE; to run it by hand:
-#   sudo RENEWED_LINEAGE=/etc/letsencrypt/live/nexlynservices.com ./certbot-deploy-hook.sh
+#   sudo RENEWED_LINEAGE=/etc/letsencrypt/live/nexlyn-bgv-app.nexlynservices.com ./certbot-deploy-hook.sh
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 : "${RENEWED_LINEAGE:?certbot sets RENEWED_LINEAGE; see the comment above}"

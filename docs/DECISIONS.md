@@ -378,3 +378,10 @@ The owner asked for every ❌ and ⚠️ item of the audit to be fixed, keeping 
 - **Checked:** `docker compose config -q` with the real `.env`; `nginx -t` in `nginx-unprivileged:1.27-alpine` with a throw-away certificate. All four base images have arm64 builds (registry manifests); no amd64-only download in either Dockerfile; Playwright picks the arm64 Chromium when built on the ARM host. S3 versioning is not needed by the code (put/get/delete by key only); it is only recommended for recovering deleted files (backup runbook).
 - **Alternatives:** keep the frontend hop and fix its `X-Forwarded-Proto` header; mount all of `/etc/letsencrypt` and loosen its permissions on the host.
 - **Reverse:** point the three `proxy_pass` lines back at `frontend:8080`; set `TLS_CERT_DIR` to any folder holding plain, uid-101-readable `fullchain.pem` / `privkey.pem`.
+
+### D-047 — Production host is the subdomain nexlyn-bgv-app.nexlynservices.com — *owner request, 2026-09-27*
+
+- **What:** `server_name` in `infra/prod/nginx/nexlyn.conf` and `FRONTEND_ORIGIN` in `infra/prod/.env.example` now use `nexlyn-bgv-app.nexlynservices.com` instead of `nexlynservices.com`; comments in the README and `certbot-deploy-hook.sh` follow.
+- **Kept:** `TLS_CERT_DIR=./certs` (D-046; the owner first asked for the Let's Encrypt `live` folder, agreed to keep `./certs` after the reasons were given). The certificate paths inside the proxy (`/etc/nginx/certs/...`) carry no host name. The contact e-mail `abhishek@nexlynservices.com` on the report's Services page is not a host name and stays (§16.1).
+- **Side effect:** HSTS `includeSubDomains` now covers only `*.nexlyn-bgv-app.nexlynservices.com`, no longer the company's apex domain.
+- **Reverse:** put `nexlynservices.com` back in those two settings and issue a certificate for it (delete the other one, so its renewals cannot overwrite `certs/`).

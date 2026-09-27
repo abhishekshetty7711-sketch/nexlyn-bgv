@@ -37,7 +37,7 @@ These need accounts, money, real secrets or DNS, so they are not automated and n
    keys empty), or create an access key limited to that bucket.
 6. **Secrets**: generate and store the keys as described in [`docs/runbooks/key-management.md`](../../docs/runbooks/key-management.md),
    **including the offline copy of `PII_ENCRYPTION_KEY`**.
-7. **The site name in the proxy**: `server_name` in `nginx/nexlyn.conf` is `nexlynservices.com`; change it if the
+7. **The site name in the proxy**: `server_name` in `nginx/nexlyn.conf` is `nexlyn-bgv-app.nexlynservices.com`; change it if the
    host name changes.
 
 ## First start

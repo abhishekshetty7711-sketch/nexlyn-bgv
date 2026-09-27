@@ -3,7 +3,7 @@
 Read this file and `docs/DECISIONS.md` at the start of every session, then continue from
 "Next step". Update it (and commit) after every step.
 
-_Last updated: 2026-09-27 (production deploy config for EC2 / nexlynservices.com, D-046)_
+_Last updated: 2026-09-27 (production host changed to nexlyn-bgv-app.nexlynservices.com, D-047)_
 
 ## Phase status (CLAUDE.md section 15)
 
@@ -84,7 +84,7 @@ Both were reported missing; only the control was. The database, API, assembler a
 
 ## Production deploy config for EC2 (2026-09-27, D-046)
 
-Target: EC2 t4g.medium (ARM64, Ubuntu 24.04, ap-south-1), RDS PostgreSQL `nexlyn_bgv`, S3 bucket `nexlyn-bgv-files`, domain `nexlynservices.com`. The proxy now routes `/api` straight to the backend; the TLS certificate is copied into `infra/prod/certs` by `infra/prod/certbot-deploy-hook.sh`. `infra/prod/.env` was written on the owner's machine (git-ignored) with `FILL_IN` markers. **Not done here (owner only):** filling in the secrets, the RDS schema and app user, the certificate, building and starting on the server. S3 versioning is off; the code does not need it (recommended only for recovering deleted files).
+Target: EC2 t4g.medium (ARM64, Ubuntu 24.04, ap-south-1), RDS PostgreSQL `nexlyn_bgv`, S3 bucket `nexlyn-bgv-files`, domain `nexlyn-bgv-app.nexlynservices.com` (was `nexlynservices.com`, D-047). The proxy now routes `/api` straight to the backend; the TLS certificate is copied into `infra/prod/certs` by `infra/prod/certbot-deploy-hook.sh`. `infra/prod/.env` was written on the owner's machine (git-ignored) with `FILL_IN` markers. **Not done here (owner only):** filling in the secrets, the RDS schema and app user, the certificate, building and starting on the server. S3 versioning is off; the code does not need it (recommended only for recovering deleted files).
 
 ## Phase 2 steps
 
