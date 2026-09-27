@@ -38,7 +38,7 @@ jobs:
           -DsuppressionFiles=dependency-check-suppressions.xml
           -DnvdApiKey="$NVD_API_KEY"
           -Dformats=HTML,JSON
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: dependency-check-report
