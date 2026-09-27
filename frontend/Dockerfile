@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # The web app: static files served by nginx as a non-root user (port 8080 inside the container).
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci
