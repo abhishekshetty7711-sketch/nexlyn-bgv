@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.m2 \
         -DincludeArtifactIds=playwright,driver,driver-bundle,gson -DoutputDirectory=/build/playwright-lib
 
 # ---- runtime ---------------------------------------------------------------------------------------------------
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM eclipse-temurin:22-jre-jammy AS runtime
 
 # Chromium (with the system libraries it needs) is installed by Playwright itself, into a fixed folder that
 # every user can read. Noto fonts are added so names in Indian scripts print instead of showing empty boxes.
